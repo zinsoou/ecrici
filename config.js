@@ -2,7 +2,7 @@
 window.ECRICI = {
   url: "https://emuynuymhzhiyqfgiqxa.supabase.co",          // example: https://abcdxyz.supabase.co
   key: "sb_publishable_DNnsOolSFyCAyq25ZobUbw_CRg1RhXs",
-  adminWhatsapp: "22901469250",                 // your WhatsApp number with country code, digits only
+  adminWhatsapp: "2290146925057",                 // your WhatsApp number with country code, digits only
   emailDomain: "ecrici.app",                 // leave as is unless the guide tells you to change it
   priceText: "1 500 FCFA / mois"                // shown on the sign-up and renewal screens
 };
