@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Ecrici Admin</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{--paper:#f3f5fa;--card:#fff;--ink:#16203f;--muted:#5d6784;--line:#dde2ee;--accent:#2447d6;--accent-ink:#fff;--bad:#b4321f;--bad-bg:#fbe9e5;--ok:#17714a;--ok-bg:#e2f4ea;--warn-bg:#fff3d1;--warn-ink:#6b4b00}
+@media (prefers-color-scheme:dark){:root{--paper:#0f1527;--card:#171f38;--ink:#e8ecf8;--muted:#9aa5c6;--line:#2a3558;--accent:#7d97ff;--accent-ink:#0c1230;--bad:#ff9a88;--bad-bg:#3a1c1a;--ok:#6fd9a2;--ok-bg:#14301f;--warn-bg:#3b2f0d;--warn-ink:#f3d78a;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:max(16px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
+main{max-width:520px;margin:0 auto;display:grid;gap:12px}
+h1{font-size:24px;margin:6px 0 0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px}
+input{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}
+label{font-size:14px;color:var(--muted);display:grid;gap:4px}
+button,a.b{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 12px;cursor:pointer;text-decoration:none;text-align:center;display:inline-block}
+button.p{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.d{color:var(--bad)}
+button:disabled{opacity:.5}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1 1 auto}
+.err{color:var(--bad);font-size:14px;min-height:18px}
+.chip{display:inline-block;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:600}
+.pending{background:var(--warn-bg);color:var(--warn-ink)}.active{background:var(--ok-bg);color:var(--ok)}.suspended,.expired{background:var(--bad-bg);color:var(--bad)}
+.sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+.sum div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 2px}
+.sum b{display:block;font-size:20px}.sum span{font-size:12px;color:var(--muted)}
+.name{font-weight:700;font-size:17px}.muted{color:var(--muted);font-size:14px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script src="config.js"></script>
+<script>
+(function(){
+"use strict";
+const CFG=window.ECRICI||{}, BASE=String(CFG.url||"").replace(/\/+$/,""), SK="ecrici-admin-session";
+const $=s=>document.querySelector(s), app=$("#app");
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
+const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
+let sess=null; try{ sess=JSON.parse(lsGet(SK)); }catch(e){}
+let shops=[], q="", filter="all", err="", msg="", lastEmail="";
+
+async function http(path,o){
+  o=o||{};
+  const h={apikey:CFG.key,"Content-Type":"application/json"}; if(o.token) h.Authorization="Bearer "+o.token; Object.assign(h,o.headers||{});
+  let r; try{ r=await fetch(BASE+path,{method:o.method||"GET",headers:h,body:o.body?JSON.stringify(o.body):undefined,cache:"no-store"}); }
+  catch(e){ return {ok:false,status:0,json:null}; }
+  let j=null; try{ j=await r.json(); }catch(e){}
+  return {ok:r.ok,status:r.status,json:j};
+}
+async function api(path,o){
+  if(!sess) return {ok:false,status:401};
+  if(sess.exp-Date.now()<60000){
+    const r=await http("/auth/v1/token?grant_type=refresh_token",{method:"POST",body:{refresh_token:sess.refresh}});
+    if(r.ok){ sess={access:r.json.access_token,refresh:r.json.refresh_token,exp:Date.now()+(r.json.expires_in||3600)*1000}; lsSet(SK,JSON.stringify(sess)); }
+    else if(r.status>=400&&r.status<500){ sess=null; lsDel(SK); return {ok:false,status:401}; }
+  }
+  return http(path,Object.assign({},o,{token:sess.access}));
+}
+const state=s=>{ if(s.status==="pending") return "pending"; if(s.status==="suspended") return "suspended"; return (s.paid_until&&s.paid_until>=today())?"active":"expired"; };
+const daysLeft=s=>s.paid_until?Math.round((new Date(s.paid_until+"T12:00:00Z")-new Date(today()+"T12:00:00Z"))/864e5):null;
+
+function login(){
+  app.innerHTML=`<h1>Ecrici Admin</h1><div class="card">
+    <label>Admin email<input id="em" type="email" autocomplete="username" value="${esc(lastEmail)}"></label>
+    <label>Password<input id="pw" type="password" autocomplete="current-password"></label>
+    <div class="err" id="er">${esc(err)}</div><button class="p" id="go">Log in</button></div>`;
+  const go=async()=>{
+    err=""; lastEmail=$("#em").value.trim(); const r=await http("/auth/v1/token?grant_type=password",{method:"POST",body:{email:lastEmail,password:$("#pw").value}});
+    if(!r.ok||!r.json||!r.json.access_token){ err=r.status===0?"No internet connection.":"Wrong email or password."; login(); return; }
+    sess={access:r.json.access_token,refresh:r.json.refresh_token,exp:Date.now()+(r.json.expires_in||3600)*1000}; lsSet(SK,JSON.stringify(sess)); load();
+  };
+  $("#go").onclick=go; $("#pw").onkeydown=e=>{ if(e.key==="Enter") go(); };
+}
+async function load(){
+  app.innerHTML=`<h1>Ecrici Admin</h1><p class="muted">Loading…</p>`;
+  const r=await api("/rest/v1/shops?select=*&order=created_at.desc");
+  if(r.status===401){ err="Session ended. Log in again."; login(); return; }
+  if(!r.ok){ err="Could not load ("+r.status+")."; login(); return; }
+  shops=r.json||[];
+  draw();
+}
+function draw(){
+  const cnt={pending:0,active:0,expired:0,suspended:0}; shops.forEach(s=>cnt[state(s)]++);
+  const order={pending:0,expired:1,suspended:2,active:3};
+  const list=shops.filter(s=>(filter==="all"||state(s)===filter)&&(!q||(s.name+" "+s.phone).toLowerCase().includes(q.toLowerCase())))
+    .sort((a,b)=>order[state(a)]-order[state(b)]||String(b.created_at).localeCompare(String(a.created_at)));
+  app.innerHTML=`<div class="top"><h1>Ecrici Admin</h1><button id="out">Log out</button></div>
+    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>
+    <input id="q" placeholder="Search name or phone" value="${esc(q)}">
+    <div class="row">${["all","pending","active","expired","suspended"].map(k=>`<button data-f="${k}" class="${filter===k?"p":""}">${k}</button>`).join("")}</div>
+    <div class="err" id="er">${esc(err)}</div>${msg?`<div class="muted">${esc(msg)}</div>`:""}
+    ${list.map(card).join("")||`<p class="muted">No shops here yet.</p>`}`;
+  $("#out").onclick=()=>{ sess=null; lsDel(SK); err=""; login(); };
+  $("#q").oninput=e=>{ q=e.target.value; const pos=e.target.selectionStart; draw(); const n=$("#q"); n.focus(); n.setSelectionRange(pos,pos); };
+  app.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{ filter=b.dataset.f; draw(); });
+  app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(b.dataset.id,b.dataset.a));
+}
+function card(s){
+  const st=state(s), dl=daysLeft(s), wa=s.phone?`https://wa.me/${String(s.phone).replace(/\D/g,"")}`:"";
+  const info=s.paid_until?`Paid until ${s.paid_until}${dl!=null?` (${dl>=0?dl+" days left":Math.abs(dl)+" days ago"})`:""}`:"Not paid yet";
+  return `<div class="card" data-shop="${esc(s.id)}"><div class="top"><div><div class="name">${esc(s.name||"(no name)")}</div><div class="muted">+${esc(s.phone)} · ${esc(s.country)}</div></div><span class="chip ${st}">${st}</span></div>
+    <div class="muted">${esc(info)}</div>
+    <div class="row">${st==="pending"?`<button class="p" data-id="${esc(s.id)}" data-a="trial">Approve · 7 days</button>`:""}
+      <button data-id="${esc(s.id)}" data-a="m1">+1 month</button><button data-id="${esc(s.id)}" data-a="m3">+3 months</button><button data-id="${esc(s.id)}" data-a="m12">+12 months</button></div>
+    <div class="row">${wa?`<a class="b" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`:""}
+      ${s.status==="suspended"?`<button data-id="${esc(s.id)}" data-a="react">Reactivate</button>`:`<button class="d" data-id="${esc(s.id)}" data-a="susp">Suspend</button>`}</div></div>`;
+}
+function addTo(base,a){
+  const d=new Date(base+"T12:00:00Z");
+  if(a==="trial") d.setUTCDate(d.getUTCDate()+7); else d.setUTCMonth(d.getUTCMonth()+({m1:1,m3:3,m12:12}[a]));
+  return d.toISOString().slice(0,10);
+}
+async function act(id,a){
+  const s=shops.find(x=>x.id===id); if(!s) return;
+  let body;
+  if(a==="susp"){ if(!confirm("Suspend "+(s.name||s.phone)+"?")) return; body={status:"suspended"}; }
+  else if(a==="react"){ body={status:"active"}; }
+  else { const base=(s.status==="active"&&s.paid_until&&s.paid_until>today())?s.paid_until:today(); body={status:"active",paid_until:addTo(base,a)}; }
+  err=""; msg="";
+  const r=await api("/rest/v1/shops?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{Prefer:"return=representation"},body});
+  if(!r.ok||!Array.isArray(r.json)||!r.json.length){ err=r.status===401?"Session ended. Log in again.":"Not saved. This account may not be an admin (see the guide)."; draw(); return; }
+  Object.assign(s,r.json[0]); msg="Saved: "+(s.name||s.phone); draw();
+}
+if(!CFG.url||/PASTE/.test(CFG.url+CFG.key)){ app.innerHTML=`<h1>Ecrici Admin</h1><div class="card"><p>config.js is not filled in yet.</p></div>`; }
+else if(sess) load(); else login();
+})();
+</script>
+</body>
+</html>

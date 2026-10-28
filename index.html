@@ -1,0 +1,1245 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ecrici</title>
+<meta name="description" content="Ecrici : cahier de ventes, crédits, stock et reçus pour votre boutique. Fonctionne sans internet.">
+<meta name="theme-color" content="#2447d6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ecrici">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+<style id="lg-hide">body>*:not(#lg-gate){visibility:hidden}</style>
+<script>setTimeout(function(){var s=document.getElementById("lg-hide");if(s)s.remove()},5000)</script>
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+
+/* Layout: a notebook-style ledger. Header with shop name, one scrolling column, fixed tab bar at the bottom. */
+:root{
+  --paper:#f3f5fa;
+  --card:#ffffff;
+  --ink:#16203f;
+  --muted:#5d6784;
+  --line:#dde2ee;
+  --accent:#2447d6;
+  --accent-ink:#ffffff;
+  --owed:#b4321f;
+  --owed-bg:#fbe9e5;
+  --paid:#17714a;
+  --paid-bg:#e2f4ea;
+  --warn-bg:#fff3d1;
+  --warn-ink:#6b4b00;
+  --font-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --font-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"DM Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f1527;--card:#171f38;--ink:#e8ecf8;--muted:#9aa5c6;--line:#2a3558;
+    --accent:#7d97ff;--accent-ink:#0c1230;--owed:#ff9a88;--owed-bg:#3a1c1a;--paid:#6fd9a2;--paid-bg:#14301f;
+    --warn-bg:#3b2f0d;--warn-ink:#f3d78a;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f1527;--card:#171f38;--ink:#e8ecf8;--muted:#9aa5c6;--line:#2a3558;
+  --accent:#7d97ff;--accent-ink:#0c1230;--owed:#ff9a88;--owed-bg:#3a1c1a;--paid:#6fd9a2;--paid-bg:#14301f;
+  --warn-bg:#3b2f0d;--warn-ink:#f3d78a;color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 96px;
+}
+.wrap{max-width:720px;margin:0 auto}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.mono,.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.num{font-weight:500}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:18px 10px;flex-wrap:wrap}
+.brand{min-width:0}
+.brand h1{font-size:1.5rem;line-height:1.1;overflow-wrap:anywhere}
+.brand small{color:var(--muted);font-size:.8rem}
+.chips{display:flex;gap:8px;align-items:center}
+.pill{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:.82rem;cursor:pointer}
+.pill[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.status{font-size:.75rem;color:var(--muted)}
+
+/* banner */
+.banner{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:6px 0 14px;font-size:.9rem}
+
+/* sections */
+.sec{margin-top:22px;display:grid;gap:10px}
+.sec>h2{font-size:1.05rem;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sec>h2 span{font-family:var(--font-body);font-weight:500;font-size:.8rem;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card.flush{padding:0;overflow:hidden}
+
+/* summary */
+.sum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sum .card{min-width:0}
+.sum .lbl{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.sum .val{font-size:1.15rem;margin-top:4px;overflow-wrap:anywhere}
+.sum .owed .val{color:var(--owed)}
+.sum .got .val{color:var(--paid)}
+
+/* rows */
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line);min-width:0;width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;cursor:pointer}
+.row:first-child{border-top:0}
+.row .main{flex:1;min-width:0}
+.row .name{font-weight:600;overflow-wrap:anywhere}
+.row .sub{font-size:.82rem;color:var(--muted);overflow-wrap:anywhere}
+.row .amt{text-align:right;white-space:nowrap}
+.badge{display:inline-block;border-radius:999px;padding:2px 9px;font-size:.74rem;font-weight:600}
+.badge.owed{background:var(--owed-bg);color:var(--owed)}
+.badge.paid{background:var(--paid-bg);color:var(--paid)}
+.badge.late{background:var(--warn-bg);color:var(--warn-ink)}
+.empty{padding:22px 14px;color:var(--muted);text-align:center}
+
+/* forms */
+.form{display:grid;gap:14px}
+.field{display:grid;gap:6px;min-width:0}
+.field>label,.lab{font-size:.8rem;color:var(--muted);font-weight:600;letter-spacing:.03em}
+input,select,textarea{width:100%;min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+input[type=number]{font-family:var(--font-mono)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lines{display:grid;gap:10px}
+.line{display:grid;grid-template-columns:76px minmax(0,1fr) 40px;gap:8px;align-items:center}
+.line>input:first-child{grid-column:1/-1}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600;min-height:44px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--owed);border-color:var(--owed)}
+.btn.small{padding:6px 10px;min-height:34px;font-size:.85rem}
+.btn.ghost{background:none}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.x{border:0;background:none;color:var(--muted);font-size:1.3rem;cursor:pointer;min-height:36px}
+.total{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding-top:6px;border-top:2px solid var(--ink)}
+.total .num{font-size:1.4rem}
+.err{color:var(--owed);font-size:.88rem;min-height:1.2em}
+.note{color:var(--muted);font-size:.85rem}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* tab bar */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+  display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);
+  padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));z-index:5}
+.tabs button{background:none;border:0;padding:8px 2px;border-radius:10px;cursor:pointer;color:var(--muted);font-size:.7rem;font-weight:600;min-width:0}
+.tabs button[aria-current="page"]{color:var(--accent);background:var(--paper)}
+.tabs svg{display:block;margin:0 auto 3px;width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* modal + receipt */
+.veil{position:fixed;inset:0;background:rgba(10,14,30,.55);z-index:20;overflow-y:auto;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet{max-width:440px;margin:0 auto;display:grid;gap:12px}
+.dlg{background:var(--card);border-radius:14px;padding:16px;display:grid;gap:12px}
+.ticket{background:var(--card);border-radius:6px;padding:20px 18px;font-family:var(--font-mono);font-size:.86rem;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px);background-size:100% 1.55em;background-position:0 .55em}
+.ticket h3{font-family:var(--font-display);font-size:1.25rem;text-align:center;background:var(--card);padding:2px 0}
+.ticket .c{text-align:center;background:var(--card)}
+.ticket table{width:100%;border-collapse:collapse;background:var(--card);margin:8px 0}
+.ticket td,.ticket th{padding:3px 0;vertical-align:top;text-align:left;font-weight:400}
+.ticket td.r,.ticket th.r{text-align:right;white-space:nowrap;padding-left:8px}
+.ticket .big td{font-weight:500;border-top:1px dashed var(--ink);padding-top:6px}
+.ticket .bal{background:var(--card);padding:6px 0 0;font-weight:500}
+.msg{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.92rem}
+a.btn{text-decoration:none;display:inline-flex;align-items:center;color:inherit}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:14px;font-size:.88rem;line-height:1.35;text-align:center;z-index:30;width:max-content;max-width:min(92vw,360px)}
+.hint{grid-column:1/-1;font-size:.78rem;color:var(--muted);margin-top:-4px}.hint:empty{display:none}
+.lock{max-width:380px;margin:12vh auto 0}
+.pin{letter-spacing:.5em;font-family:var(--font-mono);text-align:center}
+.code{font-family:var(--font-mono);font-size:1.1rem;letter-spacing:.15em}
+.bars{display:flex;align-items:flex-end;gap:3px;height:120px;padding-top:6px}
+.bars .b{flex:1;min-width:0;background:var(--accent);border-radius:3px 3px 0 0;min-height:2px}
+.bars .b.zero{background:var(--line)}
+.blabels{display:flex;gap:3px;margin-top:4px}
+.blabels span{flex:1;min-width:0;font-size:.62rem;color:var(--muted);display:flex;justify-content:center;overflow:visible;white-space:nowrap}
+.row.voided .name,.row.voided .amt .num{text-decoration:line-through;opacity:.6}
+.stat{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 14px;border-top:1px solid var(--line)}
+.stat:first-child{border-top:0}.stat>span:first-child{min-width:0;overflow-wrap:anywhere}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.nav .lbl2{flex:1;text-align:center;font-weight:600;text-transform:capitalize;min-width:0;overflow-wrap:anywhere}
+.up{color:var(--paid)}.down{color:var(--owed)}
+
+@media (prefers-reduced-motion:no-preference){.veil{animation:fade .12s ease-out}@keyframes fade{from{opacity:0}to{opacity:1}}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<nav class="tabs" id="tabs" aria-label="Navigation"></nav>
+<div id="layer"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+"use strict";
+/* ---------- constants ---------- */
+const COUNTRIES = {
+  BJ:{name:"Bénin",   sym:"FCFA", after:true,  cc:"229", lang:"fr", ph:"01 97 00 00 00"},
+  NG:{name:"Nigeria", sym:"₦",    after:false, cc:"234", lang:"en", ph:"0803 000 0000"},
+  GH:{name:"Ghana",   sym:"GH₵",  after:false, cc:"233", lang:"en", ph:"024 000 0000"},
+  KE:{name:"Kenya",   sym:"KSh",  after:false, cc:"254", lang:"en", ph:"0712 000 000"}
+};
+const EX_COST={"Riz 25 kg":15500,"Huile 5 L":5600,"Ciment (sac)":4700,"Sucre 1 kg":780,"Savon":250,"Boîtes de tomate":480,"Eau 1,5 L":300,"Pain":150,"Lait en poudre":1250};
+const T = {
+  fr:{
+    tab_home:"Accueil",tab_sale:"Vente",tab_cust:"Clients",tab_hist:"Reçus",tab_set:"Réglages",
+    today:"Aujourd'hui",sold:"Ventes du jour",collected:"Encaissé",credit_given:"Crédit donné",to_collect:"À recevoir",
+    late_title:"Clients à relancer",late_none:"Personne n'est en retard. Bien joué.",remind:"Relancer",
+    days:"j",owes:"doit",settled:"à jour",since:"depuis",
+    examples_banner:"Ces données sont des exemples pour que vous voyiez comment ça marche.",remove_examples:"Effacer les exemples",
+    new_sale:"Nouvelle vente",customer:"Client",walkin:"Client de passage",new_customer:"+ Nouveau client",
+    existing_customer:"Choisir un client existant",
+    name:"Nom",phone:"Téléphone",item:"Article",qty:"Qté",price:"Prix",add_line:"+ Ajouter un article",total:"Total",
+    paid_now:"Payé maintenant",pay_full:"Tout payé",pay_credit:"À crédit",pay_part:"Paiement partiel",amount:"Montant",
+    balance_left:"Reste à payer",save_sale:"Enregistrer et créer le reçu",note:"Note (facultatif)",
+    err_total:"Ajoutez au moins un article avec un prix.",err_cust:"Choisissez ou créez un client pour une vente à crédit.",err_name:"Le nom du client est obligatoire.",
+    err_amount:"Entrez un montant supérieur à zéro.",err_over:"Ce montant dépasse ce que le client doit.",
+    customers:"Clients",search:"Rechercher",add_customer:"Ajouter un client",no_customers:"Aucun client pour l'instant.",
+    owed_total:"Total dû",record_payment:"Enregistrer un paiement",history:"Historique",back:"Retour",
+    method:"Mode de paiement",cash:"Espèces",momo:"Mobile money",transfer:"Virement",
+    receipts:"Reçus",no_receipts:"Aucun reçu pour l'instant.",sale:"Vente",payment:"Paiement",
+    receipt:"REÇU",receipt_no:"N°",date:"Date",items:"Articles",paid:"Payé",balance_after:"Solde du client après ce reçu",
+    thanks:"Merci de votre confiance !",copy:"Copier",copied:"Copié",whatsapp:"WhatsApp",sms:"SMS",save_txt:"Télécharger",close:"Fermer",
+    send_reminder:"Message de rappel",reminder_hint:"Vérifiez le texte, puis envoyez-le par WhatsApp ou SMS. Rien n'est envoyé automatiquement.",
+    msg_remind:(n,s,a)=>`Bonjour ${n}, c'est ${s}. Votre solde chez nous est de ${a}. Merci de passer le régler quand vous pouvez. Merci !`,
+    msg_receipt_intro:(n)=>`Bonjour ${n}, voici votre reçu :`,
+    settings:"Réglages",shop_name:"Nom de la boutique",shop_phone:"Téléphone de la boutique",country:"Pays",language:"Langue",
+    footer:"Message en bas du reçu",late_after:"Relancer après (jours)",save:"Enregistrer",saved_ok:"Enregistré",
+    backup:"Sauvegarde",backup_note:"Vos données sont gardées dans votre compte si vous êtes connecté, sinon sur cet appareil. Faites une copie de temps en temps.",
+    export_json:"Sauvegarde complète",export_csv:"Exporter en tableau (CSV)",import:"Restaurer une sauvegarde",imported:"Sauvegarde restaurée",bad_file:"Fichier non reconnu.",
+    danger:"Zone sensible",reset:"Tout effacer",reset_confirm:"Oui, tout effacer",cancel:"Annuler",
+    store_acct:"Enregistré dans votre compte",store_dev:"Enregistré sur cet appareil seulement",
+    created:"Reçu créé",pay_saved:"Paiement enregistré",cust_saved:"Client ajouté",examples_gone:"Exemples effacés",
+    default_footer:"Merci de votre confiance !",goods:"Marchandises",
+    wa_note:"Le lien WhatsApp ouvre la conversation avec le numéro du client.",
+    walk:"Client de passage",unpaid_sales:"Ventes non soldées",
+    appearance:"Apparence",th_auto:"Auto (comme le téléphone)",th_light:"Clair",th_dark:"Sombre",
+    country_note:"Changer de pays change seulement le symbole de la monnaie. Les montants déjà saisis ne sont pas convertis.",
+    edit:"Modifier",phone_hint:"Numéro étranger : commencez par + et l'indicatif (ex. +1 646…).",
+    backup_now:"Sauvegarder maintenant",last_backup:"Dernière sauvegarde",never:"jamais",backup_done:"Sauvegarde enregistrée",
+    backup_banner:(n)=>`Sauvegarde conseillée : ${n} écriture(s) pas encore sauvegardée(s). Envoyez le fichier à votre WhatsApp ou à votre e-mail.`,
+    bc_title:"Message à vos clients",bc_btn:"Écrire à tous",tpl_month:"Nouveau mois",tpl_promo:"Promotion",tpl_season:"Fêtes",tpl_stock:"Arrivage",tpl_back:"Revenez",
+    aud_all:"Tous",aud_owe:"Doivent de l'argent",aud_recent:"Achat ces 30 jours",aud_inactive:"Absents depuis 60 jours",bc_msg:"Message",
+    bc_note:"Chaque message s'ouvre dans WhatsApp ou SMS, prêt à envoyer. Vous appuyez sur Envoyer pour chaque client. Écrivez seulement à des clients qui attendent de vos nouvelles. {name} devient le nom du client.",
+    bc_fill:"Remplacez les crochets [ ] avant d'envoyer.",bc_nophone:"sans numéro",bc_sent:"Ouvert ✓",bc_open:"WhatsApp",bc_copy:"Copier le message (pour Statut ou groupe)",
+    bc_none:"Aucun client dans ce groupe.",bc_progress:(a,b)=>`${a} sur ${b} ouverts`,
+    load_examples:"Charger des exemples",examples_loaded:"Exemples chargés",empty_home:"Il n'y a encore rien ici. Chargez des exemples pour voir comment l'app fonctionne, ou ajoutez votre premier client.",
+    tab_rep:"Bilan",reports:"Bilan",set_btn:"Réglages",p_day:"Jour",p_week:"Semaine",p_month:"Mois",p_year:"Année",
+    rep_sales:"Ventes",rep_collected:"Encaissé",rep_credit:"Crédit donné",rep_debtpaid:"Dettes payées",rep_count:"Nombre de ventes",rep_profit:"Bénéfice",
+    rep_profit_note:(n)=>`Calculé sur ${n} % des ventes (produits avec prix d'achat).`,rep_no_profit:"Ajoutez le prix d'achat de vos produits pour voir le bénéfice.",
+    rep_top_products:"Produits les plus vendus",rep_top_customers:"Meilleurs clients",rep_none:"Aucune vente sur cette période.",rep_vs:"vs période précédente",
+    cost_price:"Prix d'achat",cancel_entry:"Annuler cette écriture",cancelled:"Annulé",cancel_title:"Annuler cette écriture ?",
+    cancel_hint:"Le stock et le solde du client seront corrigés. L'écriture reste visible, marquée Annulé.",cancel_reason:"Raison (facultatif)",
+    cancel_yes:"Oui, annuler",cancel_done:"Écriture annulée",back2:"Retour",sold_units:"vendus",
+    tab_stock:"Stock",stock:"Stock",add_product:"Ajouter un produit",product_name:"Nom du produit",unit_price:"Prix de vente",in_stock:"En stock",
+    low_alert:"Alerte quand il en reste",add_received:"Quantité reçue (à ajouter)",low:"Bas",out:"Épuisé",low_stock_title:"Stock bas",
+    no_products:"Aucun produit. Ajoutez vos articles pour suivre le stock.",stock_value:"Valeur du stock",err_pname:"Le nom du produit est obligatoire.",
+    err_pdup:"Ce produit existe déjà.",err_stock:(n,q)=>`Stock insuffisant pour ${n} : ${q} restant(s). Ajoutez du stock d'abord.`,
+    product_saved:"Produit enregistré",delete:"Supprimer",confirm_del_product:"Supprimer ce produit ?",
+    staff:"Équipe",staff_security:"Les codes PIN servent à garder les employés hors des réglages et des sauvegardes. Ce n'est pas une sécurité bancaire, et les données restent sur cet appareil.",
+    add_person:"Ajouter une personne",owner:"Propriétaire",employee:"Employé",role:"Rôle",err_sname:"Le nom est obligatoire.",err_pin:"Le PIN doit avoir exactement 4 chiffres.",
+    err_need_owner:"Ajoutez d'abord un propriétaire avec un PIN.",err_last_owner:"Gardez au moins un propriétaire tant que le verrouillage est actif.",
+    lock_on:"Activer le verrouillage par PIN",lock_off:"Désactiver le verrouillage",lock:"Verrouiller",unlock:"Ouvrir",who:"Qui êtes-vous ?",wrong_pin:"PIN incorrect.",
+    forgot:"PIN oublié ?",reset_access:"Désactiver le verrouillage",reset_access_hint:"Entrez le code de secours (affiché au propriétaire dans les réglages).",reset_wrong:"Code de secours incorrect.",
+    recovery:"Code de secours (notez-le)",served_by:"Servi par",
+    invoice:"FACTURE",as_invoice:"Voir en facture",as_receipt:"Voir en reçu",invoice_note:"Facture simple, sans valeur fiscale.",due:"Reste dû",balance_now:"Solde total du client",
+    msg_invoice_intro:(n)=>`Bonjour ${n}, voici votre facture :`
+  },
+  en:{
+    tab_home:"Home",tab_sale:"Sale",tab_cust:"Customers",tab_hist:"Receipts",tab_set:"Settings",
+    today:"Today",sold:"Sales today",collected:"Collected",credit_given:"Credit given",to_collect:"To collect",
+    late_title:"Customers to remind",late_none:"Nobody is overdue. Well done.",remind:"Remind",
+    days:"d",owes:"owes",settled:"settled",since:"since",
+    examples_banner:"This is example data so you can see how it works.",remove_examples:"Clear examples",
+    new_sale:"New sale",customer:"Customer",walkin:"Walk-in customer",new_customer:"+ New customer",
+    existing_customer:"Pick an existing customer",
+    name:"Name",phone:"Phone",item:"Item",qty:"Qty",price:"Price",add_line:"+ Add item",total:"Total",
+    paid_now:"Paid now",pay_full:"Paid in full",pay_credit:"On credit",pay_part:"Part payment",amount:"Amount",
+    balance_left:"Balance left",save_sale:"Save and create receipt",note:"Note (optional)",
+    err_total:"Add at least one item with a price.",err_cust:"Choose or create a customer for a credit sale.",err_name:"Customer name is required.",
+    err_amount:"Enter an amount above zero.",err_over:"That is more than the customer owes.",
+    customers:"Customers",search:"Search",add_customer:"Add customer",no_customers:"No customers yet.",
+    owed_total:"Total owed",record_payment:"Record a payment",history:"History",back:"Back",
+    method:"Payment method",cash:"Cash",momo:"Mobile money",transfer:"Transfer",
+    receipts:"Receipts",no_receipts:"No receipts yet.",sale:"Sale",payment:"Payment",
+    receipt:"RECEIPT",receipt_no:"No.",date:"Date",items:"Items",paid:"Paid",balance_after:"Customer balance after this receipt",
+    thanks:"Thank you for your business!",copy:"Copy",copied:"Copied",whatsapp:"WhatsApp",sms:"SMS",save_txt:"Download",close:"Close",
+    send_reminder:"Reminder message",reminder_hint:"Check the text, then send it by WhatsApp or SMS. Nothing is sent automatically.",
+    msg_remind:(n,s,a)=>`Hello ${n}, this is ${s}. Your balance with us is ${a}. Please come by and settle it when you can. Thank you!`,
+    msg_receipt_intro:(n)=>`Hello ${n}, here is your receipt:`,
+    settings:"Settings",shop_name:"Shop name",shop_phone:"Shop phone",country:"Country",language:"Language",
+    footer:"Receipt footer message",late_after:"Remind after (days)",save:"Save",saved_ok:"Saved",
+    backup:"Backup",backup_note:"Your data is kept in your account when you are signed in, otherwise on this device. Make a copy now and then.",
+    export_json:"Full backup",export_csv:"Export as spreadsheet (CSV)",import:"Restore a backup",imported:"Backup restored",bad_file:"File not recognised.",
+    danger:"Careful",reset:"Erase everything",reset_confirm:"Yes, erase everything",cancel:"Cancel",
+    store_acct:"Saved to your account",store_dev:"Saved on this device only",
+    created:"Receipt created",pay_saved:"Payment saved",cust_saved:"Customer added",examples_gone:"Examples cleared",
+    default_footer:"Thank you for your business!",goods:"Goods",
+    wa_note:"The WhatsApp link opens a chat with the customer's number.",
+    walk:"Walk-in customer",unpaid_sales:"Unpaid sales",
+    appearance:"Appearance",th_auto:"Auto (like the phone)",th_light:"Light",th_dark:"Dark",
+    country_note:"Changing the country only changes the currency symbol. Amounts already entered are not converted.",
+    edit:"Edit",phone_hint:"Foreign number: start with + and the country code (e.g. +1 646…).",
+    backup_now:"Back up now",last_backup:"Last backup",never:"never",backup_done:"Backup saved",
+    backup_banner:(n)=>`Backup recommended: ${n} entr${n===1?"y":"ies"} not backed up yet. Send the file to your own WhatsApp or email.`,
+    bc_title:"Message your customers",bc_btn:"Message all",tpl_month:"New month",tpl_promo:"Promotion",tpl_season:"Season",tpl_stock:"New stock",tpl_back:"Come back",
+    aud_all:"Everyone",aud_owe:"Owe money",aud_recent:"Bought in 30 days",aud_inactive:"Away for 60 days",bc_msg:"Message",
+    bc_note:"Each message opens in WhatsApp or SMS, ready to send. You tap Send for each customer. Only write to customers who expect to hear from you. {name} becomes the customer's name.",
+    bc_fill:"Replace the [ ] brackets before sending.",bc_nophone:"no number",bc_sent:"Opened ✓",bc_open:"WhatsApp",bc_copy:"Copy the message (for Status or a group)",
+    bc_none:"No customers in this group.",bc_progress:(a,b)=>`${a} of ${b} opened`,
+    load_examples:"Load examples",examples_loaded:"Examples loaded",empty_home:"Nothing here yet. Load examples to see how the app works, or add your first customer.",
+    tab_rep:"Reports",reports:"Reports",set_btn:"Settings",p_day:"Day",p_week:"Week",p_month:"Month",p_year:"Year",
+    rep_sales:"Sales",rep_collected:"Collected",rep_credit:"Credit given",rep_debtpaid:"Debts paid",rep_count:"Number of sales",rep_profit:"Profit",
+    rep_profit_note:(n)=>`Based on ${n}% of sales (products with a cost price).`,rep_no_profit:"Add a cost price to your products to see profit.",
+    rep_top_products:"Best-selling products",rep_top_customers:"Top customers",rep_none:"No sales in this period.",rep_vs:"vs previous period",
+    cost_price:"Cost price",cancel_entry:"Cancel this entry",cancelled:"Cancelled",cancel_title:"Cancel this entry?",
+    cancel_hint:"Stock and the customer's balance will be corrected. The entry stays visible, marked Cancelled.",cancel_reason:"Reason (optional)",
+    cancel_yes:"Yes, cancel it",cancel_done:"Entry cancelled",back2:"Back",sold_units:"sold",
+    tab_stock:"Stock",stock:"Stock",add_product:"Add product",product_name:"Product name",unit_price:"Selling price",in_stock:"In stock",
+    low_alert:"Alert when this many are left",add_received:"Quantity received (add)",low:"Low",out:"Out",low_stock_title:"Running low",
+    no_products:"No products yet. Add your items to track stock.",stock_value:"Stock value",err_pname:"Product name is required.",
+    err_pdup:"This product already exists.",err_stock:(n,q)=>`Not enough stock for ${n}: ${q} left. Add stock first.`,
+    product_saved:"Product saved",delete:"Delete",confirm_del_product:"Delete this product?",
+    staff:"Team",staff_security:"PINs keep employees out of settings and backups. This is not bank-grade security, and the data stays on this device.",
+    add_person:"Add a person",owner:"Owner",employee:"Employee",role:"Role",err_sname:"Name is required.",err_pin:"The PIN must be exactly 4 digits.",
+    err_need_owner:"Add an owner with a PIN first.",err_last_owner:"Keep at least one owner while the lock is on.",
+    lock_on:"Turn on PIN lock",lock_off:"Turn off PIN lock",lock:"Lock",unlock:"Open",who:"Who are you?",wrong_pin:"Wrong PIN.",
+    forgot:"Forgot PIN?",reset_access:"Turn off the lock",reset_access_hint:"Enter the recovery code (shown to the owner in Settings).",reset_wrong:"Wrong recovery code.",
+    recovery:"Recovery code (write it down)",served_by:"Served by",
+    invoice:"INVOICE",as_invoice:"View as invoice",as_receipt:"View as receipt",invoice_note:"Simple invoice, no tax validity.",due:"Amount due",balance_now:"Customer's total balance",
+    msg_invoice_intro:(n)=>`Hello ${n}, here is your invoice:`
+  }
+};
+
+/* ---------- state ---------- */
+const LS_KEY = "cahier-boutique-v1";
+let S = null;              // saved state
+let ui = {view:"home", custId:null, search:"", histSearch:"", draft:null, modal:null, confirmReset:false, me:null, lockForgot:false, repPeriod:"week", repOff:0, bc:null};
+let storeMode = "device";  // "device" | "account"
+
+const uid = () => Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
+const dkey = d => new Date(d).toLocaleDateString("sv");
+const todayKey = () => dkey(new Date());
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = s => document.querySelector(s);
+const L = () => S.shop.lang==="en"?"en":"fr";
+const t = (k,...a) => { const v=T[L()][k]; return typeof v==="function"?v(...a):(v==null?k:v); };
+const C = () => COUNTRIES[S.shop.country]||COUNTRIES.BJ;
+
+function money(n){
+  n = Number(n)||0;
+  const c=C();
+  const s = new Intl.NumberFormat(L()==="fr"?"fr-FR":"en-NG",{maximumFractionDigits:c.sym==="FCFA"?0:2}).format(n).replace(/[  ]/g," ");
+  return c.after ? `${s} ${c.sym}` : `${c.sym} ${s}`;
+}
+function parseAmt(v){ const n=parseFloat(String(v||"").replace(/[\s,]/g,"").replace(",",".")); return isFinite(n)?n:0; }
+function fmtDate(iso){
+  const d=new Date(iso);
+  return d.toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{day:"2-digit",month:"short",year:"numeric"})+" "+
+         d.toLocaleTimeString(L()==="fr"?"fr-FR":"en-GB",{hour:"2-digit",minute:"2-digit"});
+}
+function daysAgo(n){ const d=new Date(); d.setDate(d.getDate()-n); d.setHours(10,0,0,0); return d.toISOString(); }
+
+/* ---------- data model ---------- */
+function seed(){
+  const mk=(name,phone)=>({id:uid(),name,phone,example:true,created:daysAgo(40)});
+  const a=mk("Mme Adjovi","0197000011"), b=mk("Koffi (menuisier)","0196000022"), c=mk("Mama Fatou","0166000033"), d=mk("Séraphin","0161000044");
+  let no=0;
+  const sale=(cust,ago,lines0,paid,note)=>{ const lines=lines0.map(l=>({...l,c:EX_COST[l.d]||0})); const total=lines.reduce((s,l)=>s+l.q*l.p,0);
+    return {id:uid(),no:++no,type:"sale",cust:cust?cust.id:null,date:daysAgo(ago),lines,total,paid,note:note||"",example:true}; };
+  const pay=(cust,ago,amount,method)=>({id:uid(),no:++no,type:"payment",cust:cust.id,date:daysAgo(ago),amount,method,note:"",example:true});
+  const txs=[
+    sale(a,30,[{d:"Riz 25 kg",q:1,p:17500},{d:"Huile 5 L",q:1,p:6500}],10000),
+    pay(a,12,8000,"momo"),
+    sale(b,21,[{d:"Ciment (sac)",q:10,p:5200}],30000),
+    sale(c,9,[{d:"Sucre 1 kg",q:6,p:900},{d:"Savon",q:4,p:350}],3000),
+    pay(c,4,2000,"cash"),
+    sale(d,3,[{d:"Boîtes de tomate",q:5,p:600}],3000),
+    sale(null,1,[{d:"Eau 1,5 L",q:2,p:500}],1000),
+    sale(null,0,[{d:"Pain",q:3,p:200},{d:"Lait en poudre",q:1,p:1500}],2100),
+    sale(null,2,[{d:"Sucre 1 kg",q:4,p:900}],3600),
+    sale(null,5,[{d:"Riz 25 kg",q:1,p:17500}],17500),
+    sale(null,6,[{d:"Savon",q:6,p:350}],2100),
+    sale(null,8,[{d:"Huile 5 L",q:2,p:6500}],13000),
+    sale(null,13,[{d:"Sucre 1 kg",q:10,p:900}],9000),
+    sale(null,17,[{d:"Eau 1,5 L",q:12,p:500}],6000),
+    sale(null,25,[{d:"Riz 25 kg",q:2,p:17500}],35000)
+  ];
+  const prod=(name,price,qty,low)=>({id:uid(),name,price,qty,low,cost:EX_COST[name]||0,example:true});
+  const products=[prod("Riz 25 kg",17500,12,3),prod("Huile 5 L",6500,2,3),prod("Sucre 1 kg",900,40,10),prod("Savon",350,0,10),prod("Ciment (sac)",5200,25,5)];
+  return {v:1,updated:Date.now(),counter:no,
+    shop:{name:"Ma Boutique",phone:"",country:"BJ",lang:"fr",footer:"",lateDays:14,staffOn:false,recovery:""},
+    customers:[a,b,c,d],txs,products,staff:[]};
+}
+function balanceOf(custId, uptoNo){
+  let b=0;
+  for(const x of S.txs){ if(x.cust!==custId||x.void) continue; if(uptoNo&&x.no>uptoNo) continue;
+    b += x.type==="sale" ? x.total-x.paid : -x.amount; }
+  return Math.round(b*100)/100;
+}
+/* oldest sale still unpaid, payments applied oldest first */
+function oldestUnpaid(custId){
+  const mine=S.txs.filter(x=>x.cust===custId&&!x.void).sort((a,b)=>a.no-b.no);
+  let pool=mine.filter(x=>x.type==="payment").reduce((s,x)=>s+x.amount,0);
+  for(const x of mine){ if(x.type!=="sale") continue; let owe=x.total-x.paid;
+    if(owe<=0) continue; const use=Math.min(pool,owe); pool-=use; owe-=use; if(owe>0.001) return x.date; }
+  return null;
+}
+function ageDays(iso){ return iso?Math.floor((Date.now()-new Date(iso).getTime())/864e5):0; }
+const me = () => (S&&S.staff&&S.staff.find(x=>x.id===ui.me))||null;
+const isOwner = () => !S.shop.staffOn || (me()&&me().role==="owner");
+const custById = id => S.customers.find(c=>c.id===id);
+const custName = id => id?(custById(id)?.name||"?"):t("walk");
+
+/* ---------- phone helpers ---------- */
+function intlPhone(raw){
+  const plus=/^\s*(\+|00)/.test(String(raw||""));
+  let d=String(raw||"").replace(/\D/g,""); if(!d) return "";
+  const cc=C().cc;
+  if(d.startsWith("00")) d=d.slice(2);
+  if(plus&&!d.startsWith(cc)) return d;
+  if(S.shop.country==="BJ"&&d.startsWith(cc)&&d.length===cc.length+8) return cc+"01"+d.slice(cc.length);
+  if(d.startsWith(cc)&&d.length>=cc.length+8) return d;
+  if(S.shop.country==="BJ"){ if(d.length===8) d="01"+d; return cc+d; }
+  return cc+d.replace(/^0+/,"");
+}
+
+/* ---------- persistence ---------- */
+let saveTimer=null, cloud=null, cloudBusy=false, cloudDirty=false;
+function save(){
+  S.updated=Date.now();
+  try{ localStorage.setItem(LS_KEY,JSON.stringify(S)); }catch(e){}
+  clearTimeout(saveTimer); saveTimer=setTimeout(pushCloud,1200);
+}
+async function pushCloud(){
+  if(!cloud) return;
+  if(cloudBusy){ cloudDirty=true; return; }
+  cloudBusy=true;
+  try{
+    const json=JSON.stringify(S);
+    if(json.length>230000) throw new Error("too large");
+    await cloud.set({json,updated:S.updated});
+    storeMode="account";
+  }catch(e){ storeMode="device"; }
+  cloudBusy=false; updateStatus();
+  if(cloudDirty){ cloudDirty=false; pushCloud(); }
+}
+async function initCloud(){
+  try{
+    if(!window.claude||!claude.use) return;
+    const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
+    if(!db||!user) return;
+    const id=await user.id(); if(!id) return;
+    const ref=db.doc("data/users/"+id+"/ledger");
+    const snap=await ref.get();
+    cloud=ref;
+    if(snap.exists){
+      const d=snap.data();
+      if(d&&d.json&&d.updated>(S.updated||0)){
+        try{ const parsed=JSON.parse(d.json); if(parsed&&parsed.shop){ S=migrate(parsed); try{localStorage.setItem(LS_KEY,d.json);}catch(e){} render(); } }catch(e){}
+      }else{ pushCloud(); }
+    }else{ pushCloud(); }
+    storeMode="account"; updateStatus();
+  }catch(e){ cloud=null; storeMode="device"; updateStatus(); }
+}
+function migrate(p){
+  p.products=p.products||[]; p.staff=p.staff||[]; p.shop.staffOn=!!p.shop.staffOn; p.shop.recovery=p.shop.recovery||""; p.shop.lastBackup=p.shop.lastBackup||"";
+  if(p.shop.staffOn&&!p.staff.length) p.shop.staffOn=false;
+  p.txs.forEach(x=>{ if(x.type==="sale") x.lines.forEach(l=>{ if(!("pid" in l)) l.pid=null; if(x.example&&l.c===undefined) l.c=EX_COST[l.d]||0; }); });
+  p.products.forEach(q=>{ if(q.cost===undefined) q.cost=q.example?(EX_COST[q.name]||0):0; });
+  return p;
+}
+const THEME_KEY="cahier-theme", hostTheme=document.documentElement.getAttribute("data-theme");
+function getTheme(){ try{ return localStorage.getItem(THEME_KEY)||"auto"; }catch(e){ return ui.themeMem||"auto"; } }
+function applyTheme(){
+  const m=getTheme(), r=document.documentElement;
+  if(m==="light"||m==="dark") r.setAttribute("data-theme",m);
+  else if(hostTheme) r.setAttribute("data-theme",hostTheme); else r.removeAttribute("data-theme");
+}
+function setTheme(m){ try{ localStorage.setItem(THEME_KEY,m); }catch(e){ ui.themeMem=m; } applyTheme(); render(); }
+function load(){
+  try{ const raw=localStorage.getItem(LS_KEY); if(raw){ const p=JSON.parse(raw); if(p&&p.shop&&p.txs) return migrate(p); } }catch(e){}
+  return null;
+}
+function updateStatus(){ const el=$("#status"); if(el) el.textContent = storeMode==="account"?t("store_acct"):t("store_dev"); }
+
+/* ---------- small ui helpers ---------- */
+let toastTimer=null;
+function toast(msg){ const el=$("#toast"); el.textContent=msg; el.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{el.hidden=true;},2200); }
+async function copyText(text){
+  try{ await navigator.clipboard.writeText(text); toast(t("copied")); return; }catch(e){}
+  const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");toast(t("copied"));}catch(e){} ta.remove();
+}
+async function saveFile(filename,data){
+  try{
+    const type=/\.json$/.test(filename)?"application/json":/\.csv$/.test(filename)?"text/csv":"text/plain";
+    const blob=new Blob([data],{type:type+";charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const el=document.createElement("a"); el.href=url; el.download=filename; document.body.appendChild(el); el.click(); el.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+    return true;
+  }catch(e){ toast("—"); return false; }
+}
+async function backupNow(){
+  const prev=S.shop.lastBackup||"";
+  S.shop.lastBackup=new Date().toISOString();
+  const name=`ecrici-${todayKey()}.json`, json=JSON.stringify(S,null,1);
+  let ok=false, cancelled=false;
+  try{
+    const file=new File([json],name,{type:"application/json"});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],title:"Ecrici"}); ok=true; }
+      catch(e){ if(e&&e.name==="AbortError") cancelled=true; }
+    }
+  }catch(e){}
+  if(!ok&&!cancelled) ok=await saveFile(name,json);
+  if(ok){ save(); render(); toast(t("backup_done")); } else { S.shop.lastBackup=prev; }
+}
+const icons={
+  rep:'<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  stock:'<svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>',
+  home:'<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>',
+  sale:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
+  cust:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 5a3.2 3.2 0 010 6M18 14.8c1.8.7 3 2.4 3.4 5.2"/></svg>',
+  hist:'<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>',
+  set:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>'
+};
+
+/* ---------- views ---------- */
+function render(){
+  if(!S) return;
+  document.documentElement.lang=L();
+  if(S.shop.staffOn&&!me()){ ui.modal=null; $("#app").innerHTML=viewLock(); $("#tabs").innerHTML=""; $("#layer").innerHTML=""; return; }
+  if((ui.view==="set"||ui.view==="rep")&&!isOwner()) ui.view="home";
+  const v=ui.view;
+  const who=S.shop.staffOn?me():null;
+  let html=`<header class="top"><div class="brand"><h1>${esc(S.shop.name)}</h1><small>${esc(C().name)}${who?` · ${esc(who.name)}`:""} · <span id="status"></span></small></div>
+    <div class="chips" style="flex-wrap:wrap;justify-content:flex-end">${isOwner()?`<button class="pill" data-act="tab" data-v="set" ${ui.view==="set"?'aria-pressed="true"':""}>${t("set_btn")}</button>`:""}${who?`<button class="pill" data-act="lock">${t("lock")}</button>`:""}<button class="pill" data-act="lang" aria-label="${t("language")}">${L()==="fr"?"FR → EN":"EN → FR"}</button></div></header>`;
+  if(v==="home") html+=viewHome();
+  else if(v==="sale") html+=viewSale();
+  else if(v==="stock") html+=viewStock();
+  else if(v==="rep") html+=viewReports();
+  else if(v==="bc") html+=viewBroadcast();
+  else if(v==="cust") html+=ui.custId?viewCustomer():viewCustomers();
+  else if(v==="hist") html+=viewHistory();
+  else html+=viewSettings();
+  $("#app").innerHTML=html;
+  $("#tabs").innerHTML=[["home","tab_home"],["sale","tab_sale"],["stock","tab_stock"],["cust","tab_cust"],["hist","tab_hist"],["rep","tab_rep"]].filter(([k])=>k!=="rep"||isOwner())
+    .map(([k,l])=>`<button data-act="tab" data-v="${k}" ${(v==="bc"?"cust":v)===k?'aria-current="page"':""}>${icons[k]}${t(l)}</button>`).join("");
+  renderModal(); updateStatus();
+  if(v==="sale") updateSaleTotals();
+}
+
+function viewHome(){
+  const tk=todayKey();
+  const day=S.txs.filter(x=>dkey(x.date)===tk&&!x.void);
+  const sold=day.filter(x=>x.type==="sale").reduce((s,x)=>s+x.total,0);
+  const got=day.reduce((s,x)=>s+(x.type==="sale"?x.paid:x.amount),0);
+  const cred=day.filter(x=>x.type==="sale").reduce((s,x)=>s+(x.total-x.paid),0);
+  const debtors=S.customers.map(c=>({c,b:balanceOf(c.id)})).filter(x=>x.b>0.001);
+  const owedAll=debtors.reduce((s,x)=>s+x.b,0);
+  const late=debtors.map(x=>({...x,age:ageDays(oldestUnpaid(x.c.id))})).filter(x=>x.age>=S.shop.lateDays).sort((a,b)=>b.b-a.b);
+  const hasEx=S.customers.some(c=>c.example)||S.txs.some(x=>x.example)||S.products.some(p=>p.example);
+  let h="";
+  if(hasEx&&isOwner()) h+=`<div class="banner"><span>${t("examples_banner")}</span><button class="btn small" data-act="clear-examples">${t("remove_examples")}</button></div>`;
+  if(isOwner()){
+    const real=S.txs.filter(x=>!x.example), lb=S.shop.lastBackup;
+    const since=real.filter(x=>!lb||new Date(x.date)>new Date(lb)).length;
+    const days=lb?ageDays(lb):999;
+    if(since>=30||(since>=1&&days>=7)) h+=`<div class="banner"><span>${t("backup_banner",since)}</span><button class="btn small primary" data-act="backup-now">${t("backup_now")}</button></div>`;
+  }
+  if(!S.customers.length&&!S.txs.length&&!S.products.length) h+=`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`;
+  h+=`<section class="sec"><h2>${t("today")}<span>${new Date().toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{weekday:"long",day:"numeric",month:"long"})}</span></h2>
+    <div class="sum">
+      <div class="card"><div class="lbl">${t("sold")}</div><div class="val num">${money(sold)}</div></div>
+      <div class="card got"><div class="lbl">${t("collected")}</div><div class="val num">${money(got)}</div></div>
+      <div class="card"><div class="lbl">${t("credit_given")}</div><div class="val num">${money(cred)}</div></div>
+      <div class="card owed"><div class="lbl">${t("to_collect")}</div><div class="val num">${money(owedAll)}</div></div>
+    </div></section>`;
+  h+=`<section class="sec"><h2>${t("late_title")}<span>${S.shop.lateDays} ${t("days")}+</span></h2><div class="card flush">`;
+  if(!late.length) h+=`<div class="empty">${t("late_none")}</div>`;
+  else h+=late.map(x=>`<div class="row" style="cursor:default"><div class="main"><div class="name">${esc(x.c.name)}</div>
+      <div class="sub"><span class="badge late">${x.age} ${t("days")}</span></div></div>
+      <div class="amt"><div class="num" style="color:var(--owed)">${money(x.b)}</div>
+      <button class="btn small primary" data-act="remind" data-id="${x.c.id}" style="margin-top:6px">${t("remind")}</button></div></div>`).join("");
+  h+=`</div></section>`;
+  const lowp=S.products.filter(p=>p.qty<=p.low).sort((a,b)=>a.qty-b.qty).slice(0,8);
+  if(lowp.length){ h+=`<section class="sec"><h2>${t("low_stock_title")}<span>${lowp.length}</span></h2><div class="card flush">`+
+    lowp.map(p=>`<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div></div><div class="amt"><span class="num">${p.qty}</span> ${p.qty<=0?`<span class="badge owed">${t("out")}</span>`:`<span class="badge late">${t("low")}</span>`}</div></button>`).join("")+`</div></section>`; }
+  return h;
+}
+
+/* --- sale form --- */
+function newDraft(custId){ return {cust:custId||"",newCust:false,nc:{name:"",phone:""},lines:[{d:"",q:"1",p:"",pid:null,auto:false}],mode:"full",part:"",note:"",err:""}; }
+function draftTotal(){ return ui.draft.lines.reduce((s,l)=>s+(parseAmt(l.q)||0)*parseAmt(l.p),0); }
+function draftPaid(){ const d=ui.draft,tot=draftTotal(); return d.mode==="full"?tot:d.mode==="credit"?0:Math.min(parseAmt(d.part),tot); }
+function viewSale(){
+  if(!ui.draft) ui.draft=newDraft();
+  const d=ui.draft;
+  const opts=`<option value="">${t("walkin")}</option>`+S.customers.map(c=>`<option value="${c.id}" ${d.cust===c.id?"selected":""}>${esc(c.name)}</option>`).join("");
+  return `<section class="sec"><h2>${t("new_sale")}</h2><div class="card form">
+    <div class="field"><label for="f-cust">${t("customer")}</label>
+      ${d.newCust?`<div class="grid2"><input id="nc-name" data-bind="nc.name" value="${esc(d.nc.name)}" placeholder="${t("name")}" autocomplete="off">
+        <input id="nc-phone" data-bind="nc.phone" value="${esc(d.nc.phone)}" placeholder="${esc(C().ph)}" inputmode="tel" autocomplete="off"></div>
+        <button class="btn small ghost" data-act="sale-existing" style="justify-self:start">${t("existing_customer")}</button>`
+      :`<select id="f-cust" data-bind="cust">${opts}</select>
+        <button class="btn small ghost" data-act="sale-newcust" style="justify-self:start">${t("new_customer")}</button>`}
+    </div>
+    <datalist id="plist">${S.products.map(p=>`<option value="${esc(p.name)}">`).join("")}</datalist>
+    <div class="field"><span class="lab">${t("items")}</span><div class="lines" id="lines">
+      ${d.lines.map((l,i)=>`<div class="line">
+        <input data-bind="line.${i}.d" id="l${i}d" list="plist" value="${esc(l.d)}" placeholder="${t("item")}" autocomplete="off" aria-label="${t("item")}">
+        <input data-bind="line.${i}.q" id="l${i}q" value="${esc(l.q)}" inputmode="decimal" aria-label="${t("qty")}">
+        <input data-bind="line.${i}.p" id="l${i}p" value="${esc(l.p)}" inputmode="decimal" placeholder="${t("price")}" aria-label="${t("price")}">
+        <button class="x" data-act="del-line" data-i="${i}" aria-label="×" ${d.lines.length===1?"disabled":""}>×</button><div class="hint" id="h${i}">${esc(lineHint(l))}</div></div>`).join("")}
+      </div>
+      <button class="btn small ghost" data-act="add-line" style="justify-self:start">${t("add_line")}</button></div>
+    <div class="total"><span>${t("total")}</span><span class="num" id="s-total"></span></div>
+    <div class="field"><span class="lab">${t("paid_now")}</span>
+      <div class="seg">
+        <button class="pill" data-act="mode" data-m="full" aria-pressed="${d.mode==="full"}">${t("pay_full")}</button>
+        <button class="pill" data-act="mode" data-m="credit" aria-pressed="${d.mode==="credit"}">${t("pay_credit")}</button>
+        <button class="pill" data-act="mode" data-m="part" aria-pressed="${d.mode==="part"}">${t("pay_part")}</button>
+      </div>
+      ${d.mode==="part"?`<input id="f-part" data-bind="part" value="${esc(d.part)}" inputmode="decimal" placeholder="${t("amount")}" aria-label="${t("amount")}">`:""}
+      <div class="total" style="border-top:1px dashed var(--line);margin-top:4px"><span>${t("balance_left")}</span><span class="num" id="s-left"></span></div>
+    </div>
+    <div class="field"><label for="f-note">${t("note")}</label><input id="f-note" data-bind="note" value="${esc(d.note)}" autocomplete="off"></div>
+    <div class="err" id="s-err" role="alert">${esc(d.err)}</div>
+    <button class="btn primary" data-act="save-sale">${t("save_sale")}</button>
+  </div></section>`;
+}
+function lineHint(l){ const p=l.pid&&S.products.find(x=>x.id===l.pid); if(!p) return ""; const q=parseAmt(l.q)||0; return `${t("in_stock")}: ${p.qty}`+(q>p.qty?" ⚠":""); }
+function updateSaleTotals(){
+  if(!ui.draft) return;
+  const tot=draftTotal(), paid=draftPaid();
+  const a=$("#s-total"), b=$("#s-left");
+  if(a) a.textContent=money(tot);
+  if(b){ const left=Math.max(0,tot-paid); b.textContent=money(left); b.style.color=left>0?"var(--owed)":"var(--paid)"; }
+}
+
+/* --- customers --- */
+function viewCustomers(){
+  const q=ui.search.trim().toLowerCase();
+  const list=S.customers.map(c=>({c,b:balanceOf(c.id)}))
+    .filter(x=>!q||x.c.name.toLowerCase().includes(q)||String(x.c.phone).includes(q))
+    .sort((a,b)=>b.b-a.b||a.c.name.localeCompare(b.c.name));
+  let h=`<section class="sec"><h2 style="flex-wrap:wrap">${t("customers")}<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small" data-act="bc-open">${t("bc_btn")}</button><button class="btn small primary" data-act="add-cust">${t("add_customer")}</button></div></h2>
+    <input id="f-search" data-bind="search" value="${esc(ui.search)}" placeholder="${t("search")}" aria-label="${t("search")}" autocomplete="off">
+    <div class="card flush">`;
+  if(!list.length) h+=`<div class="empty">${t("no_customers")}</div>`;
+  h+=list.map(({c,b})=>{ const age=b>0?ageDays(oldestUnpaid(c.id)):0;
+    return `<button class="row" data-act="open-cust" data-id="${c.id}"><div class="main"><div class="name">${esc(c.name)}</div>
+      <div class="sub">${esc(c.phone||"")}${b>0&&age>=S.shop.lateDays?` <span class="badge late">${age} ${t("days")}</span>`:""}</div></div>
+      <div class="amt">${b>0.001?`<span class="num" style="color:var(--owed)">${money(b)}</span>`:`<span class="badge paid">${t("settled")}</span>`}</div></button>`; }).join("");
+  return h+`</div></section>`;
+}
+function viewCustomer(){
+  const c=custById(ui.custId); if(!c){ ui.custId=null; return viewCustomers(); }
+  const b=balanceOf(c.id);
+  const txs=S.txs.filter(x=>x.cust===c.id).sort((a,b)=>b.no-a.no);
+  return `<section class="sec"><button class="btn small ghost" data-act="back-cust" style="justify-self:start">← ${t("back")}</button>
+    <div class="card"><h2 style="overflow-wrap:anywhere">${esc(c.name)}</h2><div class="note">${esc(c.phone||"")}</div>
+      <div class="total" style="margin-top:12px"><span>${t("owed_total")}</span><span class="num" style="color:${b>0?"var(--owed)":"var(--paid)"}">${money(Math.max(0,b))}</span></div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn primary" data-act="new-payment" data-id="${c.id}">${t("record_payment")}</button>
+        <button class="btn" data-act="sale-for" data-id="${c.id}">${t("new_sale")}</button>
+        <button class="btn" data-act="edit-cust" data-id="${c.id}">${t("edit")}</button>
+        ${b>0.001?`<button class="btn" data-act="remind" data-id="${c.id}">${t("remind")}</button>`:""}
+      </div></div>
+    <h2>${t("history")}</h2><div class="card flush">${txs.length?txs.map(rowTx).join(""):`<div class="empty">${t("no_receipts")}</div>`}</div>
+    ${isOwner()?`<button class="btn small danger" data-act="del-cust" data-id="${c.id}" style="justify-self:start">${L()==="fr"?"Supprimer ce client":"Delete this customer"}</button>`:""}</section>`;
+}
+function rowTx(x){
+  const isSale=x.type==="sale";
+  const amt=isSale?x.total:x.amount;
+  const sub=isSale?(x.lines.map(l=>l.d).filter(Boolean).join(", ")||t("goods")):t(x.method||"cash");
+  return `<button class="row${x.void?" voided":""}" data-act="open-receipt" data-id="${x.id}"><div class="main">
+    <div class="name">#${String(x.no).padStart(4,"0")} · ${isSale?t("sale"):t("payment")}${x.cust?"":""}</div>
+    <div class="sub">${esc(custName(x.cust))} · ${esc(sub)}</div><div class="sub">${fmtDate(x.date)}</div></div>
+    <div class="amt"><div class="num">${money(amt)}</div>
+    ${x.void?`<span class="badge late">${t("cancelled")}</span>`:isSale&&x.total-x.paid>0.001?`<span class="badge owed">${t("owes")} ${money(x.total-x.paid)}</span>`:`<span class="badge paid">${isSale?t("paid"):"✓"}</span>`}</div></button>`;
+}
+function viewHistory(){
+  const q=ui.histSearch.trim().toLowerCase();
+  const list=[...S.txs].sort((a,b)=>b.no-a.no)
+    .filter(x=>!q||custName(x.cust).toLowerCase().includes(q)||String(x.no).includes(q)).slice(0,150);
+  return `<section class="sec"><h2>${t("receipts")}</h2>
+    <input id="f-hsearch" data-bind="hsearch" value="${esc(ui.histSearch)}" placeholder="${t("search")}" aria-label="${t("search")}" autocomplete="off">
+    <div class="card flush">${list.length?list.map(rowTx).join(""):`<div class="empty">${t("no_receipts")}</div>`}</div></section>`;
+}
+
+function loadExamples(){
+  if(S.customers.some(c=>c.example)){ toast(t("examples_loaded")); return; }
+  const ex=seed(), off=S.counter;
+  ex.txs.forEach(x=>{ x.no+=off; });
+  S.counter=off+ex.counter;
+  S.customers.push(...ex.customers); S.txs.push(...ex.txs);
+  const names=new Set(S.products.map(q=>q.name.toLowerCase()));
+  ex.products.forEach(q=>{ if(!names.has(q.name.toLowerCase())) S.products.push(q); });
+  save(); ui.view="home"; ui.custId=null; render(); toast(t("examples_loaded"));
+}
+/* --- broadcast --- */
+const BC_TPL={
+  fr:{month:"Bonjour {name}, bon nouveau mois ! Merci de votre fidélité. — {shop}",
+      promo:"Bonjour {name}, chez {shop} : [X] % de réduction sur [produits] jusqu'au [date]. Passez nous voir !",
+      season:"Bonjour {name}, {shop} vous souhaite de très belles fêtes ! Merci pour votre confiance.",
+      stock:"Bonjour {name}, nouveaux arrivages chez {shop} : [produits]. Passez nous voir !",
+      back:"Bonjour {name}, ça fait un moment ! {shop} vous attend avec de bonnes offres : [offre]."},
+  en:{month:"Hello {name}, happy new month! Thank you for your loyalty. — {shop}",
+      promo:"Hello {name}, at {shop}: [X]% off [products] until [date]. Come and see us!",
+      season:"Hello {name}, {shop} wishes you a wonderful season! Thank you for your trust.",
+      stock:"Hello {name}, new stock at {shop}: [products]. Come and see us!",
+      back:"Hello {name}, it has been a while! {shop} has good offers waiting for you: [offer]."}
+};
+function bcState(){ if(!ui.bc) ui.bc={aud:"all",text:BC_TPL[L()].month,sent:{}}; return ui.bc; }
+function lastBuy(custId){ let m=0; for(const x of S.txs){ if(x.cust===custId&&x.type==="sale"&&!x.void){ const d=new Date(x.date).getTime(); if(d>m) m=d; } } return m; }
+function bcAudience(aud){
+  const now=Date.now();
+  return S.customers.filter(c=>{
+    if(aud==="owe") return balanceOf(c.id)>0.001;
+    if(aud==="recent") return now-lastBuy(c.id)<=30*864e5&&lastBuy(c.id)>0;
+    if(aud==="inactive") return !lastBuy(c.id)||now-lastBuy(c.id)>60*864e5;
+    return true; }).sort((a,b)=>a.name.localeCompare(b.name));
+}
+const bcFill=(text,c)=>text.replace(/\{name\}/g,c.name).replace(/\{shop\}/g,S.shop.name);
+function bcLinks(c){ const b=bcState(), msg=bcFill(b.text,c), ph=intlPhone(c.phone);
+  return {wa:`https://wa.me/${ph}?text=${encodeURIComponent(msg)}`, sms:`sms:+${ph}?body=${encodeURIComponent(msg)}`}; }
+function updateBc(){ document.querySelectorAll("[data-bcid]").forEach(a=>{ const c=custById(a.dataset.bcid); if(!c) return; const l=bcLinks(c); a.setAttribute("href",a.dataset.kind==="sms"?l.sms:l.wa); });
+  const w=$("#bc-warn"); if(w) w.hidden=!/\[[^\]]+\]/.test(bcState().text); }
+function viewBroadcast(){
+  const b=bcState(), list=bcAudience(b.aud);
+  const opened=list.filter(c=>b.sent[c.id]).length;
+  const auds=[["all","aud_all"],["owe","aud_owe"],["recent","aud_recent"],["inactive","aud_inactive"]];
+  const tpls=[["month","tpl_month"],["promo","tpl_promo"],["season","tpl_season"],["stock","tpl_stock"],["back","tpl_back"]];
+  return `<section class="sec"><button class="btn small ghost" data-act="bc-back" style="justify-self:start">← ${t("back")}</button>
+    <h2>${t("bc_title")}</h2><div class="card form">
+      <div class="field"><span class="lab">${t("bc_msg")}</span><div class="seg">${tpls.map(([k,l])=>`<button class="pill" data-act="bc-tpl" data-k="${k}">${t(l)}</button>`).join("")}</div>
+        <textarea id="bc-text" data-bind="bc.text" rows="5" aria-label="${t("bc_msg")}">${esc(b.text)}</textarea>
+        <div class="err" id="bc-warn" ${/\[[^\]]+\]/.test(b.text)?"":"hidden"}>${t("bc_fill")}</div>
+        <p class="note" style="margin:0">${t("bc_note")}</p></div>
+      <div class="field"><span class="lab">${t("customers")}</span><div class="seg">${auds.map(([k,l])=>`<button class="pill" data-act="bc-aud" data-k="${k}" aria-pressed="${b.aud===k}">${t(l)} (${bcAudience(k).length})</button>`).join("")}</div></div>
+      <button class="btn" data-act="bc-copy">${t("bc_copy")}</button></div>
+    <div class="note" id="bc-progress">${t("bc_progress",opened,list.filter(c=>intlPhone(c.phone)).length)}</div>
+    <div class="card flush">${list.length?list.map(c=>{ const ph=intlPhone(c.phone), l=ph?bcLinks(c):null;
+      return `<div class="row" style="cursor:default"><div class="main"><div class="name">${esc(c.name)}</div><div class="sub">${ph?esc(c.phone):t("bc_nophone")}</div></div>
+        ${ph?`<div class="actions" style="flex-wrap:nowrap"><a class="btn small primary" data-act="bc-sent" data-bcid="${c.id}" data-kind="wa" href="${l.wa}" target="_blank" rel="noopener">${b.sent[c.id]?t("bc_sent"):t("bc_open")}</a>
+        <a class="btn small" data-bcid="${c.id}" data-kind="sms" href="${l.sms}">${t("sms")}</a></div>`:""}</div>`; }).join(""):`<div class="empty">${t("bc_none")}</div>`}</div></section>`;
+}
+
+/* --- cancel entries --- */
+const canCancel = x => isOwner() || dkey(x.date)===todayKey();
+function cancelModal(m){
+  const x=S.txs.find(y=>y.id===m.id); if(!x) return "";
+  const amt=x.type==="sale"?x.total:x.amount;
+  return `<div class="dlg form"><h2>${t("cancel_title")}</h2>
+    <div class="note">${docTitle(x)} · ${esc(custName(x.cust))} · ${money(amt)}</div>
+    <p class="note" style="margin:0">${t("cancel_hint")}</p>
+    <div class="field"><label for="cn-reason">${t("cancel_reason")}</label><input id="cn-reason" autocomplete="off"></div>
+    <div class="actions"><button class="btn danger" data-act="do-cancel" data-id="${x.id}">${t("cancel_yes")}</button><button class="btn" data-act="open-receipt" data-id="${x.id}">${t("back2")}</button></div></div>`;
+}
+function voidTx(id){
+  const x=S.txs.find(y=>y.id===id); if(!x||x.void||!canCancel(x)) return;
+  const r=($("#cn-reason")||{}).value||"";
+  x.void={date:new Date().toISOString(),by:me()?me().name:"",reason:r.trim()};
+  if(x.type==="sale") x.lines.forEach(l=>{ if(l.pid){ const pr=S.products.find(z=>z.id===l.pid); if(pr) pr.qty=Math.round((pr.qty+l.q)*1000)/1000; } });
+  save(); ui.modal={type:"receipt",id:x.id}; render(); toast(t("cancel_done"));
+}
+
+/* --- reports --- */
+function startOf(period,off){
+  const n=new Date(); n.setHours(0,0,0,0); let a,b;
+  if(period==="day"){ a=new Date(n); a.setDate(a.getDate()+off); b=new Date(a); b.setDate(b.getDate()+1); }
+  else if(period==="week"){ a=new Date(n); const wd=(a.getDay()+6)%7; a.setDate(a.getDate()-wd+off*7); b=new Date(a); b.setDate(b.getDate()+7); }
+  else if(period==="month"){ a=new Date(n.getFullYear(),n.getMonth()+off,1); b=new Date(a.getFullYear(),a.getMonth()+1,1); }
+  else { a=new Date(n.getFullYear()+off,0,1); b=new Date(a.getFullYear()+1,0,1); }
+  return [a,b];
+}
+function rangeLabel(period,a,b){
+  const loc=L()==="fr"?"fr-FR":"en-GB";
+  if(period==="day") return a.toLocaleDateString(loc,{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  if(period==="week"){ const e=new Date(b); e.setDate(e.getDate()-1); return a.toLocaleDateString(loc,{day:"numeric",month:"short"})+" – "+e.toLocaleDateString(loc,{day:"numeric",month:"short",year:"numeric"}); }
+  if(period==="month") return a.toLocaleDateString(loc,{month:"long",year:"numeric"});
+  return String(a.getFullYear());
+}
+function stats(a,b){
+  const r={sales:0,collected:0,credit:0,debtPaid:0,count:0,profit:0,profitBase:0,prod:{},cust:{}};
+  for(const x of S.txs){ if(x.void) continue; const d=new Date(x.date); if(d<a||d>=b) continue;
+    if(x.type==="sale"){
+      r.sales+=x.total; r.collected+=x.paid; r.credit+=x.total-x.paid; r.count++;
+      const ck=x.cust||"_walk"; r.cust[ck]=(r.cust[ck]||0)+x.total;
+      x.lines.forEach(l=>{ const rev=l.q*l.p; const key=l.pid||("n:"+(l.d||"").toLowerCase());
+        const e=r.prod[key]||(r.prod[key]={name:l.d||t("goods"),q:0,rev:0}); e.q+=l.q; e.rev+=rev;
+        if(l.c>0){ r.profit+=(l.p-l.c)*l.q; r.profitBase+=rev; } });
+    }else{ r.collected+=x.amount; r.debtPaid+=x.amount; } }
+  return r;
+}
+function buckets(period,a){
+  const loc=L()==="fr"?"fr-FR":"en-GB", out=[];
+  if(period==="week"){ for(let i=0;i<7;i++){ const s=new Date(a); s.setDate(s.getDate()+i); const e=new Date(s); e.setDate(e.getDate()+1); out.push({s,e,label:s.toLocaleDateString(loc,{weekday:"narrow"}),full:s.toLocaleDateString(loc,{weekday:"long",day:"numeric",month:"short"})}); } }
+  else if(period==="month"){ const days=new Date(a.getFullYear(),a.getMonth()+1,0).getDate(); for(let i=1;i<=days;i++){ const s=new Date(a.getFullYear(),a.getMonth(),i); const e=new Date(a.getFullYear(),a.getMonth(),i+1); out.push({s,e,label:(i===1||i%5===0)?String(i):"",full:s.toLocaleDateString(loc,{day:"numeric",month:"long"})}); } }
+  else if(period==="year"){ for(let m=0;m<12;m++){ const s=new Date(a.getFullYear(),m,1); const e=new Date(a.getFullYear(),m+1,1); out.push({s,e,label:s.toLocaleDateString(loc,{month:"narrow"}),full:s.toLocaleDateString(loc,{month:"long",year:"numeric"})}); } }
+  return out;
+}
+function salesBetween(a,b){ let n=0; for(const x of S.txs){ if(x.void||x.type!=="sale") continue; const d=new Date(x.date); if(d>=a&&d<b) n+=x.total; } return n; }
+function viewReports(){
+  const per=ui.repPeriod, off=ui.repOff, [a,b]=startOf(per,off), st=stats(a,b);
+  const [pa,pb]=startOf(per,off-1); const prev=stats(pa,pb).sales;
+  const delta=prev>0?Math.round((st.sales-prev)/prev*100):null;
+  const periods=[["day","p_day"],["week","p_week"],["month","p_month"],["year","p_year"]];
+  let h=`<section class="sec"><h2>${t("reports")}</h2>
+    <div class="seg">${periods.map(([k,l])=>`<button class="pill" data-act="rep-period" data-p="${k}" aria-pressed="${per===k}">${t(l)}</button>`).join("")}</div>
+    <div class="nav"><button class="btn small" data-act="rep-prev" aria-label="←">←</button><div class="lbl2">${esc(rangeLabel(per,a,b))}</div>
+      <button class="btn small" data-act="rep-next" aria-label="→" ${off>=0?"disabled":""}>→</button></div>`;
+  h+=`<div class="sum">
+    <div class="card"><div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${t("rep_sales")}</div><div class="val num" style="font-size:1.15rem;margin-top:4px;overflow-wrap:anywhere">${money(st.sales)}</div>
+      ${delta!==null&&off<0?`<div class="note ${delta>=0?"up":"down"}">${delta>=0?"+":""}${delta}% ${t("rep_vs")}</div>`:""}</div>
+    <div class="card"><div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${t("rep_profit")}</div>
+      <div class="val num" style="font-size:1.15rem;margin-top:4px;overflow-wrap:anywhere;color:${st.profitBase>0?(st.profit>=0?"var(--paid)":"var(--owed)"):"var(--muted)"}">${st.profitBase>0?money(st.profit):"—"}</div>
+      <div class="note">${st.profitBase>0?t("rep_profit_note",Math.round(st.profitBase/Math.max(1,st.sales)*100)):t("rep_no_profit")}</div></div></div>`;
+  const bk=buckets(per,a);
+  if(bk.length){
+    const vals=bk.map(x=>salesBetween(x.s,x.e)), mx=Math.max(...vals,0);
+    h+=`<div class="card"><div class="note" style="margin-bottom:4px">${t("rep_sales")}${mx>0?` · max ${money(mx)}`:""}</div>
+      <div class="bars" role="img" aria-label="${t("rep_sales")}">${vals.map((v,i)=>`<div class="b${v>0?"":" zero"}" style="height:${mx>0?Math.max(2,Math.round(v/mx*100)):2}%" title="${esc(bk[i].full)}: ${esc(money(v))}"></div>`).join("")}</div>
+      <div class="blabels">${bk.map(x=>`<span>${esc(x.label)}</span>`).join("")}</div></div>`;
+  }
+  h+=`<div class="card flush">
+    <div class="stat"><span>${t("rep_collected")}</span><span class="num" style="color:var(--paid)">${money(st.collected)}</span></div>
+    <div class="stat"><span>${t("rep_credit")}</span><span class="num" style="color:var(--owed)">${money(st.credit)}</span></div>
+    <div class="stat"><span>${t("rep_debtpaid")}</span><span class="num">${money(st.debtPaid)}</span></div>
+    <div class="stat"><span>${t("rep_count")}</span><span class="num">${st.count}</span></div></div>`;
+  if(!st.count){ h+=`<div class="card"><div class="empty">${t("rep_none")}</div></div>`; }
+  else{
+    const tp=Object.values(st.prod).sort((x,y)=>y.rev-x.rev).slice(0,5);
+    const tc=Object.entries(st.cust).sort((x,y)=>y[1]-x[1]).slice(0,5);
+    h+=`<h2>${t("rep_top_products")}</h2><div class="card flush">${tp.map(e=>`<div class="stat"><span>${esc(e.name)} <span class="note">· ${e.q} ${t("sold_units")}</span></span><span class="num">${money(e.rev)}</span></div>`).join("")}</div>
+      <h2>${t("rep_top_customers")}</h2><div class="card flush">${tc.map(([k,v])=>`<div class="stat"><span>${esc(k==="_walk"?t("walk"):custName(k))}</span><span class="num">${money(v)}</span></div>`).join("")}</div>`;
+  }
+  return h+`</section>`;
+}
+
+/* --- stock --- */
+function viewStock(){
+  const list=[...S.products].sort((a,b)=>a.name.localeCompare(b.name));
+  const val=S.products.reduce((s,p)=>s+Math.max(0,p.qty)*p.price,0);
+  let h=`<section class="sec"><h2>${t("stock")}${isOwner()?`<button class="btn small primary" data-act="add-product">${t("add_product")}</button>`:""}</h2>`;
+  if(isOwner()&&list.length) h+=`<div class="card"><div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${t("stock_value")}</div><div class="num" style="font-size:1.35rem;margin-top:4px">${money(val)}</div></div>`;
+  h+=`<div class="card flush">`;
+  if(!list.length) h+=`<div class="empty">${t("no_products")}</div>`;
+  h+=list.map(p=>{ const st=p.qty<=0?`<span class="badge owed">${t("out")}</span>`:p.qty<=p.low?`<span class="badge late">${t("low")}</span>`:"";
+    return `<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)}</div></div><div class="amt"><div class="num">${p.qty}</div>${st}</div></button>`; }).join("");
+  return h+`</div></section>`;
+}
+function productModal(m){
+  const p=m.id?S.products.find(x=>x.id===m.id):null, own=isOwner(), ro=own?"":"readonly";
+  return `<div class="dlg form"><h2>${p?esc(p.name):t("add_product")}</h2>
+    <div class="field"><label for="pr-name">${t("product_name")}</label><input id="pr-name" value="${esc(p?p.name:"")}" ${ro} autocomplete="off"></div>
+    <div class="grid2"><div class="field"><label for="pr-price">${t("unit_price")}</label><input id="pr-price" value="${esc(p?p.price:"")}" inputmode="decimal" ${ro}></div>
+    <div class="field"><label for="pr-qty">${t("in_stock")}</label><input id="pr-qty" value="${esc(p?p.qty:"0")}" inputmode="decimal" ${ro}></div></div>
+    ${own?`<div class="field"><label for="pr-cost">${t("cost_price")}</label><input id="pr-cost" value="${esc(p?(p.cost||""):"")}" inputmode="decimal"></div>`:""}
+    <div class="field"><label for="pr-low">${t("low_alert")}</label><input id="pr-low" value="${esc(p?p.low:"5")}" inputmode="numeric" ${ro}></div>
+    ${p?`<div class="field"><label for="pr-add">${t("add_received")}</label><input id="pr-add" inputmode="decimal" placeholder="0"></div>`:""}
+    <div class="err" id="pr-err" role="alert"></div>
+    <div class="actions"><button class="btn primary" data-act="save-product">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button>
+    ${p&&own?`<button class="btn danger" data-act="del-product" data-id="${p.id}">${t("delete")}</button>`:""}</div></div>`;
+}
+function saveProduct(){
+  const m=ui.modal, own=isOwner(), er=$("#pr-err"); let p=m.id?S.products.find(x=>x.id===m.id):null;
+  if(own){
+    const name=$("#pr-name").value.trim(); if(!name){ er.textContent=t("err_pname"); return; }
+    if(S.products.some(x=>x.id!==(p&&p.id)&&x.name.toLowerCase()===name.toLowerCase())){ er.textContent=t("err_pdup"); return; }
+    const price=parseAmt($("#pr-price").value), qty=parseAmt($("#pr-qty").value), low=Math.max(0,parseAmt($("#pr-low").value));
+    const cost=parseAmt(($("#pr-cost")||{}).value);
+    if(!p){ p={id:uid(),name,price,qty,low,cost}; S.products.push(p); } else { p.name=name; p.price=price; p.qty=qty; p.low=low; p.cost=cost; }
+  }
+  if(p){ const ae=$("#pr-add"); const add=ae?parseAmt(ae.value):0; if(add>0) p.qty=Math.round((p.qty+add)*1000)/1000; }
+  save(); ui.modal=null; render(); toast(t("product_saved"));
+}
+
+/* --- staff & lock --- */
+function viewLock(){
+  const opts=S.staff.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
+  return `<div class="lock"><h1>${esc(S.shop.name)}</h1><div class="card form" style="margin-top:14px">
+    <div class="field"><label for="lk-who">${t("who")}</label><select id="lk-who">${opts}</select></div>
+    <div class="field"><label for="lk-pin">PIN</label><input id="lk-pin" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+    <div class="err" id="lk-err" role="alert"></div>
+    <button class="btn primary" data-act="unlock">${t("unlock")}</button>
+    ${ui.lockForgot?`<div class="field"><label for="lk-rec">${t("reset_access_hint")}</label><input id="lk-rec" inputmode="numeric" autocomplete="off"></div><button class="btn danger" data-act="reset-access">${t("reset_access")}</button>`
+      :`<button class="btn small ghost" data-act="forgot" style="justify-self:start">${t("forgot")}</button>`}
+  </div></div>`;
+}
+function doUnlock(){
+  const w=$("#lk-who"), pn=$("#lk-pin"); if(!w||!pn) return;
+  const st=S.staff.find(x=>x.id===w.value);
+  if(st&&st.pin===pn.value){ ui.me=st.id; ui.view="home"; ui.lockForgot=false; render(); }
+  else { $("#lk-err").textContent=t("wrong_pin"); }
+}
+function staffSection(){
+  const on=S.shop.staffOn;
+  return `<section class="sec"><h2>${t("staff")}</h2><div class="card form"><p class="note" style="margin:0">${t("staff_security")}</p>
+    ${S.staff.length?`<div class="card flush" style="background:var(--paper)">${S.staff.map(s=>`<div class="row" style="cursor:default"><div class="main"><div class="name">${esc(s.name)}</div><div class="sub">${s.role==="owner"?t("owner"):t("employee")}</div></div><button class="btn small danger" data-act="del-staff" data-id="${s.id}">${t("delete")}</button></div>`).join("")}</div>`:""}
+    ${on&&S.shop.recovery?`<div class="field"><span class="lab">${t("recovery")}</span><div class="code">${esc(S.shop.recovery)}</div></div>`:""}
+    <div class="actions"><button class="btn" data-act="add-person">${t("add_person")}</button>
+    ${on?`<button class="btn" data-act="lock-off">${t("lock_off")}</button>`:`<button class="btn primary" data-act="lock-on">${t("lock_on")}</button>`}</div>
+    <div class="err" id="st-err" role="alert"></div></div></section>`;
+}
+function staffModal(){
+  return `<div class="dlg form"><h2>${t("add_person")}</h2>
+    <div class="field"><label for="st-name">${t("name")}</label><input id="st-name" autocomplete="off"></div>
+    <div class="field"><label for="st-role">${t("role")}</label><select id="st-role"><option value="staff">${t("employee")}</option><option value="owner">${t("owner")}</option></select></div>
+    <div class="field"><label for="st-pin">PIN</label><input id="st-pin" type="password" class="pin" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+    <div class="err" id="st-err2" role="alert"></div>
+    <div class="actions"><button class="btn primary" data-act="save-staff">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+}
+
+/* --- settings --- */
+function viewSettings(){
+  const s=S.shop;
+  return `<section class="sec"><h2>${t("settings")}</h2><div class="card form">
+    <div class="field"><label for="s-name">${t("shop_name")}</label><input id="s-name" value="${esc(s.name)}" autocomplete="off"></div>
+    <div class="field"><label for="s-phone">${t("shop_phone")}</label><input id="s-phone" value="${esc(s.phone)}" inputmode="tel" autocomplete="off"></div>
+    <div class="grid2">
+      <div class="field"><label for="s-country">${t("country")}</label><select id="s-country">${Object.entries(COUNTRIES).map(([k,v])=>`<option value="${k}" ${s.country===k?"selected":""}>${v.name} (${v.sym})</option>`).join("")}</select></div>
+      <div class="field"><label for="s-lang">${t("language")}</label><select id="s-lang"><option value="fr" ${s.lang==="fr"?"selected":""}>Français</option><option value="en" ${s.lang==="en"?"selected":""}>English</option></select></div>
+    </div>
+    <p class="note" style="margin:0">${t("country_note")}</p>
+    <div class="field"><label for="s-footer">${t("footer")}</label><input id="s-footer" value="${esc(s.footer)}" placeholder="${esc(t("default_footer"))}" autocomplete="off"></div>
+    <div class="field"><label for="s-late">${t("late_after")}</label><input id="s-late" value="${esc(s.lateDays)}" inputmode="numeric"></div>
+    <button class="btn primary" data-act="save-settings">${t("save")}</button>
+  </div></section>
+  <section class="sec"><h2>${t("appearance")}</h2><div class="card"><div class="seg">
+    ${[["auto","th_auto"],["light","th_light"],["dark","th_dark"]].map(([k,l])=>`<button class="pill" data-act="theme" data-m="${k}" aria-pressed="${getTheme()===k}">${t(l)}</button>`).join("")}</div></div></section>
+  ${staffSection()}<section class="sec"><h2>${t("backup")}</h2><div class="card form"><p class="note" style="margin:0">${t("backup_note")}</p>
+    <p class="note" style="margin:0"><b>${t("last_backup")}:</b> ${S.shop.lastBackup?fmtDate(S.shop.lastBackup):t("never")}</p>
+    <div class="actions"><button class="btn" data-act="load-examples">${t("load_examples")}</button><button class="btn primary" data-act="backup-now">${t("backup_now")}</button><button class="btn" data-act="export-csv">${t("export_csv")}</button></div>
+    <div class="field"><label for="f-import">${t("import")}</label><input type="file" id="f-import" accept=".json,application/json"></div></div></section>
+  <section class="sec"><h2>${t("danger")}</h2><div class="card form">
+    ${ui.confirmReset?`<div class="actions"><button class="btn danger" data-act="reset-yes">${t("reset_confirm")}</button><button class="btn" data-act="reset-no">${t("cancel")}</button></div>`
+      :`<button class="btn danger" data-act="reset" style="justify-self:start">${t("reset")}</button>`}</div></section>`;
+}
+
+/* ---------- receipts & messages ---------- */
+const pad4=n=>String(n).padStart(4,"0");
+const docTitle=(x,kind)=>`${kind==="invoice"?t("invoice"):t("receipt")} ${t("receipt_no")} ${pad4(x.no)}`;
+function receiptLines(x,kind){
+  kind=kind||"receipt"; const sh=S.shop; const out=[];
+  out.push(sh.name.toUpperCase()); if(sh.phone) out.push(sh.phone);
+  out.push(docTitle(x,kind),fmtDate(x.date)); if(x.void) out.push("*** "+t("cancelled").toUpperCase()+" ***"); out.push("");
+  out.push(`${t("customer")}: ${custName(x.cust)}`);
+  if(x.by) out.push(`${t("served_by")}: ${x.by}`);
+  out.push("");
+  if(x.type==="sale"){
+    x.lines.forEach(l=>out.push(`${l.q} × ${l.d||t("goods")}  ${money(l.q*l.p)}`));
+    out.push("-----",`${t("total")}: ${money(x.total)}`,`${t("paid")}: ${money(x.paid)}`);
+    if(x.total-x.paid>0.001) out.push(`${kind==="invoice"?t("due"):t("balance_left")}: ${money(x.total-x.paid)}`);
+  }else{
+    out.push(`${t("payment")} (${t(x.method||"cash")}): ${money(x.amount)}`);
+  }
+  if(x.note) out.push("",x.note);
+  if(x.cust) out.push("-----",`${kind==="invoice"?t("balance_now"):t("balance_after")}: ${money(Math.max(0,balanceOf(x.cust,x.no)))}`);
+  out.push("",kind==="invoice"?t("invoice_note"):(sh.footer||t("default_footer")));
+  return out;
+}
+const receiptText=(x,kind)=>receiptLines(x,kind).join("\n");
+
+function ticketHtml(x,kind){
+  kind=kind||"receipt"; const sh=S.shop; let rows="";
+  if(x.type==="sale"){
+    rows=`<table><thead><tr><th>${t("item")}</th><th class="r">${t("total")}</th></tr></thead><tbody>`+
+      x.lines.map(l=>`<tr><td>${esc(l.q)} × ${esc(l.d||t("goods"))}</td><td class="r">${money(l.q*l.p)}</td></tr>`).join("")+
+      `<tr class="big"><td>${t("total")}</td><td class="r">${money(x.total)}</td></tr>
+       <tr><td>${t("paid")}</td><td class="r">${money(x.paid)}</td></tr>
+       ${x.total-x.paid>0.001?`<tr><td>${kind==="invoice"?t("due"):t("balance_left")}</td><td class="r" style="color:var(--owed)">${money(x.total-x.paid)}</td></tr>`:""}</tbody></table>`;
+  }else{
+    rows=`<table><tbody><tr class="big"><td>${t("payment")} · ${t(x.method||"cash")}</td><td class="r">${money(x.amount)}</td></tr></tbody></table>`;
+  }
+  return `<div class="ticket"><h3>${esc(sh.name)}</h3>${sh.phone?`<div class="c">${esc(sh.phone)}</div>`:""}
+    <div class="c">${docTitle(x,kind)}</div><div class="c">${fmtDate(x.date)}</div>${x.void?`<div class="c" style="color:var(--owed);font-weight:500">— ${t("cancelled").toUpperCase()} —</div>`:""}
+    <div style="background:var(--card);margin-top:8px">${t("customer")}: ${esc(custName(x.cust))}</div>
+    ${x.by?`<div style="background:var(--card)">${t("served_by")}: ${esc(x.by)}</div>`:""}${rows}
+    ${x.note?`<div style="background:var(--card)">${esc(x.note)}</div>`:""}
+    ${x.cust?`<div class="bal">${kind==="invoice"?t("balance_now"):t("balance_after")}: ${money(Math.max(0,balanceOf(x.cust,x.no)))}</div>`:""}
+    <div class="c" style="margin-top:8px">${esc(kind==="invoice"?t("invoice_note"):(sh.footer||t("default_footer")))}</div></div>`;
+}
+
+/* ---------- modals ---------- */
+function renderModal(){
+  const m=ui.modal, layer=$("#layer");
+  if(!m){ layer.innerHTML=""; return; }
+  let inner="";
+  if(m.type==="receipt"){
+    const x=S.txs.find(y=>y.id===m.id); if(!x){ ui.modal=null; layer.innerHTML=""; return; }
+    const kind=(m.kind==="invoice"&&x.type==="sale")?"invoice":"receipt";
+    const c=x.cust?custById(x.cust):null;
+    const ph=c?intlPhone(c.phone):"";
+    const text=`${c?t(kind==="invoice"?"msg_invoice_intro":"msg_receipt_intro",c.name)+"\n\n":""}${receiptText(x,kind)}`;
+    const wa=`https://wa.me/${ph}?text=${encodeURIComponent(text)}`;
+    const sms=`sms:${ph?"+"+ph:""}?body=${encodeURIComponent(text)}`;
+    inner=`${ticketHtml(x,kind)}${x.void?`<div class="dlg" style="color:var(--owed)">${t("cancelled")} · ${fmtDate(x.void.date)}${x.void.by?` · ${esc(x.void.by)}`:""}${x.void.reason?` — ${esc(x.void.reason)}`:""}</div>`:""}<div class="dlg"><div class="actions">
+      <a class="btn primary" href="${wa}" target="_blank" rel="noopener">${t("whatsapp")}</a>
+      <a class="btn" href="${sms}">${t("sms")}</a>
+      <button class="btn" data-act="copy-receipt" data-id="${x.id}">${t("copy")}</button>
+      <button class="btn" data-act="txt-receipt" data-id="${x.id}">${t("save_txt")}</button>
+      ${x.type==="sale"?`<button class="btn" data-act="toggle-doc" data-id="${x.id}">${kind==="invoice"?t("as_receipt"):t("as_invoice")}</button>`:""}
+      ${(!x.void&&canCancel(x))?`<button class="btn danger" data-act="ask-cancel" data-id="${x.id}">${t("cancel_entry")}</button>`:""}</div>
+      <p class="note" style="margin:0">${t("wa_note")}</p>
+      <button class="btn" data-act="close-modal">${t("close")}</button></div>`;
+  }else if(m.type==="remind"){
+    const c=custById(m.id); if(!c){ ui.modal=null; layer.innerHTML=""; return; }
+    const text=t("msg_remind",c.name,S.shop.name,money(balanceOf(c.id)));
+    const ph=intlPhone(c.phone);
+    inner=`<div class="dlg"><h2>${t("send_reminder")}</h2><div class="note">${esc(c.name)} ${esc(c.phone||"")}</div>
+      <div class="msg">${esc(text)}</div><p class="note" style="margin:0">${t("reminder_hint")}</p>
+      <div class="actions"><a class="btn primary" href="https://wa.me/${ph}?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">${t("whatsapp")}</a>
+      <a class="btn" href="sms:${ph?"+"+ph:""}?body=${encodeURIComponent(text)}">${t("sms")}</a>
+      <button class="btn" data-act="copy-msg" data-id="${c.id}">${t("copy")}</button></div>
+      <button class="btn" data-act="close-modal">${t("close")}</button></div>`;
+  }else if(m.type==="payment"){
+    const c=custById(m.id); if(!c){ ui.modal=null; layer.innerHTML=""; return; }
+    inner=`<div class="dlg form"><h2>${t("record_payment")}</h2><div class="note">${esc(c.name)} · ${t("owed_total")}: ${money(Math.max(0,balanceOf(c.id)))}</div>
+      <div class="field"><label for="p-amt">${t("amount")}</label><input id="p-amt" inputmode="decimal" autocomplete="off"></div>
+      <div class="field"><span class="lab">${t("method")}</span><div class="seg" id="p-method">
+        ${["cash","momo","transfer"].map((k,i)=>`<button class="pill" data-act="pay-method" data-m="${k}" aria-pressed="${i===0}">${t(k)}</button>`).join("")}</div></div>
+      <div class="field"><label for="p-note">${t("note")}</label><input id="p-note" autocomplete="off"></div>
+      <div class="err" id="p-err" role="alert"></div>
+      <div class="actions"><button class="btn primary" data-act="save-payment" data-id="${c.id}">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="newcust"){
+    inner=`<div class="dlg form"><h2>${t("add_customer")}</h2>
+      <div class="field"><label for="c-name">${t("name")}</label><input id="c-name" autocomplete="off"></div>
+      <div class="field"><label for="c-phone">${t("phone")}</label><input id="c-phone" inputmode="tel" placeholder="${esc(C().ph)}" autocomplete="off"></div>
+      <p class="note" style="margin:0">${t("phone_hint")}</p>
+      <div class="err" id="c-err" role="alert"></div>
+      <div class="actions"><button class="btn primary" data-act="save-cust">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="delcust"){
+    const c=custById(m.id);
+    inner=`<div class="dlg"><h2>${L()==="fr"?"Supprimer ce client ?":"Delete this customer?"}</h2><p class="note" style="margin:0">${esc(c?c.name:"")} — ${L()==="fr"?"Ses reçus restent dans l'historique.":"Their receipts stay in the history."}</p>
+      <div class="actions"><button class="btn danger" data-act="del-cust-yes" data-id="${m.id}">${L()==="fr"?"Supprimer":"Delete"}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="product"){ inner=productModal(m);
+  }else if(m.type==="editcust"){
+    const c=custById(m.id); if(!c){ ui.modal=null; layer.innerHTML=""; return; }
+    inner=`<div class="dlg form"><h2>${t("edit")}</h2>
+      <div class="field"><label for="ec-name">${t("name")}</label><input id="ec-name" value="${esc(c.name)}" autocomplete="off"></div>
+      <div class="field"><label for="ec-phone">${t("phone")}</label><input id="ec-phone" value="${esc(c.phone||"")}" inputmode="tel" autocomplete="off"></div>
+      <p class="note" style="margin:0">${t("phone_hint")}</p>
+      <div class="err" id="ec-err" role="alert"></div>
+      <div class="actions"><button class="btn primary" data-act="save-ecust" data-id="${c.id}">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="cancel"){ inner=cancelModal(m);
+  }else if(m.type==="staff"){ inner=staffModal();
+  }else if(m.type==="delproduct"){ inner=`<div class="dlg"><h2>${t("confirm_del_product")}</h2><div class="actions"><button class="btn danger" data-act="del-product-yes" data-id="${m.id}">${t("delete")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }
+  layer.innerHTML=`<div class="veil" data-act="veil"><div class="sheet" role="dialog" aria-modal="true">${inner}</div></div>`;
+  const first=layer.querySelector("input"); if(first&&m.type!=="receipt") first.focus();
+}
+
+/* ---------- actions ---------- */
+function setBind(path,val){
+  const d=ui.draft;
+  if(path==="search"){ ui.search=val; return "search"; }
+  if(path==="hsearch"){ ui.histSearch=val; return "hsearch"; }
+  if(path==="bc.text"){ bcState().text=val; updateBc(); return; }
+  if(!d) return;
+  if(path==="cust") d.cust=val;
+  else if(path==="part") d.part=val;
+  else if(path==="note") d.note=val;
+  else if(path==="nc.name") d.nc.name=val;
+  else if(path==="nc.phone") d.nc.phone=val;
+  else if(path.startsWith("line.")){
+    const [,i,k]=path.split("."); const l=d.lines[+i]; l[k]=val;
+    if(k==="p") l.auto=false;
+    if(k==="d"){ const pr=S.products.find(x=>x.name.toLowerCase()===val.trim().toLowerCase()); l.pid=pr?pr.id:null;
+      if(pr&&(!parseAmt(l.p)||l.auto)){ l.p=String(pr.price); l.auto=true; const pf=$("#l"+i+"p"); if(pf) pf.value=l.p; } }
+    const h=$("#h"+i); if(h) h.textContent=lineHint(l);
+  }
+}
+function saveSale(){
+  const d=ui.draft; d.err="";
+  const lines=d.lines.map(l=>({d:l.d.trim(),q:parseAmt(l.q)||0,p:parseAmt(l.p),pid:l.pid||null,c:(()=>{const pr=l.pid&&S.products.find(z=>z.id===l.pid);return pr&&pr.cost>0?pr.cost:0;})()})).filter(l=>l.q>0&&l.p>0);
+  const total=lines.reduce((s,l)=>s+l.q*l.p,0);
+  if(!lines.length||total<=0){ d.err=t("err_total"); $("#s-err").textContent=d.err; return; }
+  const need={}; lines.forEach(l=>{ if(l.pid) need[l.pid]=(need[l.pid]||0)+l.q; });
+  for(const pid in need){ const pr=S.products.find(x=>x.id===pid); if(pr&&need[pid]>pr.qty){ d.err=t("err_stock",pr.name,pr.qty); $("#s-err").textContent=d.err; return; } }
+  let paid=draftPaid(); if(paid>total) paid=total;
+  let custId=d.cust||null;
+  if(d.newCust){
+    if(!d.nc.name.trim()){ d.err=t("err_name"); $("#s-err").textContent=d.err; return; }
+    const c={id:uid(),name:d.nc.name.trim(),phone:d.nc.phone.trim(),created:new Date().toISOString()};
+    S.customers.push(c); custId=c.id;
+  }
+  if(!custId&&total-paid>0.001){ d.err=t("err_cust"); $("#s-err").textContent=d.err; return; }
+  const x={id:uid(),no:++S.counter,type:"sale",cust:custId,date:new Date().toISOString(),lines,total,paid,note:d.note.trim(),by:me()?me().name:""};
+  for(const pid in need){ const pr=S.products.find(y=>y.id===pid); if(pr) pr.qty=Math.round((pr.qty-need[pid])*1000)/1000; }
+  S.txs.push(x); save();
+  ui.draft=null; ui.modal={type:"receipt",id:x.id}; ui.view="home"; render(); toast(t("created"));
+}
+function savePayment(id){
+  const amt=parseAmt($("#p-amt").value), err=$("#p-err");
+  const bal=balanceOf(id);
+  if(amt<=0){ err.textContent=t("err_amount"); return; }
+  if(amt>bal+0.001){ err.textContent=t("err_over"); return; }
+  const m=document.querySelector("#p-method [aria-pressed=true]");
+  const x={id:uid(),no:++S.counter,type:"payment",cust:id,date:new Date().toISOString(),amount:amt,method:m?m.dataset.m:"cash",note:$("#p-note").value.trim(),by:me()?me().name:""};
+  S.txs.push(x); save(); ui.modal={type:"receipt",id:x.id}; render(); toast(t("pay_saved"));
+}
+function csvOf(){
+  const q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
+  const rows=[["no","date","type","customer","items","total","paid","payment_amount","method","note","cancelled"]];
+  [...S.txs].sort((a,b)=>a.no-b.no).forEach(x=>rows.push([x.no,x.date,x.type,custName(x.cust),
+    x.type==="sale"?x.lines.map(l=>`${l.q} x ${l.d} @ ${l.p}`).join("; "):"",x.total??"",x.paid??"",x.amount??"",x.method||"",x.note||"",x.void?"yes":""]));
+  return "﻿"+rows.map(r=>r.map(q).join(",")).join("\r\n");
+}
+
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-act]"); if(!el) return;
+  const a=el.dataset.act, id=el.dataset.id;
+  if(a==="veil"){ if(e.target===el){ ui.modal=null; renderModal(); } return; }
+  switch(a){
+    case "tab": ui.view=el.dataset.v; ui.custId=null; if(ui.view!=="sale") {} render(); window.scrollTo(0,0); break;
+    case "lang": S.shop.lang=L()==="fr"?"en":"fr"; save(); render(); break;
+    case "clear-examples":
+      S.customers=S.customers.filter(c=>!c.example); S.txs=S.txs.filter(x=>!x.example); S.products=S.products.filter(p=>!p.example);
+      S.counter=S.txs.reduce((m,x)=>Math.max(m,x.no),0); save(); render(); toast(t("examples_gone")); break;
+    case "remind": ui.modal={type:"remind",id}; renderModal(); break;
+    case "copy-msg": { const c=custById(id); copyText(t("msg_remind",c.name,S.shop.name,money(balanceOf(c.id)))); break; }
+    case "open-cust": ui.custId=id; render(); window.scrollTo(0,0); break;
+    case "back-cust": ui.custId=null; render(); break;
+    case "add-cust": ui.modal={type:"newcust"}; renderModal(); break;
+    case "save-cust": {
+      const n=$("#c-name").value.trim(); if(!n){ $("#c-err").textContent=t("err_name"); break; }
+      S.customers.push({id:uid(),name:n,phone:$("#c-phone").value.trim(),created:new Date().toISOString()});
+      save(); ui.modal=null; render(); toast(t("cust_saved")); break; }
+    case "del-cust": ui.modal={type:"delcust",id}; renderModal(); break;
+    case "del-cust-yes": S.customers=S.customers.filter(c=>c.id!==id); S.txs.forEach(x=>{ if(x.cust===id) x.cust=null; });
+      save(); ui.modal=null; ui.custId=null; render(); break;
+    case "new-payment": ui.modal={type:"payment",id}; renderModal(); break;
+    case "pay-method": document.querySelectorAll("#p-method .pill").forEach(b=>b.setAttribute("aria-pressed",String(b===el))); break;
+    case "save-payment": savePayment(id); break;
+    case "sale-for": ui.draft=newDraft(id); ui.view="sale"; ui.custId=null; render(); window.scrollTo(0,0); break;
+    case "sale-newcust": ui.draft.newCust=true; render(); $("#nc-name")&&$("#nc-name").focus(); break;
+    case "sale-existing": ui.draft.newCust=false; render(); break;
+    case "add-line": ui.draft.lines.push({d:"",q:"1",p:"",pid:null,auto:false}); render(); { const i=ui.draft.lines.length-1; const f=$("#l"+i+"d"); f&&f.focus(); } break;
+    case "del-line": ui.draft.lines.splice(+el.dataset.i,1); render(); break;
+    case "mode": ui.draft.mode=el.dataset.m; render(); break;
+    case "save-sale": saveSale(); break;
+    case "open-receipt": ui.modal={type:"receipt",id}; renderModal(); break;
+    case "copy-receipt": { const k=ui.modal&&ui.modal.kind; copyText(receiptText(S.txs.find(x=>x.id===id),k)); break; }
+    case "toggle-doc": ui.modal.kind=ui.modal.kind==="invoice"?"receipt":"invoice"; renderModal(); break;
+    case "txt-receipt": { const x=S.txs.find(y=>y.id===id); const k=ui.modal&&ui.modal.kind; saveFile(`${k==="invoice"?"facture":"recu"}-${pad4(x.no)}.txt`,receiptText(x,k)); break; }
+    case "add-product": ui.modal={type:"product",id:null}; renderModal(); break;
+    case "open-product": ui.modal={type:"product",id}; renderModal(); break;
+    case "save-product": saveProduct(); break;
+    case "del-product": ui.modal={type:"delproduct",id}; renderModal(); break;
+    case "del-product-yes": S.products=S.products.filter(p=>p.id!==id); save(); ui.modal=null; render(); break;
+    case "add-person": ui.modal={type:"staff"}; renderModal(); break;
+    case "save-staff": {
+      const n=$("#st-name").value.trim(), pin=$("#st-pin").value.trim(), er=$("#st-err2");
+      if(!n){ er.textContent=t("err_sname"); break; } if(!/^\d{4}$/.test(pin)){ er.textContent=t("err_pin"); break; }
+      S.staff.push({id:uid(),name:n,role:$("#st-role").value,pin}); save(); ui.modal=null; render(); break; }
+    case "del-staff": {
+      const st=S.staff.find(x=>x.id===id); if(!st) break;
+      const owners=S.staff.filter(x=>x.role==="owner");
+      if(S.shop.staffOn&&st.role==="owner"&&owners.length<=1){ $("#st-err").textContent=t("err_last_owner"); break; }
+      S.staff=S.staff.filter(x=>x.id!==id); if(ui.me===id) ui.me=null; save(); render(); break; }
+    case "lock-on":
+      if(!S.staff.some(x=>x.role==="owner")){ $("#st-err").textContent=t("err_need_owner"); break; }
+      S.shop.staffOn=true; S.shop.recovery=String(Math.floor(100000+Math.random()*900000)); ui.me=null; save(); render(); break;
+    case "lock-off": S.shop.staffOn=false; S.shop.recovery=""; save(); render(); break;
+    case "lock": ui.me=null; ui.view="home"; ui.custId=null; render(); break;
+    case "unlock": doUnlock(); break;
+    case "forgot": ui.lockForgot=true; render(); break;
+    case "reset-access": {
+      const v=($("#lk-rec")||{}).value; if(v&&S.shop.recovery&&v.trim()===S.shop.recovery){ S.shop.staffOn=false; S.shop.recovery=""; ui.lockForgot=false; save(); render(); }
+      else { $("#lk-err").textContent=t("reset_wrong"); } break; }
+    case "load-examples": loadExamples(); break;
+    case "bc-open": ui.view="bc"; render(); window.scrollTo(0,0); break;
+    case "bc-back": ui.view="cust"; render(); break;
+    case "bc-tpl": bcState().text=BC_TPL[L()][el.dataset.k]; render(); break;
+    case "bc-aud": bcState().aud=el.dataset.k; render(); break;
+    case "bc-copy": copyText(bcState().text.replace(/\s*\{name\}/g,"").replace(/\{shop\}/g,S.shop.name)); break;
+    case "bc-sent": { const b=bcState(); b.sent[el.dataset.bcid]=1; el.textContent=t("bc_sent");
+      const list=bcAudience(b.aud); const pr=$("#bc-progress"); if(pr) pr.textContent=t("bc_progress",list.filter(c=>b.sent[c.id]).length,list.filter(c=>intlPhone(c.phone)).length); break; }
+    case "edit-cust": ui.modal={type:"editcust",id}; renderModal(); break;
+    case "save-ecust": { const c=custById(id), n=$("#ec-name").value.trim(); if(!n){ $("#ec-err").textContent=t("err_name"); break; }
+      c.name=n; c.phone=$("#ec-phone").value.trim(); save(); ui.modal=null; render(); toast(t("saved_ok")); break; }
+    case "ask-cancel": ui.modal={type:"cancel",id}; renderModal(); break;
+    case "do-cancel": voidTx(id); break;
+    case "rep-period": ui.repPeriod=el.dataset.p; ui.repOff=0; render(); break;
+    case "rep-prev": ui.repOff--; render(); break;
+    case "rep-next": if(ui.repOff<0) ui.repOff++; render(); break;
+    case "close-modal": ui.modal=null; renderModal(); break;
+    case "save-settings": {
+      const s=S.shop, oldC=s.country;
+      s.name=$("#s-name").value.trim()||"Ma Boutique"; s.phone=$("#s-phone").value.trim();
+      s.country=$("#s-country").value; s.lang=$("#s-lang").value; s.footer=$("#s-footer").value.trim();
+      s.lateDays=Math.max(1,parseInt($("#s-late").value,10)||14);
+      if(oldC!==s.country&&!$("#s-lang").dataset.touched) {}
+      save(); render(); toast(t("saved_ok")); break; }
+    case "backup-now": backupNow(); break;
+    case "theme": setTheme(el.dataset.m); break;
+    case "export-csv": saveFile(`ecrici-${todayKey()}.csv`,csvOf()); break;
+    case "reset": ui.confirmReset=true; render(); break;
+    case "reset-no": ui.confirmReset=false; render(); break;
+    case "reset-yes": S=blank(); ui.confirmReset=false; ui.custId=null; ui.view="home"; save(); render(); break;
+  }
+});
+/* sms: links cannot open from inside a framed page (it blanks the page). When framed, copy the message instead. */
+document.addEventListener("click",async e=>{
+  const a=e.target.closest&&e.target.closest('a[href^="sms:"]'); if(!a) return;
+  let framed=false; try{ framed=window.self!==window.top; }catch(_){ framed=true; }
+  if(!framed) return;
+  e.preventDefault();
+  const href=a.getAttribute("href"), q=href.indexOf("?body=");
+  const to=href.slice(4,q<0?undefined:q), body=q<0?"":decodeURIComponent(href.slice(q+6));
+  await copyText(body);
+  toast(L()==="fr"?`Message copié. Ouvrez vos SMS, écrivez à ${to||"votre client"} et collez.`:`Message copied. Open your SMS app, write to ${to||"your customer"} and paste.`);
+},true);
+document.addEventListener("input",e=>{
+  const el=e.target; if(!el.dataset||!el.dataset.bind) return;
+  const r=setBind(el.dataset.bind,el.value);
+  if(r==="search"||r==="hsearch"){ const pos=el.selectionStart; render(); const n=$("#"+el.id); if(n){ n.focus(); try{n.setSelectionRange(pos,pos);}catch(_){} } return; }
+  updateSaleTotals();
+});
+document.addEventListener("change",e=>{
+  const el=e.target;
+  if(el.dataset&&el.dataset.bind==="cust"){ setBind("cust",el.value); }
+  if(el.id==="s-country"){ const l=$("#s-lang"); if(l) l.value=COUNTRIES[el.value].lang; }
+  if(el.id==="f-import"&&el.files&&el.files[0]){
+    const fr=new FileReader();
+    fr.onload=()=>{ try{ const p=JSON.parse(fr.result); if(!p||!p.shop||!Array.isArray(p.txs)||!Array.isArray(p.customers)) throw 0;
+      S=migrate(p); save(); ui.view="home"; render(); toast(t("imported")); }catch(_){ toast(t("bad_file")); } };
+    fr.readAsText(el.files[0]);
+  }
+});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&ui.modal){ ui.modal=null; renderModal(); } if(e.key==="Enter"&&e.target.id==="lk-pin") doUnlock(); });
+
+function blank(){ return {v:1,updated:Date.now(),counter:0,shop:{name:"Ma Boutique",phone:"",country:"BJ",lang:"fr",footer:"",lateDays:14,staffOn:false,recovery:""},customers:[],txs:[],products:[],staff:[]}; }
+
+/* ---------- boot ---------- */
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+S=load()||seed();
+applyTheme();
+if(!load()) save();
+render();
+initCloud();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+</script>
+
+<script src="config.js"></script>
+<script src="hosted.js"></script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+ECRICI - LAUNCH GUIDE (everything can be done from a phone browser)
+=====================================================================
+
+What you have in this folder
+  index.html, sw.js, manifest.webmanifest, icons .... the shop app (works offline once opened)
+  hosted.js ........................................ login, approval, subscription check, cloud sync
+  config.js ........................................ the 4 lines YOU fill in
+  admin.html ....................................... YOUR page: approve, extend, suspend shops
+  schema.sql ....................................... the database rules (paste once into Supabase)
+
+How it works
+  1. A shop opens your link and creates an account (shop name, phone number, password).
+  2. The account waits as "pending". The shop taps WhatsApp and writes to you.
+  3. You open admin.html, tap "Approve - 7 days" (free trial). The shop opens the app.
+  4. The shop pays you by Mobile Money. You tap "+1 month" (or +3, +12) in admin.html.
+  5. If a shop does not renew, or you suspend it, the app locks and stops syncing.
+     Its data stays safe in the cloud and on its phone (the shop can still make a backup file).
+  The shop uses the app with no internet. Everything syncs when the phone is online again.
+  The phone number is the login. No email needed.
+
+
+STEP A - Database (Supabase, free)
+  1. Go to supabase.com > Start your project > sign up.
+  2. New project: name "ecrici", choose a database password (save it), pick the region closest to
+     your customers (Europe is fine). Wait about 2 minutes.
+  3. Left menu > SQL Editor > New query. Open schema.sql, copy ALL of it, paste, tap Run.
+     You should see "Success".
+
+STEP B - Let people sign up without email codes
+  Authentication > Sign In / Providers (or "Providers") > Email > turn OFF "Confirm email". Save.
+
+STEP C - Make YOUR admin account
+  1. Authentication > Users > Add user > Create new user. Use YOUR real email and a strong
+     password. Tick "Auto Confirm User".
+  2. SQL Editor > New query, paste this (change the email to yours), Run:
+       insert into public.admins (user_id) select id from auth.users where email = 'YOUR@EMAIL.COM';
+
+STEP D - Copy two values
+  Project Settings > API (or "API Keys"):
+    - Project URL (looks like https://abcdxyz.supabase.co)
+    - The PUBLIC key: "anon" or "publishable". 
+  NEVER copy or share the "service_role" or "secret" key.
+
+STEP E - Fill config.js
+  Open config.js in a text editor (or the GitHub web editor) and fill:
+    url, key, adminWhatsapp (your number with country code, digits only, e.g. 22997123456), priceText.
+
+STEP F - Put the files online (Cloudflare Pages, free)
+  1. Unzip the folder on your phone (Files app > long press the zip > Extract).
+  2. Create a free account at github.com. New repository "ecrici". Choose
+     "uploading an existing file", select ALL the files from the unzipped folder, Commit.
+     (config.js holds your public key only. That is normal. Never upload anything secret.)
+  3. dash.cloudflare.com > Workers & Pages > Create > Pages > Connect to Git > pick the repository.
+     Build command: leave empty. Output directory: leave empty (or "/"). Save and Deploy.
+  4. Your app is live at a free address like ecrici.pages.dev.
+  5. Custom domain: in the Pages project > Custom domains > Set up a domain.
+  Tip: switch the browser to "Desktop site" if a page looks cramped.
+
+STEP G - Test before you tell anyone (10 minutes)
+  1. Open your link. Create a test shop (use your own number).
+  2. You should see "Compte cree" (waiting for approval).
+  3. Open YOURLINK/admin.html. Log in with your admin email. Tap "Approve - 7 days".
+  4. Back in the test shop tap "Verifier maintenant". The app opens. Add a customer.
+  5. On a second phone, log in with the same number: the customer appears.
+  6. In admin.html tap Suspend. On the test phone the app locks. Tap Reactivate. It opens again.
+  Keep admin.html private (do not share its address).
+
+DAILY WORK
+  - New shop: approve (7 days). Paid: +1 / +3 / +12 months. Extensions start from the current end date.
+  - Forgot password: Supabase > Authentication > Users > find the shop (login looks like
+    22997123456@ecrici.app) > reset or set a new password, and tell the shop.
+  - Updating the app later: replace the files on GitHub. Change VERSION in sw.js (ecrici-v7 -> v8)
+    so phones fetch the new version.
+
+THINGS TO KNOW (honest limits)
+  - The app was tested with a simulated server and the database rules were tested on a real PostgreSQL,
+    but NOT yet against your real Supabase project. Do STEP G first.
+  - If sign-up says the server refuses the number, Supabase rejected the fake email domain. Set
+    emailDomain in config.js to a domain you own (e.g. "yourdomain.com") and try again.
+  - The lock screen is in the app, so it is only a strong gate while online. What really stops a shop
+    is the cloud: unapproved, suspended and expired shops cannot save or restore data. An approved shop
+    can keep using the app offline for up to 3 days after its end date.
+  - Two phones on the same shop: the most recent save wins. Do not edit the same shop on two phones
+    at the same moment while offline.
+  - Supabase free projects pause after 1 week with no activity and have a 500 MB limit. With paying
+    shops, move to the Pro plan (about $25/month; check the current price).
+  - Receipts and invoices have no tax validity. Check each country's rules.
+  - Test the WhatsApp buttons with real Benin, Nigerian and Ghanaian numbers.
