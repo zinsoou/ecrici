@@ -239,6 +239,10 @@ const T = {
     bc_none:"Aucun client dans ce groupe.",bc_progress:(a,b)=>`${a} sur ${b} ouverts`,
     load_examples:"Charger des exemples",examples_loaded:"Exemples chargés",empty_home:"Il n'y a encore rien ici. Chargez des exemples pour voir comment l'app fonctionne, ou ajoutez votre premier client.",
     start_t:"Pour commencer",start_1:"1. Ajoutez vos produits",start_2:"2. Enregistrez une vente",start_3:"3. Voyez qui vous doit",start_hide:"Masquer",
+    due_label:"À payer le (facultatif)",due_on:"Échéance",overdue_d:(n)=>`${n} j de retard`,next_due:"Prochaine échéance",
+    msg_remind_due:(n,s,a,d)=>`Bonjour ${n}, c'est ${s}. Votre solde de ${a} était à payer le ${d}. Merci de passer le régler dès que possible. Merci !`,
+    exp_title:"Dépenses",exp_add:"Ajouter une dépense",exp_label:"Motif (loyer, transport…)",exp_amount:"Montant",exp_date:"Date",exp_none:"Aucune dépense sur cette période.",exp_total:"Dépenses",exp_net:"Bénéfice net",exp_net_note:"Bénéfice sur les articles avec prix d'achat, moins les dépenses.",exp_del_q:"Supprimer cette dépense ?",err_exp:"Écrivez le motif et un montant.",
+    st_btn:"Relevé",st_title:"Relevé de compte",st_client:"Client",st_date:"Date",st_last:"Dernières opérations",st_sale:"Vente",st_pay:"Paiement",st_bal:"Solde dû",st_over:"Échéance dépassée depuis le",st_left:"reste",st_hint:"Vérifiez le texte, puis envoyez-le par WhatsApp. Rien n'est envoyé automatiquement.",
     inst_txt:"Installez Ecrici sur votre téléphone : menu ⋮ du navigateur, puis « Ajouter à l'écran d'accueil » ou « Installer l'application ».",inst_btn:"Installer",inst_later:"Plus tard",
     tab_rep:"Bilan",reports:"Bilan",set_btn:"Réglages",p_day:"Jour",p_week:"Semaine",p_month:"Mois",p_year:"Année",
     rep_sales:"Ventes",rep_collected:"Encaissé",rep_credit:"Crédit donné",rep_debtpaid:"Dettes payées",rep_count:"Nombre de ventes",rep_profit:"Bénéfice",
@@ -305,6 +309,10 @@ const T = {
     bc_none:"No customers in this group.",bc_progress:(a,b)=>`${a} of ${b} opened`,
     load_examples:"Load examples",examples_loaded:"Examples loaded",empty_home:"Nothing here yet. Load examples to see how the app works, or add your first customer.",
     start_t:"Getting started",start_1:"1. Add your products",start_2:"2. Record a sale",start_3:"3. See who owes you",start_hide:"Hide",
+    due_label:"Pay by (optional)",due_on:"Due",overdue_d:(n)=>`${n} d overdue`,next_due:"Next due date",
+    msg_remind_due:(n,s,a,d)=>`Hello ${n}, this is ${s}. Your balance of ${a} was due on ${d}. Please come by and settle it as soon as you can. Thank you!`,
+    exp_title:"Expenses",exp_add:"Add an expense",exp_label:"Reason (rent, transport…)",exp_amount:"Amount",exp_date:"Date",exp_none:"No expenses in this period.",exp_total:"Expenses",exp_net:"Net profit",exp_net_note:"Profit on items with a cost price, minus expenses.",exp_del_q:"Delete this expense?",err_exp:"Enter a reason and an amount.",
+    st_btn:"Statement",st_title:"Account statement",st_client:"Customer",st_date:"Date",st_last:"Latest entries",st_sale:"Sale",st_pay:"Payment",st_bal:"Balance due",st_over:"Overdue since",st_left:"left",st_hint:"Check the text, then send it by WhatsApp. Nothing is sent automatically.",
     inst_txt:"Install Ecrici on your phone: browser menu ⋮, then “Add to Home screen” or “Install app”.",inst_btn:"Install",inst_later:"Later",
     tab_rep:"Reports",reports:"Reports",set_btn:"Settings",p_day:"Day",p_week:"Week",p_month:"Month",p_year:"Year",
     rep_sales:"Sales",rep_collected:"Collected",rep_credit:"Credit given",rep_debtpaid:"Debts paid",rep_count:"Number of sales",rep_profit:"Profit",
@@ -387,7 +395,7 @@ function seed(){
   const products=[prod("Riz 25 kg",17500,12,3),prod("Huile 5 L",6500,2,3),prod("Sucre 1 kg",900,40,10),prod("Savon",350,0,10),prod("Ciment (sac)",5200,25,5)];
   return {v:1,updated:Date.now(),counter:no,
     shop:{name:"Ma Boutique",phone:"",country:"BJ",lang:"fr",footer:"",lateDays:14,staffOn:false,recovery:""},
-    customers:[a,b,c,d],txs,products,staff:[]};
+    customers:[a,b,c,d],txs,products,staff:[],expenses:[]};
 }
 function balanceOf(custId, uptoNo){
   let b=0;
@@ -395,13 +403,41 @@ function balanceOf(custId, uptoNo){
     b += x.type==="sale" ? x.total-x.paid : -x.amount; }
   return Math.round(b*100)/100;
 }
-/* oldest sale still unpaid, payments applied oldest first */
-function oldestUnpaid(custId){
+/* unpaid sales, payments applied oldest first */
+function unpaidSales(custId){
   const mine=S.txs.filter(x=>x.cust===custId&&!x.void).sort((a,b)=>a.no-b.no);
-  let pool=mine.filter(x=>x.type==="payment").reduce((s,x)=>s+x.amount,0);
+  let pool=mine.filter(x=>x.type==="payment").reduce((s,x)=>s+x.amount,0); const out=[];
   for(const x of mine){ if(x.type!=="sale") continue; let owe=x.total-x.paid;
-    if(owe<=0) continue; const use=Math.min(pool,owe); pool-=use; owe-=use; if(owe>0.001) return x.date; }
-  return null;
+    if(owe<=0) continue; const use=Math.min(pool,owe); pool-=use; owe-=use; if(owe>0.001) out.push({x,owe}); }
+  return out;
+}
+function oldestUnpaid(custId){ const u=unpaidSales(custId); return u.length?u[0].x.date:null; }
+function overdueInfo(custId){
+  const tk=todayKey(), o=unpaidSales(custId).filter(u=>u.x.due&&u.x.due<tk); if(!o.length) return null;
+  const first=o.reduce((m,u)=>u.x.due<m.x.due?u:m);
+  return {due:first.x.due,days:Math.max(1,Math.round((new Date(tk)-new Date(first.x.due))/864e5)),owe:o.reduce((s,u)=>s+u.owe,0)};
+}
+function nextDue(custId){ const d=unpaidSales(custId).filter(u=>u.x.due).map(u=>u.x.due).sort(); return d.length?d[0]:null; }
+const fmtDay=iso=>new Date(iso+"T12:00:00").toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{day:"2-digit",month:"short",year:"numeric"});
+function statementText(c){
+  const loc=L()==="fr"?"fr-FR":"en-GB", dshort=iso=>new Date(iso).toLocaleDateString(loc,{day:"2-digit",month:"2-digit"});
+  const mine=S.txs.filter(x=>x.cust===c.id&&!x.void).sort((a,b)=>a.no-b.no), last=mine.slice(-12);
+  const out=[`${t("st_title")} - ${S.shop.name}`,`${t("st_client")}: ${c.name}`,`${t("st_date")}: ${new Date().toLocaleDateString(loc)}`,""];
+  if(mine.length>last.length) out.push("…");
+  last.forEach(x=>{ out.push(x.type==="sale"?`${dshort(x.date)}  ${t("st_sale")} #${String(x.no).padStart(4,"0")}  ${money(x.total)}`+(x.total-x.paid>0.001?` (${t("st_left")} ${money(x.total-x.paid)})`:""):`${dshort(x.date)}  ${t("st_pay")} #${String(x.no).padStart(4,"0")}  -${money(x.amount)}`); });
+  out.push("",`${t("st_bal")}: ${money(Math.max(0,balanceOf(c.id)))}`);
+  const o=overdueInfo(c.id); if(o) out.push(`${t("st_over")} ${fmtDay(o.due)}`);
+  return out.join("\n");
+}
+function saveExpense(){
+  const lab=($("#ex-label").value||"").trim(), amt=parseAmt($("#ex-amt").value), dv=$("#ex-date").value, er=$("#ex-err");
+  if(!lab||amt<=0){ er.textContent=t("err_exp"); return; }
+  const date=/^\d{4}-\d{2}-\d{2}$/.test(dv)?new Date(dv+"T12:00:00").toISOString():new Date().toISOString();
+  (S.expenses=S.expenses||[]).push({id:uid(),date,amount:amt,label:lab}); save(); ui.modal=null; render(); toast(t("created"));
+}
+function remindText(c){
+  const o=overdueInfo(c.id);
+  return o?t("msg_remind_due",c.name,S.shop.name,money(balanceOf(c.id)),fmtDay(o.due)):t("msg_remind",c.name,S.shop.name,money(balanceOf(c.id)));
 }
 function ageDays(iso){ return iso?Math.floor((Date.now()-new Date(iso).getTime())/864e5):0; }
 const me = () => (S&&S.staff&&S.staff.find(x=>x.id===ui.me))||null;
@@ -461,7 +497,7 @@ async function initCloud(){
   }catch(e){ cloud=null; storeMode="device"; updateStatus(); }
 }
 function migrate(p){
-  p.products=p.products||[]; p.staff=p.staff||[]; p.shop.staffOn=!!p.shop.staffOn; p.shop.recovery=p.shop.recovery||""; p.shop.lastBackup=p.shop.lastBackup||"";
+  p.products=p.products||[]; p.staff=p.staff||[]; p.expenses=p.expenses||[]; p.shop.staffOn=!!p.shop.staffOn; p.shop.recovery=p.shop.recovery||""; p.shop.lastBackup=p.shop.lastBackup||"";
   if(p.shop.staffOn&&!p.staff.length) p.shop.staffOn=false;
   p.txs.forEach(x=>{ if(x.type==="sale") x.lines.forEach(l=>{ if(!("pid" in l)) l.pid=null; if(x.example&&l.c===undefined) l.c=EX_COST[l.d]||0; }); });
   p.products.forEach(q=>{ if(q.cost===undefined) q.cost=q.example?(EX_COST[q.name]||0):0; });
@@ -567,7 +603,7 @@ function viewHome(){
   const cred=day.filter(x=>x.type==="sale").reduce((s,x)=>s+(x.total-x.paid),0);
   const debtors=S.customers.map(c=>({c,b:balanceOf(c.id)})).filter(x=>x.b>0.001);
   const owedAll=debtors.reduce((s,x)=>s+x.b,0);
-  const late=debtors.map(x=>({...x,age:ageDays(oldestUnpaid(x.c.id))})).filter(x=>x.age>=S.shop.lateDays).sort((a,b)=>b.b-a.b);
+  const late=debtors.map(x=>({...x,age:ageDays(oldestUnpaid(x.c.id)),od:overdueInfo(x.c.id)})).filter(x=>x.age>=S.shop.lateDays||x.od).sort((a,b)=>b.b-a.b);
   const hasEx=S.customers.some(c=>c.example)||S.txs.some(x=>x.example)||S.products.some(p=>p.example);
   let h="";
   if(hasEx&&isOwner()) h+=`<div class="banner"><span>${t("examples_banner")}</span><button class="btn small" data-act="clear-examples">${t("remove_examples")}</button></div>`;
@@ -591,7 +627,7 @@ function viewHome(){
   h+=`<section class="sec"><h2>${t("late_title")}<span>${S.shop.lateDays} ${t("days")}+</span></h2><div class="card flush">`;
   if(!late.length) h+=`<div class="empty">${t("late_none")}</div>`;
   else h+=late.map(x=>`<div class="row" style="cursor:default"><div class="main"><div class="name">${esc(x.c.name)}</div>
-      <div class="sub"><span class="badge late">${x.age} ${t("days")}</span></div></div>
+      <div class="sub"><span class="badge late">${x.od?t("overdue_d",x.od.days):x.age+" "+t("days")}</span></div></div>
       <div class="amt"><div class="num" style="color:var(--owed)">${money(x.b)}</div>
       <button class="btn small primary" data-act="remind" data-id="${x.c.id}" style="margin-top:6px">${t("remind")}</button></div></div>`).join("");
   h+=`</div></section>`;
@@ -602,7 +638,7 @@ function viewHome(){
 }
 
 /* --- sale form --- */
-function newDraft(custId){ return {cust:custId||"",newCust:false,nc:{name:"",phone:""},lines:[{d:"",q:"1",p:"",pid:null,auto:false}],mode:"full",part:"",note:"",err:""}; }
+function newDraft(custId){ return {cust:custId||"",newCust:false,nc:{name:"",phone:""},lines:[{d:"",q:"1",p:"",pid:null,auto:false}],mode:"full",part:"",due:"",note:"",err:""}; }
 function draftTotal(){ return ui.draft.lines.reduce((s,l)=>s+(parseAmt(l.q)||0)*parseAmt(l.p),0); }
 function draftPaid(){ const d=ui.draft,tot=draftTotal(); return d.mode==="full"?tot:d.mode==="credit"?0:Math.min(parseAmt(d.part),tot); }
 function viewSale(){
@@ -636,6 +672,7 @@ function viewSale(){
       ${d.mode==="part"?`<input id="f-part" data-bind="part" value="${esc(d.part)}" inputmode="decimal" placeholder="${t("amount")}" aria-label="${t("amount")}">`:""}
       <div class="total" style="border-top:1px dashed var(--line);margin-top:4px"><span>${t("balance_left")}</span><span class="num" id="s-left"></span></div>
     </div>
+    ${d.mode!=="full"?`<div class="field"><label for="f-due">${t("due_label")}</label><input id="f-due" type="date" data-bind="due" value="${esc(d.due)}"></div>`:""}
     <div class="field"><label for="f-note">${t("note")}</label><input id="f-note" data-bind="note" value="${esc(d.note)}" autocomplete="off"></div>
     <div class="err" id="s-err" role="alert">${esc(d.err)}</div>
     <button class="btn primary" data-act="save-sale">${t("save_sale")}</button>
@@ -660,9 +697,9 @@ function viewCustomers(){
     <input id="f-search" data-bind="search" value="${esc(ui.search)}" placeholder="${t("search")}" aria-label="${t("search")}" autocomplete="off">
     <div class="card flush">`;
   if(!list.length) h+=`<div class="empty">${t("no_customers")}</div>`;
-  h+=list.map(({c,b})=>{ const age=b>0?ageDays(oldestUnpaid(c.id)):0;
+  h+=list.map(({c,b})=>{ const age=b>0?ageDays(oldestUnpaid(c.id)):0, od=b>0?overdueInfo(c.id):null;
     return `<button class="row" data-act="open-cust" data-id="${c.id}"><div class="main"><div class="name">${esc(c.name)}</div>
-      <div class="sub">${esc(c.phone||"")}${b>0&&age>=S.shop.lateDays?` <span class="badge late">${age} ${t("days")}</span>`:""}</div></div>
+      <div class="sub">${esc(c.phone||"")}${od?` <span class="badge late">${t("overdue_d",od.days)}</span>`:(b>0&&age>=S.shop.lateDays?` <span class="badge late">${age} ${t("days")}</span>`:"")}</div></div>
       <div class="amt">${b>0.001?`<span class="num" style="color:var(--owed)">${money(b)}</span>`:`<span class="badge paid">${t("settled")}</span>`}</div></button>`; }).join("");
   return h+`</div></section>`;
 }
@@ -672,12 +709,14 @@ function viewCustomer(){
   const txs=S.txs.filter(x=>x.cust===c.id).sort((a,b)=>b.no-a.no);
   return `<section class="sec"><button class="btn small ghost" data-act="back-cust" style="justify-self:start">← ${t("back")}</button>
     <div class="card"><h2 style="overflow-wrap:anywhere">${esc(c.name)}</h2><div class="note">${esc(c.phone||"")}</div>
+      ${b>0.001&&nextDue(c.id)?`<div class="note" style="margin-top:6px">${t("next_due")}: ${esc(fmtDay(nextDue(c.id)))}${overdueInfo(c.id)?` · <span class="badge late">${t("overdue_d",overdueInfo(c.id).days)}</span>`:""}</div>`:""}
       <div class="total" style="margin-top:12px"><span>${t("owed_total")}</span><span class="num" style="color:${b>0?"var(--owed)":"var(--paid)"}">${money(Math.max(0,b))}</span></div>
       <div class="actions" style="margin-top:12px">
         <button class="btn primary" data-act="new-payment" data-id="${c.id}">${t("record_payment")}</button>
         <button class="btn" data-act="sale-for" data-id="${c.id}">${t("new_sale")}</button>
         <button class="btn" data-act="edit-cust" data-id="${c.id}">${t("edit")}</button>
         ${b>0.001?`<button class="btn" data-act="remind" data-id="${c.id}">${t("remind")}</button>`:""}
+        ${txs.some(x=>!x.void)?`<button class="btn" data-act="statement" data-id="${c.id}">${t("st_btn")}</button>`:""}
       </div></div>
     <h2>${t("history")}</h2><div class="card flush">${txs.length?txs.map(rowTx).join(""):`<div class="empty">${t("no_receipts")}</div>`}</div>
     ${isOwner()?`<button class="btn small danger" data-act="del-cust" data-id="${c.id}" style="justify-self:start">${L()==="fr"?"Supprimer ce client":"Delete this customer"}</button>`:""}</section>`;
@@ -795,7 +834,7 @@ function rangeLabel(period,a,b){
   return String(a.getFullYear());
 }
 function stats(a,b){
-  const r={sales:0,collected:0,credit:0,debtPaid:0,count:0,profit:0,profitBase:0,prod:{},cust:{}};
+  const r={sales:0,collected:0,credit:0,debtPaid:0,count:0,profit:0,profitBase:0,expenses:0,expList:[],prod:{},cust:{}};
   for(const x of S.txs){ if(x.void) continue; const d=new Date(x.date); if(d<a||d>=b) continue;
     if(x.type==="sale"){
       r.sales+=x.total; r.collected+=x.paid; r.credit+=x.total-x.paid; r.count++;
@@ -804,6 +843,8 @@ function stats(a,b){
         const e=r.prod[key]||(r.prod[key]={name:l.d||t("goods"),q:0,rev:0}); e.q+=l.q; e.rev+=rev;
         if(l.c>0){ r.profit+=(l.p-l.c)*l.q; r.profitBase+=rev; } });
     }else{ r.collected+=x.amount; r.debtPaid+=x.amount; } }
+  for(const e of (S.expenses||[])){ const d=new Date(e.date); if(d<a||d>=b) continue; r.expenses+=e.amount; r.expList.push(e); }
+  r.expList.sort((x,y)=>new Date(y.date)-new Date(x.date));
   return r;
 }
 function buckets(period,a){
@@ -841,6 +882,11 @@ function viewReports(){
     <div class="stat"><span>${t("rep_credit")}</span><span class="num" style="color:var(--owed)">${money(st.credit)}</span></div>
     <div class="stat"><span>${t("rep_debtpaid")}</span><span class="num">${money(st.debtPaid)}</span></div>
     <div class="stat"><span>${t("rep_count")}</span><span class="num">${st.count}</span></div></div>`;
+  h+=`<h2>${t("exp_title")}<button class="btn small primary" data-act="add-expense">${t("exp_add")}</button></h2><div class="card flush">
+    <div class="stat"><span>${t("exp_total")}</span><span class="num" style="color:var(--owed)">${money(st.expenses)}</span></div>
+    ${st.profitBase>0?`<div class="stat"><span>${t("exp_net")}</span><span class="num" style="color:${st.profit-st.expenses>=0?"var(--paid)":"var(--owed)"}">${money(st.profit-st.expenses)}</span></div>`:""}
+    ${st.expList.length?st.expList.map(e=>`<div class="stat"><span>${esc(e.label)} <span class="note">· ${esc(new Date(e.date).toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{day:"2-digit",month:"short"}))}</span></span><span class="num">${money(e.amount)} <button class="x" data-act="del-expense" data-id="${e.id}" aria-label="×">×</button></span></div>`).join(""):`<div class="empty">${t("exp_none")}</div>`}</div>
+    ${st.profitBase>0?`<p class="note" style="margin:0">${t("exp_net_note")}</p>`:""}`;
   if(!st.count){ h+=`<div class="card"><div class="empty">${t("rep_none")}</div></div>`; }
   else{
     const tp=Object.values(st.prod).sort((x,y)=>y.rev-x.rev).slice(0,5);
@@ -965,6 +1011,7 @@ function receiptLines(x,kind){
     x.lines.forEach(l=>out.push(`${l.q} × ${l.d||t("goods")}  ${money(l.q*l.p)}`));
     out.push("-----",`${t("total")}: ${money(x.total)}`,`${t("paid")}: ${money(x.paid)}`);
     if(x.total-x.paid>0.001) out.push(`${kind==="invoice"?t("due"):t("balance_left")}: ${money(x.total-x.paid)}`);
+    if(x.due&&x.total-x.paid>0.001) out.push(`${t("due_on")}: ${fmtDay(x.due)}`);
   }else{
     out.push(`${t("payment")} (${t(x.method||"cash")}): ${money(x.amount)}`);
   }
@@ -990,6 +1037,7 @@ function ticketHtml(x,kind){
     <div class="c">${docTitle(x,kind)}</div><div class="c">${fmtDate(x.date)}</div>${x.void?`<div class="c" style="color:var(--owed);font-weight:500">— ${t("cancelled").toUpperCase()} —</div>`:""}
     <div style="background:var(--card);margin-top:8px">${t("customer")}: ${esc(custName(x.cust))}</div>
     ${x.by?`<div style="background:var(--card)">${t("served_by")}: ${esc(x.by)}</div>`:""}${rows}
+    ${x.due&&x.type==="sale"&&x.total-x.paid>0.001?`<div style="background:var(--card)">${t("due_on")}: ${esc(fmtDay(x.due))}</div>`:""}
     ${x.note?`<div style="background:var(--card)">${esc(x.note)}</div>`:""}
     ${x.cust?`<div class="bal">${kind==="invoice"?t("balance_now"):t("balance_after")}: ${money(Math.max(0,balanceOf(x.cust,x.no)))}</div>`:""}
     <div class="c" style="margin-top:8px">${esc(kind==="invoice"?t("invoice_note"):(sh.footer||t("default_footer")))}</div></div>`;
@@ -1019,7 +1067,7 @@ function renderModal(){
       <button class="btn" data-act="close-modal">${t("close")}</button></div>`;
   }else if(m.type==="remind"){
     const c=custById(m.id); if(!c){ ui.modal=null; layer.innerHTML=""; return; }
-    const text=t("msg_remind",c.name,S.shop.name,money(balanceOf(c.id)));
+    const text=remindText(c);
     const ph=intlPhone(c.phone);
     inner=`<div class="dlg"><h2>${t("send_reminder")}</h2><div class="note">${esc(c.name)} ${esc(c.phone||"")}</div>
       <div class="msg">${esc(text)}</div><p class="note" style="margin:0">${t("reminder_hint")}</p>
@@ -1027,6 +1075,21 @@ function renderModal(){
       <a class="btn" href="sms:${ph?"+"+ph:""}?body=${encodeURIComponent(text)}">${t("sms")}</a>
       <button class="btn" data-act="copy-msg" data-id="${c.id}">${t("copy")}</button></div>
       <button class="btn" data-act="close-modal">${t("close")}</button></div>`;
+  }else if(m.type==="statement"){
+    const c=custById(m.id); if(!c){ ui.modal=null; layer.innerHTML=""; return; }
+    const text=statementText(c), ph=intlPhone(c.phone);
+    inner=`<div class="dlg"><h2>${t("st_title")}</h2><div class="note">${esc(c.name)} ${esc(c.phone||"")}</div>
+      <div class="msg">${esc(text)}</div><p class="note" style="margin:0">${t("st_hint")}</p>
+      <div class="actions"><a class="btn primary" href="https://wa.me/${ph}?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">${t("whatsapp")}</a>
+      <button class="btn" data-act="copy-statement" data-id="${c.id}">${t("copy")}</button></div>
+      <button class="btn" data-act="close-modal">${t("close")}</button></div>`;
+  }else if(m.type==="expense"){
+    inner=`<div class="dlg form"><h2>${t("exp_add")}</h2>
+      <div class="field"><label for="ex-label">${t("exp_label")}</label><input id="ex-label" autocomplete="off"></div>
+      <div class="grid2"><div class="field"><label for="ex-amt">${t("exp_amount")}</label><input id="ex-amt" inputmode="decimal" autocomplete="off"></div>
+      <div class="field"><label for="ex-date">${t("exp_date")}</label><input id="ex-date" type="date" value="${todayKey()}"></div></div>
+      <div class="err" id="ex-err" role="alert"></div>
+      <div class="actions"><button class="btn primary" data-act="save-expense">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
   }else if(m.type==="payment"){
     const c=custById(m.id); if(!c){ ui.modal=null; layer.innerHTML=""; return; }
     inner=`<div class="dlg form"><h2>${t("record_payment")}</h2><div class="note">${esc(c.name)} · ${t("owed_total")}: ${money(Math.max(0,balanceOf(c.id)))}</div>
@@ -1074,6 +1137,7 @@ function setBind(path,val){
   if(path==="cust") d.cust=val;
   else if(path==="part") d.part=val;
   else if(path==="note") d.note=val;
+  else if(path==="due") d.due=val;
   else if(path==="nc.name") d.nc.name=val;
   else if(path==="nc.phone") d.nc.phone=val;
   else if(path.startsWith("line.")){
@@ -1099,7 +1163,7 @@ function saveSale(){
     S.customers.push(c); custId=c.id;
   }
   if(!custId&&total-paid>0.001){ d.err=t("err_cust"); $("#s-err").textContent=d.err; return; }
-  const x={id:uid(),no:++S.counter,type:"sale",cust:custId,date:new Date().toISOString(),lines,total,paid,note:d.note.trim(),by:me()?me().name:""};
+  const x={id:uid(),no:++S.counter,type:"sale",cust:custId,date:new Date().toISOString(),lines,total,paid,due:(total-paid>0.001&&/^\d{4}-\d{2}-\d{2}$/.test(d.due||""))?d.due:"",note:d.note.trim(),by:me()?me().name:""};
   for(const pid in need){ const pr=S.products.find(y=>y.id===pid); if(pr) pr.qty=Math.round((pr.qty-need[pid])*1000)/1000; }
   S.txs.push(x); save();
   ui.draft=null; ui.modal={type:"receipt",id:x.id}; ui.view="home"; render(); toast(t("created"));
@@ -1132,7 +1196,12 @@ document.addEventListener("click",e=>{
       S.customers=S.customers.filter(c=>!c.example); S.txs=S.txs.filter(x=>!x.example); S.products=S.products.filter(p=>!p.example);
       S.counter=S.txs.reduce((m,x)=>Math.max(m,x.no),0); save(); render(); toast(t("examples_gone")); break;
     case "remind": ui.modal={type:"remind",id}; renderModal(); break;
-    case "copy-msg": { const c=custById(id); copyText(t("msg_remind",c.name,S.shop.name,money(balanceOf(c.id)))); break; }
+    case "copy-msg": { const c=custById(id); copyText(remindText(c)); break; }
+    case "statement": ui.modal={type:"statement",id}; renderModal(); break;
+    case "copy-statement": { const c=custById(id); if(c) copyText(statementText(c)); break; }
+    case "add-expense": ui.modal={type:"expense"}; renderModal(); break;
+    case "save-expense": saveExpense(); break;
+    case "del-expense": if(confirm(t("exp_del_q"))){ S.expenses=(S.expenses||[]).filter(e=>e.id!==id); save(); render(); } break;
     case "open-cust": ui.custId=id; render(); window.scrollTo(0,0); break;
     case "back-cust": ui.custId=null; render(); break;
     case "add-cust": ui.modal={type:"newcust"}; renderModal(); break;
@@ -1248,7 +1317,7 @@ document.addEventListener("change",e=>{
 });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&ui.modal){ ui.modal=null; renderModal(); } if(e.key==="Enter"&&e.target.id==="lk-pin") doUnlock(); });
 
-function blank(){ return {v:1,updated:Date.now(),counter:0,shop:{name:"Ma Boutique",phone:"",country:"BJ",lang:"fr",footer:"",lateDays:14,staffOn:false,recovery:""},customers:[],txs:[],products:[],staff:[]}; }
+function blank(){ return {v:1,updated:Date.now(),counter:0,shop:{name:"Ma Boutique",phone:"",country:"BJ",lang:"fr",footer:"",lateDays:14,staffOn:false,recovery:""},customers:[],txs:[],products:[],staff:[],expenses:[]}; }
 
 /* ---------- boot ---------- */
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}

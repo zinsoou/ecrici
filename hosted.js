@@ -88,6 +88,7 @@ const G = {
     wa: "Écrire sur WhatsApp", check: "Vérifier maintenant", out: "Se déconnecter", backup: "Sauvegarder mes données",
     off_t: "Pas de connexion", off_p: "Impossible de vérifier votre abonnement pour l'instant. Réessayez avec internet.", retry: "Réessayer",
     err_t: "Compte introuvable", err_p: "Votre compte n'est pas encore prêt. Réessayez dans un instant.",
+    chpw: "Changer le mot de passe", npw: "Nouveau mot de passe", npw2: "Répétez le mot de passe", chpw_go: "Enregistrer le mot de passe", chpw_ok: "Mot de passe changé", chpw_mismatch: "Les deux mots de passe sont différents.", chpw_weak: "6 caractères minimum.", chpw_fail: "Impossible pour le moment. Réessayez avec internet.", chpw_login: "Pour votre sécurité, déconnectez-vous puis reconnectez-vous avant de changer le mot de passe.",
     forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
     wa_new: (n, p) => `Bonjour, je viens de créer mon compte Ecrici pour la boutique ${n} (${p}). Merci de l'activer.`,
     wa_renew: (n, p) => `Bonjour, je souhaite renouveler mon abonnement Ecrici pour la boutique ${n} (${p}).`,
@@ -108,6 +109,7 @@ const G = {
     wa: "Message on WhatsApp", check: "Check now", out: "Log out", backup: "Back up my data",
     off_t: "No connection", off_p: "We can't check your subscription right now. Try again with internet.", retry: "Try again",
     err_t: "Account not found", err_p: "Your account isn't ready yet. Try again in a moment.",
+    chpw: "Change password", npw: "New password", npw2: "Repeat the password", chpw_go: "Save password", chpw_ok: "Password changed", chpw_mismatch: "The two passwords are different.", chpw_weak: "6 characters minimum.", chpw_fail: "Not possible right now. Try again with internet.", chpw_login: "For your security, log out and log in again before changing the password.",
     forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
     wa_new: (n, p) => `Hello, I just created my Ecrici account for the shop ${n} (${p}). Please activate it.`,
     wa_renew: (n, p) => `Hello, I would like to renew my Ecrici subscription for the shop ${n} (${p}).`,
@@ -350,6 +352,18 @@ async function logout(fromGate) {
   location.reload();
 }
 
+async function changePassword() {
+  const a = document.getElementById("lg-npw"), c = document.getElementById("lg-npw2"); if (!a || !c) return;
+  if (a.value.length < 6) { toast(g("chpw_weak")); return; }
+  if (a.value !== c.value) { toast(g("chpw_mismatch")); return; }
+  try {
+    const r = await api("/auth/v1/user", { method: "PUT", body: { password: a.value } });
+    if (r.ok) { a.value = ""; c.value = ""; toast(g("chpw_ok")); }
+    else if (/reauth|recent|login/i.test(JSON.stringify(r.json || {}))) toast(g("chpw_login"));
+    else toast(r.status === 422 ? g("chpw_weak") : g("chpw_fail"));
+  } catch (e) { toast(g("chpw_fail")); }
+}
+
 /* ---------- Settings: account block ---------- */
 const baseSettings = window.viewSettings;
 window.viewSettings = function () {
@@ -360,11 +374,16 @@ window.viewSettings = function () {
   return baseSettings() + `<section class="sec"><h2>${esc(g("acct"))}</h2><div class="card form">
     <div class="note" style="margin:0">${esc(a.phone ? "+" + a.phone : "")}${until ? " · " + esc(g("until", until)) : ""}<br>${esc(dirty ? g("sync_wait") : g("sync_ok"))}</div>
     ${w ? `<a class="btn" href="${w}" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">${esc(g("help"))}</a>` : ""}
+    <div class="field"><label for="lg-npw">${esc(g("chpw"))}</label><input id="lg-npw" type="password" autocomplete="new-password" placeholder="${esc(g("npw"))}"></div>
+    <div class="field"><input id="lg-npw2" type="password" autocomplete="new-password" placeholder="${esc(g("npw2"))}" aria-label="${esc(g("npw2"))}"></div>
+    <button class="btn" data-lg-act="chpw">${esc(g("chpw_go"))}</button>
     <button class="btn danger" data-lg-act="logout">${esc(g("out"))}</button></div></section>`;
 };
 document.addEventListener("click", e => {
   const b = e.target.closest && e.target.closest("[data-lg-act]"); if (!b) return;
-  e.stopPropagation(); if (b.dataset.lgAct === "logout") logout(false);
+  e.stopPropagation();
+  if (b.dataset.lgAct === "logout") logout(false);
+  else if (b.dataset.lgAct === "chpw") changePassword();
 }, true);
 
 /* ---------- start ---------- */

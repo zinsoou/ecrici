@@ -47,7 +47,7 @@ const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
 const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
 let sess=null; try{ sess=JSON.parse(lsGet(SK)); }catch(e){}
-let shops=[], q="", filter="all", err="", msg="", lastEmail="";
+let shops=[], q="", filter="all", err="", msg="", msgLink="", lastEmail="";
 
 async function http(path,o){
   o=o||{};
@@ -98,7 +98,7 @@ function draw(){
     <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>
     <input id="q" placeholder="Search name or phone" value="${esc(q)}">
     <div class="row">${["all","pending","active","expired","suspended"].map(k=>`<button data-f="${k}" class="${filter===k?"p":""}">${k}</button>`).join("")}</div>
-    <div class="err" id="er">${esc(err)}</div>${msg?`<div class="muted">${esc(msg)}</div>`:""}
+    <div class="err" id="er">${esc(err)}</div>${msg?`<div class="muted">${esc(msg)}${msgLink?` <a href="${esc(msgLink)}" target="_blank" rel="noopener">Send on WhatsApp</a>`:""}</div>`:""}
     ${list.map(card).join("")||`<p class="muted">No shops here yet.</p>`}`;
   $("#out").onclick=()=>{ sess=null; lsDel(SK); err=""; login(); };
   $("#q").oninput=e=>{ q=e.target.value; const pos=e.target.selectionStart; draw(); const n=$("#q"); n.focus(); n.setSelectionRange(pos,pos); };
@@ -113,6 +113,7 @@ function card(s){
     <div class="row">${st==="pending"?`<button class="p" data-id="${esc(s.id)}" data-a="trial">Approve · 7 days</button>`:""}
       <button data-id="${esc(s.id)}" data-a="m1">+1 month</button><button data-id="${esc(s.id)}" data-a="m3">+3 months</button><button data-id="${esc(s.id)}" data-a="m12">+12 months</button></div>
     <div class="row">${wa?`<a class="b" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`:""}
+      <button data-id="${esc(s.id)}" data-a="pw">Reset password</button>
       ${s.status==="suspended"?`<button data-id="${esc(s.id)}" data-a="react">Reactivate</button>`:`<button class="d" data-id="${esc(s.id)}" data-a="susp">Suspend</button>`}</div></div>`;
 }
 function addTo(base,a){
@@ -122,11 +123,23 @@ function addTo(base,a){
 }
 async function act(id,a){
   const s=shops.find(x=>x.id===id); if(!s) return;
+  if(a==="pw"){
+    const def=String(Math.floor(100000+Math.random()*900000));
+    const np=prompt("New password for "+(s.name||s.phone)+" (6 characters or more). Send it to the shop afterwards:",def);
+    if(np===null) return;
+    err=""; msg=""; msgLink="";
+    if(np.length<6){ err="Password must be at least 6 characters."; draw(); return; }
+    const r=await api("/rest/v1/rpc/admin_set_password",{method:"POST",body:{target:id,new_password:np}});
+    if(!r.ok){ err=r.status===401?"Session ended. Log in again.":((r.json&&r.json.message)||"Not saved")+(r.status===404?" (run upgrade-password-reset.sql in Supabase first)":""); draw(); return; }
+    msg="Password changed for "+(s.name||s.phone)+". New password: "+np+" ";
+    msgLink=s.phone?"https://wa.me/"+String(s.phone).replace(/\D/g,"")+"?text="+encodeURIComponent("Hello, your new Ecrici password is: "+np+". You can change it in Settings, Account."):"";
+    draw(); return;
+  }
   let body;
   if(a==="susp"){ if(!confirm("Suspend "+(s.name||s.phone)+"?")) return; body={status:"suspended"}; }
   else if(a==="react"){ body={status:"active"}; }
   else { const base=(s.status==="active"&&s.paid_until&&s.paid_until>today())?s.paid_until:today(); body={status:"active",paid_until:addTo(base,a)}; }
-  err=""; msg="";
+  err=""; msg=""; msgLink="";
   const r=await api("/rest/v1/shops?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{Prefer:"return=representation"},body});
   if(!r.ok||!Array.isArray(r.json)||!r.json.length){ err=r.status===401?"Session ended. Log in again.":"Not saved. This account may not be an admin (see the guide)."; draw(); return; }
   Object.assign(s,r.json[0]); msg="Saved: "+(s.name||s.phone); draw();
