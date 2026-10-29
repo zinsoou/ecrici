@@ -238,6 +238,8 @@ const T = {
     bc_fill:"Remplacez les crochets [ ] avant d'envoyer.",bc_nophone:"sans numéro",bc_sent:"Ouvert ✓",bc_open:"WhatsApp",bc_copy:"Copier le message (pour Statut ou groupe)",
     bc_none:"Aucun client dans ce groupe.",bc_progress:(a,b)=>`${a} sur ${b} ouverts`,
     load_examples:"Charger des exemples",examples_loaded:"Exemples chargés",empty_home:"Il n'y a encore rien ici. Chargez des exemples pour voir comment l'app fonctionne, ou ajoutez votre premier client.",
+    start_t:"Pour commencer",start_1:"1. Ajoutez vos produits",start_2:"2. Enregistrez une vente",start_3:"3. Voyez qui vous doit",start_hide:"Masquer",
+    inst_txt:"Installez Ecrici sur votre téléphone : menu ⋮ du navigateur, puis « Ajouter à l'écran d'accueil » ou « Installer l'application ».",inst_btn:"Installer",inst_later:"Plus tard",
     tab_rep:"Bilan",reports:"Bilan",set_btn:"Réglages",p_day:"Jour",p_week:"Semaine",p_month:"Mois",p_year:"Année",
     rep_sales:"Ventes",rep_collected:"Encaissé",rep_credit:"Crédit donné",rep_debtpaid:"Dettes payées",rep_count:"Nombre de ventes",rep_profit:"Bénéfice",
     rep_profit_note:(n)=>`Calculé sur ${n} % des ventes (produits avec prix d'achat).`,rep_no_profit:"Ajoutez le prix d'achat de vos produits pour voir le bénéfice.",
@@ -302,6 +304,8 @@ const T = {
     bc_fill:"Replace the [ ] brackets before sending.",bc_nophone:"no number",bc_sent:"Opened ✓",bc_open:"WhatsApp",bc_copy:"Copy the message (for Status or a group)",
     bc_none:"No customers in this group.",bc_progress:(a,b)=>`${a} of ${b} opened`,
     load_examples:"Load examples",examples_loaded:"Examples loaded",empty_home:"Nothing here yet. Load examples to see how the app works, or add your first customer.",
+    start_t:"Getting started",start_1:"1. Add your products",start_2:"2. Record a sale",start_3:"3. See who owes you",start_hide:"Hide",
+    inst_txt:"Install Ecrici on your phone: browser menu ⋮, then “Add to Home screen” or “Install app”.",inst_btn:"Install",inst_later:"Later",
     tab_rep:"Reports",reports:"Reports",set_btn:"Settings",p_day:"Day",p_week:"Week",p_month:"Month",p_year:"Year",
     rep_sales:"Sales",rep_collected:"Collected",rep_credit:"Credit given",rep_debtpaid:"Debts paid",rep_count:"Number of sales",rep_profit:"Profit",
     rep_profit_note:(n)=>`Based on ${n}% of sales (products with a cost price).`,rep_no_profit:"Add a cost price to your products to see profit.",
@@ -545,6 +549,16 @@ function render(){
   if(v==="sale") updateSaleTotals();
 }
 
+let deferredInstall=null;
+function canInstall(){
+  try{ if(window.self!==window.top) return false; }catch(e){ return false; }
+  if(!/^https?:$/.test(location.protocol)) return false;
+  try{ if(matchMedia("(display-mode: standalone)").matches||navigator.standalone) return false; }catch(e){}
+  try{ if(localStorage.getItem("ecrici-install-off")) return false; }catch(e){}
+  return true;
+}
+window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredInstall=e; if(S&&ui.view==="home") render(); });
+window.addEventListener("appinstalled",()=>{ deferredInstall=null; try{localStorage.setItem("ecrici-install-off","1");}catch(e){} if(S) render(); });
 function viewHome(){
   const tk=todayKey();
   const day=S.txs.filter(x=>dkey(x.date)===tk&&!x.void);
@@ -563,7 +577,10 @@ function viewHome(){
     const days=lb?ageDays(lb):999;
     if(since>=30||(since>=1&&days>=7)) h+=`<div class="banner"><span>${t("backup_banner",since)}</span><button class="btn small primary" data-act="backup-now">${t("backup_now")}</button></div>`;
   }
-  if(!S.customers.length&&!S.txs.length&&!S.products.length) h+=`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`;
+  if(isOwner()&&canInstall()) h+=`<div class="banner"><span>${t("inst_txt")}</span><span style="display:flex;gap:6px">${deferredInstall?`<button class="btn small primary" data-act="install-app">${t("inst_btn")}</button>`:""}<button class="btn small" data-act="install-off">${t("inst_later")}</button></span></div>`;
+  const startOn=isOwner()&&!S.shop.hintOff&&!S.txs.some(x=>!x.example);
+  if(!startOn&&!S.customers.length&&!S.txs.length&&!S.products.length) h+=`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`;
+  if(startOn) h+=`<section class="sec"><h2>${t("start_t")}<button class="btn small ghost" data-act="hint-off">${t("start_hide")}</button></h2><div class="card form"><button class="btn" data-act="goto" data-to="stock">${t("start_1")}</button><button class="btn" data-act="goto" data-to="sale">${t("start_2")}</button><button class="btn" data-act="goto" data-to="cust">${t("start_3")}</button>${!S.customers.length&&!S.txs.length&&!S.products.length?`<button class="btn small ghost" data-act="load-examples" style="justify-self:start">${t("load_examples")}</button>`:""}</div></section>`;
   h+=`<section class="sec"><h2>${t("today")}<span>${new Date().toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{weekday:"long",day:"numeric",month:"long"})}</span></h2>
     <div class="sum">
       <div class="card"><div class="lbl">${t("sold")}</div><div class="val num">${money(sold)}</div></div>
@@ -1166,6 +1183,10 @@ document.addEventListener("click",e=>{
       const v=($("#lk-rec")||{}).value; if(v&&S.shop.recovery&&v.trim()===S.shop.recovery){ S.shop.staffOn=false; S.shop.recovery=""; ui.lockForgot=false; save(); render(); }
       else { $("#lk-err").textContent=t("reset_wrong"); } break; }
     case "load-examples": loadExamples(); break;
+    case "hint-off": S.shop.hintOff=true; save(); render(); break;
+    case "install-off": try{localStorage.setItem("ecrici-install-off","1");}catch(x){} render(); break;
+    case "goto": ui.view=el.dataset.to; ui.custId=null; render(); window.scrollTo(0,0); break;
+    case "install-app": if(deferredInstall){ const d=deferredInstall; deferredInstall=null; try{ d.prompt(); d.userChoice.then(()=>render(),()=>render()); }catch(x){ render(); } } break;
     case "bc-open": ui.view="bc"; render(); window.scrollTo(0,0); break;
     case "bc-back": ui.view="cust"; render(); break;
     case "bc-tpl": bcState().text=BC_TPL[L()][el.dataset.k]; render(); break;
