@@ -114,7 +114,8 @@ function card(s){
       <button data-id="${esc(s.id)}" data-a="m1">+1 month</button><button data-id="${esc(s.id)}" data-a="m3">+3 months</button><button data-id="${esc(s.id)}" data-a="m12">+12 months</button></div>
     <div class="row">${wa?`<a class="b" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`:""}
       <button data-id="${esc(s.id)}" data-a="pw">Reset password</button>
-      ${s.status==="suspended"?`<button data-id="${esc(s.id)}" data-a="react">Reactivate</button>`:`<button class="d" data-id="${esc(s.id)}" data-a="susp">Suspend</button>`}</div></div>`;
+      ${s.status==="suspended"?`<button data-id="${esc(s.id)}" data-a="react">Reactivate</button>`:`<button class="d" data-id="${esc(s.id)}" data-a="susp">Suspend</button>`}
+      ${s.status==="suspended"?`<button class="d" data-id="${esc(s.id)}" data-a="del">Delete forever</button>`:""}</div></div>`;
 }
 function addTo(base,a){
   const d=new Date(base+"T12:00:00Z");
@@ -134,6 +135,16 @@ async function act(id,a){
     msg="Password changed for "+(s.name||s.phone)+". New password: "+np+" ";
     msgLink=s.phone?"https://wa.me/"+String(s.phone).replace(/\D/g,"")+"?text="+encodeURIComponent("Hello, your new Ecrici password is: "+np+". You can change it in Settings, Account."):"";
     draw(); return;
+  }
+  if(a==="del"){
+    const code=String(s.phone||"").slice(-4);
+    const t=prompt("DELETE FOREVER: "+(s.name||s.phone)+"\nAll their data will be lost and this cannot be undone.\nType the last 4 digits of their number ("+code+") to confirm:");
+    if(t===null) return;
+    err=""; msg=""; msgLink="";
+    if(t.trim()!==code){ err="Not deleted: the digits did not match."; draw(); return; }
+    const r=await api("/rest/v1/rpc/admin_delete_shop",{method:"POST",body:{target:id}});
+    if(!r.ok){ err=r.status===401?"Session ended. Log in again.":((r.json&&r.json.message)||"Not deleted")+(r.status===404?" (run upgrade-delete-shop.sql in Supabase first)":""); draw(); return; }
+    shops=shops.filter(x=>x.id!==id); msg="Deleted: "+(s.name||s.phone); draw(); return;
   }
   let body;
   if(a==="susp"){ if(!confirm("Suspend "+(s.name||s.phone)+"?")) return; body={status:"suspended"}; }
