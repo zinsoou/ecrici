@@ -217,7 +217,7 @@ const T = {
     send_reminder:"Message de rappel",reminder_hint:"Vérifiez le texte, puis envoyez-le par WhatsApp ou SMS. Rien n'est envoyé automatiquement.",
     msg_remind:(n,s,a)=>`Bonjour ${n}, c'est ${s}. Votre solde chez nous est de ${a}. Merci de passer le régler quand vous pouvez. Merci !`,
     msg_receipt_intro:(n)=>`Bonjour ${n}, voici votre reçu :`,
-    settings:"Réglages",shop_name:"Nom de la boutique",shop_phone:"Téléphone de la boutique",country:"Pays",language:"Langue",
+    settings:"Réglages",shop_name:"Nom de la boutique",shop_phone:"Téléphone de la boutique",shop_addr:"Adresse (affichée sur les reçus)",country:"Pays",language:"Langue",
     footer:"Message en bas du reçu",late_after:"Relancer après (jours)",save:"Enregistrer",saved_ok:"Enregistré",
     backup:"Sauvegarde",backup_note:"Vos données sont gardées dans votre compte si vous êtes connecté, sinon sur cet appareil. Faites une copie de temps en temps.",
     export_json:"Sauvegarde complète",export_csv:"Exporter en tableau (CSV)",import:"Restaurer une sauvegarde",imported:"Sauvegarde restaurée",bad_file:"Fichier non reconnu.",
@@ -287,7 +287,7 @@ const T = {
     send_reminder:"Reminder message",reminder_hint:"Check the text, then send it by WhatsApp or SMS. Nothing is sent automatically.",
     msg_remind:(n,s,a)=>`Hello ${n}, this is ${s}. Your balance with us is ${a}. Please come by and settle it when you can. Thank you!`,
     msg_receipt_intro:(n)=>`Hello ${n}, here is your receipt:`,
-    settings:"Settings",shop_name:"Shop name",shop_phone:"Shop phone",country:"Country",language:"Language",
+    settings:"Settings",shop_name:"Shop name",shop_phone:"Shop phone",shop_addr:"Address (shown on receipts)",country:"Country",language:"Language",
     footer:"Receipt footer message",late_after:"Remind after (days)",save:"Save",saved_ok:"Saved",
     backup:"Backup",backup_note:"Your data is kept in your account when you are signed in, otherwise on this device. Make a copy now and then.",
     export_json:"Full backup",export_csv:"Export as spreadsheet (CSV)",import:"Restore a backup",imported:"Backup restored",bad_file:"File not recognised.",
@@ -1004,6 +1004,7 @@ function viewSettings(){
       <div class="field"><label for="s-lang">${t("language")}</label><select id="s-lang"><option value="fr" ${s.lang==="fr"?"selected":""}>Français</option><option value="en" ${s.lang==="en"?"selected":""}>English</option></select></div>
     </div>
     <p class="note" style="margin:0">${t("country_note")}</p>
+    <div class="field"><label for="s-addr">${t("shop_addr")}</label><input id="s-addr" value="${esc(s.address||"")}" autocomplete="off"></div>
     <div class="field"><label for="s-footer">${t("footer")}</label><input id="s-footer" value="${esc(s.footer)}" placeholder="${esc(t("default_footer"))}" autocomplete="off"></div>
     <div class="field"><label for="s-late">${t("late_after")}</label><input id="s-late" value="${esc(s.lateDays)}" inputmode="numeric"></div>
     <button class="btn primary" data-act="save-settings">${t("save")}</button>
@@ -1024,7 +1025,7 @@ const pad4=n=>String(n).padStart(4,"0");
 const docTitle=(x,kind)=>`${kind==="invoice"?t("invoice"):t("receipt")} ${t("receipt_no")} ${pad4(x.no)}`;
 function receiptLines(x,kind){
   kind=kind||"receipt"; const sh=S.shop; const out=[];
-  out.push(sh.name.toUpperCase()); if(sh.phone) out.push(sh.phone);
+  out.push(sh.name.toUpperCase()); if(sh.phone) out.push(sh.phone); if(sh.address) out.push(sh.address);
   out.push(docTitle(x,kind),fmtDate(x.date)); if(x.void) out.push("*** "+t("cancelled").toUpperCase()+" ***"); out.push("");
   out.push(`${t("customer")}: ${custName(x.cust)}`);
   if(x.by) out.push(`${t("served_by")}: ${x.by}`);
@@ -1055,7 +1056,7 @@ function ticketHtml(x,kind){
   }else{
     rows=`<table><tbody><tr class="big"><td>${t("payment")} · ${t(x.method||"cash")}</td><td class="r">${money(x.amount)}</td></tr></tbody></table>`;
   }
-  return `<div class="ticket"><h3>${esc(sh.name)}</h3>${sh.phone?`<div class="c">${esc(sh.phone)}</div>`:""}
+  return `<div class="ticket"><h3>${esc(sh.name)}</h3>${sh.phone?`<div class="c">${esc(sh.phone)}</div>`:""}${sh.address?`<div class="c">${esc(sh.address)}</div>`:""}
     <div class="c">${docTitle(x,kind)}</div><div class="c">${fmtDate(x.date)}</div>${x.void?`<div class="c" style="color:var(--owed);font-weight:500">— ${t("cancelled").toUpperCase()} —</div>`:""}
     <div style="background:var(--card);margin-top:8px">${t("customer")}: ${esc(custName(x.cust))}</div>
     ${x.by?`<div style="background:var(--card)">${t("served_by")}: ${esc(x.by)}</div>`:""}${rows}
@@ -1298,7 +1299,7 @@ document.addEventListener("click",e=>{
     case "close-modal": ui.modal=null; renderModal(); break;
     case "save-settings": {
       const s=S.shop, oldC=s.country;
-      s.name=$("#s-name").value.trim()||"Ma Boutique"; s.phone=$("#s-phone").value.trim();
+      s.name=$("#s-name").value.trim()||"Ma Boutique"; s.phone=$("#s-phone").value.trim(); s.address=($("#s-addr").value||"").trim();
       s.country=$("#s-country").value; s.lang=$("#s-lang").value; s.footer=$("#s-footer").value.trim();
       s.lateDays=Math.max(1,parseInt($("#s-late").value,10)||14);
       if(oldC!==s.country&&!$("#s-lang").dataset.touched) {}
