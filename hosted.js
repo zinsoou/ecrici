@@ -4,7 +4,8 @@
 "use strict";
 const hideStyle = document.getElementById("lg-hide");
 const CFG = window.ECRICI || {};
-if (!CFG.url || !CFG.key || /PASTE|COLLEZ/i.test(CFG.url + CFG.key)) { if (hideStyle) hideStyle.remove(); return; }
+if (!CFG.url || !CFG.key || /PASTE|COLLEZ/i.test(CFG.url + CFG.key)) { if (hideStyle) hideStyle.remove();
+document.documentElement.setAttribute("translate", "no"); { const m = document.createElement("meta"); m.name = "google"; m.content = "notranslate"; document.head.appendChild(m); } return; }
 const BASE = CFG.url.replace(/\/+$/, "");
 const K = { sess: "ecrici-session", acct: "ecrici-acct", owner: "ecrici-owner", sync: "ecrici-synced" };
 
@@ -89,7 +90,7 @@ const G = {
     off_t: "Pas de connexion", off_p: "Impossible de vérifier votre abonnement pour l'instant. Réessayez avec internet.", retry: "Réessayer",
     err_t: "Compte introuvable", err_p: "Votre compte n'est pas encore prêt. Réessayez dans un instant.",
     chpw: "Changer le mot de passe", npw: "Nouveau mot de passe", npw2: "Répétez le mot de passe", chpw_go: "Enregistrer le mot de passe", chpw_ok: "Mot de passe changé", chpw_mismatch: "Les deux mots de passe sont différents.", chpw_weak: "6 caractères minimum.", chpw_fail: "Impossible pour le moment. Réessayez avec internet.", chpw_login: "Pour votre sécurité, déconnectez-vous puis reconnectez-vous avant de changer le mot de passe.",
-    inst: "Installer l'application", forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
+    inst: "Installer l'application", hint_name: "Écrivez en MAJUSCULES, ex : BOUTIQUE DE VICTOR", hint_phone: "Chiffres seulement, sans le +. Ex :",  forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
     wa_new: (n, p) => `Bonjour, je viens de créer mon compte Ecrici pour la boutique ${n} (${p}). Merci de l'activer.`,
     wa_renew: (n, p) => `Bonjour, je souhaite renouveler mon abonnement Ecrici pour la boutique ${n} (${p}).`,
     acct: "Compte", until: d => `Actif jusqu'au ${d}`, sync_ok: "Synchronisé", sync_wait: "En attente de connexion", logout_q: "Se déconnecter ? Les données de cette boutique seront retirées de ce téléphone (elles restent dans votre compte).",
@@ -110,7 +111,7 @@ const G = {
     off_t: "No connection", off_p: "We can't check your subscription right now. Try again with internet.", retry: "Try again",
     err_t: "Account not found", err_p: "Your account isn't ready yet. Try again in a moment.",
     chpw: "Change password", npw: "New password", npw2: "Repeat the password", chpw_go: "Save password", chpw_ok: "Password changed", chpw_mismatch: "The two passwords are different.", chpw_weak: "6 characters minimum.", chpw_fail: "Not possible right now. Try again with internet.", chpw_login: "For your security, log out and log in again before changing the password.",
-    inst: "Install the app", forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
+    inst: "Install the app", hint_name: "Write in CAPITAL letters, e.g. VICTOR'S DRYCLEANER", hint_phone: "Digits only, no + sign. Example:",  forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
     wa_new: (n, p) => `Hello, I just created my Ecrici account for the shop ${n} (${p}). Please activate it.`,
     wa_renew: (n, p) => `Hello, I would like to renew my Ecrici subscription for the shop ${n} (${p}).`,
     acct: "Account", until: d => `Active until ${d}`, sync_ok: "Synced", sync_wait: "Waiting for connection", logout_q: "Log out? This shop's data will be removed from this phone (it stays in your account).",
@@ -118,6 +119,7 @@ const G = {
     price: CFG.priceText || ""
   }
 };
+const PH = { BJ: "01 97 00 00 11", NG: "0803 123 4567", GH: "024 123 4567", KE: "0712 345 678" };
 const g = (k, ...a) => { const v = G[lang()][k]; return typeof v === "function" ? v(...a) : v; };
 
 /* ---------- gate (full-screen screen shown until the account is valid) ---------- */
@@ -155,9 +157,9 @@ function drawGate() {
   } else if (gateKind === "auth") {
     const su = mode === "signup";
     h = head() + `<div class="card form"><h2>${esc(su ? g("signup") : g("login"))}</h2>
-      ${su ? `<div class="field"><label for="lg-name">${esc(g("shop"))}</label><input id="lg-name" value="${esc(form.name)}" autocomplete="organization"></div>` : ""}
+      ${su ? `<div class="field"><label for="lg-name">${esc(g("shop"))}</label><input id="lg-name" value="${esc(form.name)}" autocomplete="organization" autocapitalize="characters" placeholder="${esc(lang() === "fr" ? "BOUTIQUE DE VICTOR" : "VICTOR'S DRYCLEANER")}" style="text-transform:uppercase"><small style="opacity:.7;font-size:.8em">${esc(g("hint_name"))}</small></div>` : ""}
       <div class="field"><label for="lg-country">${esc(g("country"))}</label><select id="lg-country">${COUNTRY_OPTS()}</select></div>
-      <div class="field"><label for="lg-phone">${esc(g("phone"))}</label><input id="lg-phone" value="${esc(form.phone)}" inputmode="tel" autocomplete="tel"></div>
+      <div class="field"><label for="lg-phone">${esc(g("phone"))}</label><input id="lg-phone" value="${esc(form.phone)}" inputmode="tel" autocomplete="tel" placeholder="${esc(PH[form.country] || "")}"><small class="lg-hint" style="opacity:.7;font-size:.8em">${esc(g("hint_phone"))} ${esc(PH[form.country] || "")}</small></div>
       <div class="field"><label for="lg-pw">${esc(g("pw"))}</label><input id="lg-pw" type="password" autocomplete="${su ? "new-password" : "current-password"}"></div>
       <label class="lg-chk"><input type="checkbox" data-lg="showpw"> ${esc(g("show"))}</label>
       <div class="lg-err" id="lg-err" role="alert">${esc(authErrText)}</div>
@@ -200,7 +202,7 @@ gate.addEventListener("click", async e => {
   else if (act === "backup") { try { await backupNow(); } catch (x) {} }
   else if (act === "logout") logout(true);
 });
-gate.addEventListener("change", e => { if (e.target.id === "lg-country") { grab(); } });
+gate.addEventListener("change", e => { if (e.target.id === "lg-country") { grab(); drawGate(); } });
 gate.addEventListener("keydown", e => { if (e.key === "Enter" && gateKind === "auth" && e.target.tagName === "INPUT" && e.target.type !== "checkbox") submitAuth(); });
 function grab() {
   const v = id => { const el = gate.querySelector(id); return el ? el.value : null; };
@@ -226,19 +228,19 @@ async function submitAuth() {
   const id = canon(form.country, form.phone);
   authErrText = "";
   if (id.length < 10 || id.length > 15) authErrText = g("e_phone");
-  else if (su && !form.name.trim()) authErrText = g("e_name");
+  else if (su && !form.name.trim().toUpperCase()) authErrText = g("e_name");
   else if (pw.length < 6) authErrText = g("e_weak");
   if (authErrText) { drawGate(); return; }
   busyAuth = true; drawGate();
   try {
     let r;
-    if (su) r = await http("/auth/v1/signup", { method: "POST", body: { email: emailOf(id), password: pw, data: { name: form.name.trim(), phone: id, country: form.country } } });
+    if (su) r = await http("/auth/v1/signup", { method: "POST", body: { email: emailOf(id), password: pw, data: { name: form.name.trim().toUpperCase(), phone: id, country: form.country } } });
     else r = await http("/auth/v1/token?grant_type=password", { method: "POST", body: { email: emailOf(id), password: pw } });
     if (!r.ok) { authErrText = authMsg(r); }
     else if (!r.json || !r.json.access_token) { authErrText = g("e_confirm"); }
     else {
       sess = null; setSess(r.json);
-      if (su) { try { if (!S.shop.name || S.shop.name === "Ma Boutique") S.shop.name = form.name.trim(); S.shop.country = form.country; S.shop.phone = id; } catch (e) {} }
+      if (su) { try { if (!S.shop.name || S.shop.name === "Ma Boutique") S.shop.name = form.name.trim().toUpperCase(); S.shop.country = form.country; S.shop.phone = id; } catch (e) {} }
       busyAuth = false; await enter(); return;
     }
   } catch (e) { authErrText = e.offline ? g("offline") : g("e_other"); }
