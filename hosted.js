@@ -89,7 +89,7 @@ const G = {
     off_t: "Pas de connexion", off_p: "Impossible de vérifier votre abonnement pour l'instant. Réessayez avec internet.", retry: "Réessayer",
     err_t: "Compte introuvable", err_p: "Votre compte n'est pas encore prêt. Réessayez dans un instant.",
     chpw: "Changer le mot de passe", npw: "Nouveau mot de passe", npw2: "Répétez le mot de passe", chpw_go: "Enregistrer le mot de passe", chpw_ok: "Mot de passe changé", chpw_mismatch: "Les deux mots de passe sont différents.", chpw_weak: "6 caractères minimum.", chpw_fail: "Impossible pour le moment. Réessayez avec internet.", chpw_login: "Pour votre sécurité, déconnectez-vous puis reconnectez-vous avant de changer le mot de passe.",
-    forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
+    inst: "Installer l'application", forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
     wa_new: (n, p) => `Bonjour, je viens de créer mon compte Ecrici pour la boutique ${n} (${p}). Merci de l'activer.`,
     wa_renew: (n, p) => `Bonjour, je souhaite renouveler mon abonnement Ecrici pour la boutique ${n} (${p}).`,
     acct: "Compte", until: d => `Actif jusqu'au ${d}`, sync_ok: "Synchronisé", sync_wait: "En attente de connexion", logout_q: "Se déconnecter ? Les données de cette boutique seront retirées de ce téléphone (elles restent dans votre compte).",
@@ -110,7 +110,7 @@ const G = {
     off_t: "No connection", off_p: "We can't check your subscription right now. Try again with internet.", retry: "Try again",
     err_t: "Account not found", err_p: "Your account isn't ready yet. Try again in a moment.",
     chpw: "Change password", npw: "New password", npw2: "Repeat the password", chpw_go: "Save password", chpw_ok: "Password changed", chpw_mismatch: "The two passwords are different.", chpw_weak: "6 characters minimum.", chpw_fail: "Not possible right now. Try again with internet.", chpw_login: "For your security, log out and log in again before changing the password.",
-    forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
+    inst: "Install the app", forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
     wa_new: (n, p) => `Hello, I just created my Ecrici account for the shop ${n} (${p}). Please activate it.`,
     wa_renew: (n, p) => `Hello, I would like to renew my Ecrici subscription for the shop ${n} (${p}).`,
     acct: "Account", until: d => `Active until ${d}`, sync_ok: "Synced", sync_wait: "Waiting for connection", logout_q: "Log out? This shop's data will be removed from this phone (it stays in your account).",
@@ -145,6 +145,8 @@ const shopRow = () => jget(K.acct) || {};
 const waLink = txt => CFG.adminWhatsapp ? `https://wa.me/${String(CFG.adminWhatsapp).replace(/\D/g, "")}?text=${encodeURIComponent(txt)}` : "";
 const head = () => `<div class="lg-top"><button class="pill" data-lg="lang">${lang() === "fr" ? "FR → EN" : "EN → FR"}</button></div><h1>Ecrici</h1><p class="lg-tag">${esc(g("tag"))}</p>`;
 
+function canInst() { try { return typeof deferredInstall !== "undefined" && !!deferredInstall && !matchMedia("(display-mode: standalone)").matches; } catch (e) { return false; } }
+window.addEventListener("beforeinstallprompt", () => setTimeout(() => { if (gateKind === "auth") { grab(); drawGate(); } }, 50));
 function drawGate() {
   const a = shopRow();
   let h = "";
@@ -162,7 +164,8 @@ function drawGate() {
       <button class="btn primary" data-lg="submit" ${busyAuth ? "disabled" : ""}>${esc(busyAuth ? g("wait") : su ? g("signup") : g("login"))}</button>
       <button class="btn small ghost" data-lg="mode" style="justify-self:start">${esc(su ? g("have") : g("nohave"))}</button>
       ${!su && CFG.adminWhatsapp ? `<button class="btn small ghost" data-lg="forgot" style="justify-self:start">${esc(g("forgot"))}</button>` : ""}</div>
-      ${g("price") ? `<p class="lg-price">${esc(g("price"))}</p>` : ""}`;
+      ${g("price") ? `<p class="lg-price">${esc(g("price"))}</p>` : ""}
+      ${canInst() ? `<button class="btn" data-lg="install" style="margin-top:12px">${esc(g("inst"))}</button>` : ""}`;
   } else if (gateKind === "pending" || gateKind === "blocked") {
     const pend = gateKind === "pending";
     const w = waLink(pend ? g("wa_new", a.name || "", a.phone || "") : g("wa_renew", a.name || "", a.phone || ""));
@@ -193,6 +196,7 @@ gate.addEventListener("click", async e => {
   else if (act === "showpw") { const p = gate.querySelector("#lg-pw"); if (p) p.type = b.checked ? "text" : "password"; }
   else if (act === "submit") submitAuth();
   else if (act === "forgot") { grab(); let id = ""; try { id = form.phone ? canon(form.country, form.phone) : ""; } catch (x) {} window.open(waLink(g("wa_pw", id ? "+" + id : "")), "_blank"); }
+  else if (act === "install") { if (canInst()) { const d = deferredInstall; deferredInstall = null; try { d.prompt(); d.userChoice.then(() => drawGate(), () => drawGate()); } catch (x) { drawGate(); } } }
   else if (act === "check") enter();
   else if (act === "backup") { try { await backupNow(); } catch (x) {} }
   else if (act === "logout") logout(true);
