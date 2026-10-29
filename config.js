@@ -4,5 +4,5 @@ window.ECRICI = {
   key: "sb_publishable_DNnsOolSFyCAyq25ZobUbw_CRg1RhXs",
   adminWhatsapp: "2290146925057",                 // your WhatsApp number with country code, digits only
   emailDomain: "ecrici.app",                 // leave as is unless the guide tells you to change it
-  priceText: "1 500 FCFA / mois"                // shown on the sign-up and renewal screens
+  priceText: "1000 FCFA / mois"                // shown on the sign-up and renewal screens
 };
