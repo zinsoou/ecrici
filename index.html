@@ -241,7 +241,7 @@ const T = {
     start_t:"Pour commencer",start_1:"1. Ajoutez vos produits",start_2:"2. Enregistrez une vente",start_3:"3. Voyez qui vous doit",start_hide:"Masquer",
     due_label:"À payer le (facultatif)",due_on:"Échéance",overdue_d:(n)=>`${n} j de retard`,next_due:"Prochaine échéance",
     msg_remind_due:(n,s,a,d)=>`Bonjour ${n}, c'est ${s}. Votre solde de ${a} était à payer le ${d}. Merci de passer le régler dès que possible. Merci !`,
-    exp_title:"Dépenses",exp_add:"Ajouter une dépense",exp_label:"Motif (loyer, transport…)",exp_amount:"Montant",exp_date:"Date",exp_none:"Aucune dépense sur cette période.",exp_total:"Dépenses",exp_net:"Bénéfice net",exp_net_note:"Bénéfice sur les articles avec prix d'achat, moins les dépenses.",exp_del_q:"Supprimer cette dépense ?",err_exp:"Écrivez le motif et un montant.",
+    exp_title:"Dépenses",exp_rep:"Répéter",exp_rep0:"Une seule fois",exp_rep1:"Chaque semaine",exp_rep2:"Chaque mois",exp_rep3:"Chaque année",exp_rules:"Dépenses qui se répètent",exp_stop_q:"Arrêter cette dépense répétée ? Les dépenses déjà ajoutées restent.",exp_w:"/ semaine",exp_m:"/ mois",exp_y:"/ an",exp_cash:"Argent reçu moins dépenses",exp_cash_note:"Argent encaissé (ventes + dettes payées) moins les dépenses. Marche pour tous les commerces.",exp_add:"Ajouter une dépense",exp_label:"Motif (loyer, transport…)",exp_amount:"Montant",exp_date:"Date",exp_none:"Aucune dépense sur cette période.",exp_total:"Dépenses",exp_net:"Bénéfice net",exp_net_note:"Bénéfice sur les articles avec prix d'achat, moins les dépenses.",exp_del_q:"Supprimer cette dépense ?",err_exp:"Écrivez le motif et un montant.",
     st_btn:"Relevé",st_title:"Relevé de compte",st_client:"Client",st_date:"Date",st_last:"Dernières opérations",st_sale:"Vente",st_pay:"Paiement",st_bal:"Solde dû",st_over:"Échéance dépassée depuis le",st_left:"reste",st_hint:"Vérifiez le texte, puis envoyez-le par WhatsApp. Rien n'est envoyé automatiquement.",
     inst_txt:"Installez Ecrici sur votre téléphone : menu ⋮ du navigateur, puis « Ajouter à l'écran d'accueil » ou « Installer l'application ».",inst_btn:"Installer",inst_later:"Plus tard",
     tab_rep:"Bilan",reports:"Bilan",set_btn:"Réglages",p_day:"Jour",p_week:"Semaine",p_month:"Mois",p_year:"Année",
@@ -311,7 +311,7 @@ const T = {
     start_t:"Getting started",start_1:"1. Add your products",start_2:"2. Record a sale",start_3:"3. See who owes you",start_hide:"Hide",
     due_label:"Pay by (optional)",due_on:"Due",overdue_d:(n)=>`${n} d overdue`,next_due:"Next due date",
     msg_remind_due:(n,s,a,d)=>`Hello ${n}, this is ${s}. Your balance of ${a} was due on ${d}. Please come by and settle it as soon as you can. Thank you!`,
-    exp_title:"Expenses",exp_add:"Add an expense",exp_label:"Reason (rent, transport…)",exp_amount:"Amount",exp_date:"Date",exp_none:"No expenses in this period.",exp_total:"Expenses",exp_net:"Net profit",exp_net_note:"Profit on items with a cost price, minus expenses.",exp_del_q:"Delete this expense?",err_exp:"Enter a reason and an amount.",
+    exp_title:"Expenses",exp_rep:"Repeat",exp_rep0:"Only once",exp_rep1:"Every week",exp_rep2:"Every month",exp_rep3:"Every year",exp_rules:"Repeating expenses",exp_stop_q:"Stop this repeating expense? Expenses already added stay.",exp_w:"/ week",exp_m:"/ month",exp_y:"/ year",exp_cash:"Money received minus expenses",exp_cash_note:"Cash collected (sales + debts paid) minus expenses. Works for every kind of business.",exp_add:"Add an expense",exp_label:"Reason (rent, transport…)",exp_amount:"Amount",exp_date:"Date",exp_none:"No expenses in this period.",exp_total:"Expenses",exp_net:"Net profit",exp_net_note:"Profit on items with a cost price, minus expenses.",exp_del_q:"Delete this expense?",err_exp:"Enter a reason and an amount.",
     st_btn:"Statement",st_title:"Account statement",st_client:"Customer",st_date:"Date",st_last:"Latest entries",st_sale:"Sale",st_pay:"Payment",st_bal:"Balance due",st_over:"Overdue since",st_left:"left",st_hint:"Check the text, then send it by WhatsApp. Nothing is sent automatically.",
     inst_txt:"Install Ecrici on your phone: browser menu ⋮, then “Add to Home screen” or “Install app”.",inst_btn:"Install",inst_later:"Later",
     tab_rep:"Reports",reports:"Reports",set_btn:"Settings",p_day:"Day",p_week:"Week",p_month:"Month",p_year:"Year",
@@ -395,7 +395,7 @@ function seed(){
   const products=[prod("Riz 25 kg",17500,12,3),prod("Huile 5 L",6500,2,3),prod("Sucre 1 kg",900,40,10),prod("Savon",350,0,10),prod("Ciment (sac)",5200,25,5)];
   return {v:1,updated:Date.now(),counter:no,
     shop:{name:"Ma Boutique",phone:"",country:"BJ",lang:"fr",footer:"",lateDays:14,staffOn:false,recovery:""},
-    customers:[a,b,c,d],txs,products,staff:[],expenses:[]};
+    customers:[a,b,c,d],txs,products,staff:[],expenses:[],expRules:[]};
 }
 function balanceOf(custId, uptoNo){
   let b=0;
@@ -433,7 +433,26 @@ function saveExpense(){
   const lab=($("#ex-label").value||"").trim(), amt=parseAmt($("#ex-amt").value), dv=$("#ex-date").value, er=$("#ex-err");
   if(!lab||amt<=0){ er.textContent=t("err_exp"); return; }
   const date=/^\d{4}-\d{2}-\d{2}$/.test(dv)?new Date(dv+"T12:00:00").toISOString():new Date().toISOString();
-  (S.expenses=S.expenses||[]).push({id:uid(),date,amount:amt,label:lab}); save(); ui.modal=null; render(); toast(t("created"));
+  const fq=($("#ex-rep")||{}).value||"0", dk=/^\d{4}-\d{2}-\d{2}$/.test(dv)?dv:todayKey();
+  const ex={id:uid(),date,amount:amt,label:lab}; (S.expenses=S.expenses||[]).push(ex);
+  if(fq!=="0"){ const f=fq==="1"?"week":fq==="2"?"month":"year"; const rule={id:uid(),label:lab,amount:amt,freq:f,anchor:dk,next:nextDue2(dk,f,dk)}; ex.rule=rule.id; (S.expRules=S.expRules||[]).push(rule); }
+  save(); ui.modal=null; render(); toast(t("created"));
+}
+function nextDue2(anchor,freq,cur){
+  const [ay,am,ad]=anchor.split("-").map(Number), [cy,cm,cd]=cur.split("-").map(Number);
+  let y=cy,m=cm,d=cd;
+  if(freq==="week"){ const x=new Date(cy,cm-1,cd+7); return dkey(x); }
+  if(freq==="month"){ m=cm+1; if(m>12){ m=1; y=cy+1; } } else { y=cy+1; m=am; }
+  const dim=new Date(y,m,0).getDate(); d=Math.min(ad,dim);
+  return y+"-"+String(m).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+}
+function applyRules(){
+  const tk=todayKey(); let ch=false;
+  for(const r of (S.expRules||[])){
+    let n=0;
+    while(r.next<=tk&&n<60){ (S.expenses=S.expenses||[]).push({id:uid(),date:new Date(r.next+"T12:00:00").toISOString(),amount:r.amount,label:r.label,rule:r.id}); r.next=nextDue2(r.anchor,r.freq,r.next); n++; ch=true; }
+  }
+  return ch;
 }
 function remindText(c){
   const o=overdueInfo(c.id);
@@ -497,7 +516,7 @@ async function initCloud(){
   }catch(e){ cloud=null; storeMode="device"; updateStatus(); }
 }
 function migrate(p){
-  p.products=p.products||[]; p.staff=p.staff||[]; p.expenses=p.expenses||[]; p.shop.staffOn=!!p.shop.staffOn; p.shop.recovery=p.shop.recovery||""; p.shop.lastBackup=p.shop.lastBackup||"";
+  p.products=p.products||[]; p.staff=p.staff||[]; p.expenses=p.expenses||[]; p.expRules=p.expRules||[]; p.shop.staffOn=!!p.shop.staffOn; p.shop.recovery=p.shop.recovery||""; p.shop.lastBackup=p.shop.lastBackup||"";
   if(p.shop.staffOn&&!p.staff.length) p.shop.staffOn=false;
   p.txs.forEach(x=>{ if(x.type==="sale") x.lines.forEach(l=>{ if(!("pid" in l)) l.pid=null; if(x.example&&l.c===undefined) l.c=EX_COST[l.d]||0; }); });
   p.products.forEach(q=>{ if(q.cost===undefined) q.cost=q.example?(EX_COST[q.name]||0):0; });
@@ -563,6 +582,7 @@ const icons={
 /* ---------- views ---------- */
 function render(){
   if(!S) return;
+  try{ if(applyRules()) save(); }catch(e){}
   document.documentElement.lang=L();
   if(S.shop.staffOn&&!me()){ ui.modal=null; $("#app").innerHTML=viewLock(); $("#tabs").innerHTML=""; $("#layer").innerHTML=""; return; }
   if((ui.view==="set"||ui.view==="rep")&&!isOwner()) ui.view="home";
@@ -884,9 +904,11 @@ function viewReports(){
     <div class="stat"><span>${t("rep_count")}</span><span class="num">${st.count}</span></div></div>`;
   h+=`<h2>${t("exp_title")}<button class="btn small primary" data-act="add-expense">${t("exp_add")}</button></h2><div class="card flush">
     <div class="stat"><span>${t("exp_total")}</span><span class="num" style="color:var(--owed)">${money(st.expenses)}</span></div>
+    <div class="stat"><span>${t("exp_cash")}</span><span class="num" style="color:${st.collected+st.debtPaid-st.expenses>=0?"var(--paid)":"var(--owed)"}">${money(st.collected+st.debtPaid-st.expenses)}</span></div>
     ${st.profitBase>0?`<div class="stat"><span>${t("exp_net")}</span><span class="num" style="color:${st.profit-st.expenses>=0?"var(--paid)":"var(--owed)"}">${money(st.profit-st.expenses)}</span></div>`:""}
     ${st.expList.length?st.expList.map(e=>`<div class="stat"><span>${esc(e.label)} <span class="note">· ${esc(new Date(e.date).toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{day:"2-digit",month:"short"}))}</span></span><span class="num">${money(e.amount)} <button class="x" data-act="del-expense" data-id="${e.id}" aria-label="×">×</button></span></div>`).join(""):`<div class="empty">${t("exp_none")}</div>`}</div>
-    ${st.profitBase>0?`<p class="note" style="margin:0">${t("exp_net_note")}</p>`:""}`;
+    <p class="note" style="margin:0">${t("exp_cash_note")}${st.profitBase>0?" "+t("exp_net_note"):""}</p>`;
+  if((S.expRules||[]).length) h+=`<h2>${t("exp_rules")}</h2><div class="card flush">${S.expRules.map(r=>`<div class="stat"><span>${esc(r.label)} <span class="note">· ${money(r.amount)} ${t(r.freq==="week"?"exp_w":r.freq==="month"?"exp_m":"exp_y")}</span></span><span class="num"><button class="x" data-act="stop-rule" data-id="${r.id}" aria-label="×">×</button></span></div>`).join("")}</div>`;
   if(!st.count){ h+=`<div class="card"><div class="empty">${t("rep_none")}</div></div>`; }
   else{
     const tp=Object.values(st.prod).sort((x,y)=>y.rev-x.rev).slice(0,5);
@@ -1088,6 +1110,7 @@ function renderModal(){
       <div class="field"><label for="ex-label">${t("exp_label")}</label><input id="ex-label" autocomplete="off"></div>
       <div class="grid2"><div class="field"><label for="ex-amt">${t("exp_amount")}</label><input id="ex-amt" inputmode="decimal" autocomplete="off"></div>
       <div class="field"><label for="ex-date">${t("exp_date")}</label><input id="ex-date" type="date" value="${todayKey()}"></div></div>
+      <div class="field"><label for="ex-rep">${t("exp_rep")}</label><select id="ex-rep"><option value="0">${t("exp_rep0")}</option><option value="1">${t("exp_rep1")}</option><option value="2">${t("exp_rep2")}</option><option value="3">${t("exp_rep3")}</option></select></div>
       <div class="err" id="ex-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-expense">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
   }else if(m.type==="payment"){
@@ -1201,6 +1224,7 @@ document.addEventListener("click",e=>{
     case "copy-statement": { const c=custById(id); if(c) copyText(statementText(c)); break; }
     case "add-expense": ui.modal={type:"expense"}; renderModal(); break;
     case "save-expense": saveExpense(); break;
+    case "stop-rule": if(confirm(t("exp_stop_q"))){ S.expRules=(S.expRules||[]).filter(r=>r.id!==id); save(); render(); } break;
     case "del-expense": if(confirm(t("exp_del_q"))){ S.expenses=(S.expenses||[]).filter(e=>e.id!==id); save(); render(); } break;
     case "open-cust": ui.custId=id; render(); window.scrollTo(0,0); break;
     case "back-cust": ui.custId=null; render(); break;
@@ -1317,7 +1341,7 @@ document.addEventListener("change",e=>{
 });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&ui.modal){ ui.modal=null; renderModal(); } if(e.key==="Enter"&&e.target.id==="lk-pin") doUnlock(); });
 
-function blank(){ return {v:1,updated:Date.now(),counter:0,shop:{name:"Ma Boutique",phone:"",country:"BJ",lang:"fr",footer:"",lateDays:14,staffOn:false,recovery:""},customers:[],txs:[],products:[],staff:[],expenses:[]}; }
+function blank(){ return {v:1,updated:Date.now(),counter:0,shop:{name:"Ma Boutique",phone:"",country:"BJ",lang:"fr",footer:"",lateDays:14,staffOn:false,recovery:""},customers:[],txs:[],products:[],staff:[],expenses:[],expRules:[]}; }
 
 /* ---------- boot ---------- */
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
