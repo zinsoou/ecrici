@@ -66,7 +66,7 @@ async function api(path, o) {
 /* ---------- phone number = login ---------- */
 function canon(country, raw) {
   const cc = COUNTRIES[country].cc; raw = String(raw || ""); let d = raw.replace(/\D/g, "");
-  if (/^\s*(\+|00)/.test(raw)) return d.replace(/^00/, "");
+  if (/^\s*(\+|00)/.test(raw)) { d = d.replace(/^00/, ""); if (country === "BJ" && d.startsWith("229") && d.length === 13 && d.slice(3, 5) === "01") d = "229" + d.slice(5); return d; }
   if (d.startsWith(cc) && d.length >= cc.length + 8) return d;
   if (country === "BJ") { if (d.length === 10 && d.startsWith("01")) d = d.slice(2); return cc + d; }
   return cc + d.replace(/^0+/, "");
@@ -143,7 +143,7 @@ let gateKind = "loading", mode = "login", form = { country: "BJ", phone: "", nam
 const COUNTRY_OPTS = () => Object.entries(COUNTRIES).map(([k, v]) => `<option value="${k}" ${form.country === k ? "selected" : ""}>${esc(v.name)} (+${v.cc})</option>`).join("");
 const shopRow = () => jget(K.acct) || {};
 const waLink = txt => CFG.adminWhatsapp ? `https://wa.me/${String(CFG.adminWhatsapp).replace(/\D/g, "")}?text=${encodeURIComponent(txt)}` : "";
-const head = () => `<div class="lg-top"><button class="pill" data-lg="lang">${lang() === "fr" ? "FR → EN" : "EN → FR"}</button></div><h1>Ecrici</h1><p class="lg-tag">${esc(g("tag"))}</p>`;
+const head = () => `<div class="lg-top"><button class="pill" data-lg="lang">${lang() === "fr" ? "FR → EN" : "EN → FR"}</button>${canInst() ? `<button class="pill" data-lg="install">${esc(g("inst"))}</button>` : ""}</div><h1>Ecrici</h1><p class="lg-tag">${esc(g("tag"))}</p>`;
 
 function canInst() { try { return typeof deferredInstall !== "undefined" && !!deferredInstall && !matchMedia("(display-mode: standalone)").matches; } catch (e) { return false; } }
 window.addEventListener("beforeinstallprompt", () => setTimeout(() => { if (gateKind === "auth") { grab(); drawGate(); } }, 50));
@@ -164,8 +164,7 @@ function drawGate() {
       <button class="btn primary" data-lg="submit" ${busyAuth ? "disabled" : ""}>${esc(busyAuth ? g("wait") : su ? g("signup") : g("login"))}</button>
       <button class="btn small ghost" data-lg="mode" style="justify-self:start">${esc(su ? g("have") : g("nohave"))}</button>
       ${!su && CFG.adminWhatsapp ? `<button class="btn small ghost" data-lg="forgot" style="justify-self:start">${esc(g("forgot"))}</button>` : ""}</div>
-      ${g("price") ? `<p class="lg-price">${esc(g("price"))}</p>` : ""}
-      ${canInst() ? `<button class="btn" data-lg="install" style="margin-top:12px">${esc(g("inst"))}</button>` : ""}`;
+      ${g("price") ? `<p class="lg-price">${esc(g("price"))}</p>` : ""}`;
   } else if (gateKind === "pending" || gateKind === "blocked") {
     const pend = gateKind === "pending";
     const w = waLink(pend ? g("wa_new", a.name || "", a.phone || "") : g("wa_renew", a.name || "", a.phone || ""));
