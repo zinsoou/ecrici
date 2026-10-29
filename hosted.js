@@ -159,7 +159,7 @@ function drawGate() {
   } else if (gateKind === "auth") {
     const su = mode === "signup";
     h = head() + `<div class="card form"><h2>${esc(su ? g("signup") : g("login"))}</h2>
-      ${su ? `<div class="field"><label for="lg-name">${esc(g("shop"))}</label><input id="lg-name" value="${esc(form.name)}" autocomplete="organization" autocapitalize="characters" placeholder="${esc(lang() === "fr" ? "BOUTIQUE DE VICTOR" : "VICTOR'S DRYCLEANER")}" style="text-transform:uppercase"><small style="opacity:.7;font-size:.8em">${esc(g("hint_name"))}</small></div>` : ""}
+      ${su ? `<div class="field"><label for="lg-name">${esc(g("shop"))}</label><input id="lg-name" value="${esc(form.name)}" autocomplete="organization" autocapitalize="characters" placeholder="${esc(lang() === "fr" ? "BOUTIQUE DE VICTOR" : "VICTOR'S DRYCLEANER")}" style="text-transform:uppercase"></div>` : ""}
       <div class="field"><label for="lg-country">${esc(g("country"))}</label><select id="lg-country">${COUNTRY_OPTS()}</select></div>
       <div class="field"><label for="lg-phone">${esc(g("phone"))}</label><input id="lg-phone" value="${esc(form.phone)}" inputmode="tel" autocomplete="tel" placeholder="${esc(PH[form.country] || "")}"><small class="lg-hint" style="opacity:.7;font-size:.8em">${esc(g("hint_phone"))} ${esc(PH[form.country] || "")}</small></div>
       <div class="field"><label for="lg-pw">${esc(g("pw"))}</label><input id="lg-pw" type="password" autocomplete="${su ? "new-password" : "current-password"}"></div>
