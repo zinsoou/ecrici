@@ -1,5 +1,5 @@
 /* Offline cache. Bump VERSION whenever you upload a new index.html. */
-const VERSION = "ecrici-v15";
+const VERSION = "ecrici-v16";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "config.js", "hosted.js"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => Promise.all(FILES.map(f => c.add(f).catch(() => {})))).then(() => self.skipWaiting()));

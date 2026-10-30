@@ -166,6 +166,7 @@ input[type=number]{font-family:var(--font-mono)}
 .ticket .bal{margin-top:10px;font-size:.88rem;color:var(--muted);display:flex;justify-content:space-between;gap:10px}
 .ticket .bal b{color:var(--ink)}
 .ticket .thanks{margin-top:16px;padding-top:12px;border-top:1px dashed var(--line);text-align:center;color:var(--muted);font-size:.9rem}
+.chk{display:flex;gap:10px;align-items:center;font-size:.95rem}.chk input{width:20px;height:20px}
 .msg{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.92rem}
 a.btn{text-decoration:none;display:inline-flex;align-items:center;color:inherit}
 .toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:14px;font-size:.88rem;line-height:1.35;text-align:center;z-index:30;width:max-content;max-width:min(92vw,360px)}
@@ -261,7 +262,7 @@ const T = {
     cost_price:"Prix d'achat",cancel_entry:"Annuler cette écriture",cancelled:"Annulé",cancel_title:"Annuler cette écriture ?",
     cancel_hint:"Le stock et le solde du client seront corrigés. L'écriture reste visible, marquée Annulé.",cancel_reason:"Raison (facultatif)",
     cancel_yes:"Oui, annuler",cancel_done:"Écriture annulée",back2:"Retour",sold_units:"vendus",
-    tab_stock:"Stock",stock:"Stock",add_product:"Ajouter un produit",product_name:"Nom du produit",unit_price:"Prix de vente",in_stock:"En stock",
+    tab_stock:"Stock",stock:"Stock",is_service:"C'est un service (pas de stock à compter)",svc_tag:"Service",add_product:"Ajouter un produit",product_name:"Nom du produit",unit_price:"Prix de vente",in_stock:"En stock",
     low_alert:"Alerte quand il en reste",add_received:"Quantité reçue (à ajouter)",low:"Bas",out:"Épuisé",low_stock_title:"Stock bas",
     no_products:"Aucun produit. Ajoutez vos articles pour suivre le stock.",stock_value:"Valeur du stock",err_pname:"Le nom du produit est obligatoire.",
     err_pdup:"Ce produit existe déjà.",err_stock:(n,q)=>`Stock insuffisant pour ${n} : ${q} restant(s). Ajoutez du stock d'abord.`,
@@ -331,7 +332,7 @@ const T = {
     cost_price:"Cost price",cancel_entry:"Cancel this entry",cancelled:"Cancelled",cancel_title:"Cancel this entry?",
     cancel_hint:"Stock and the customer's balance will be corrected. The entry stays visible, marked Cancelled.",cancel_reason:"Reason (optional)",
     cancel_yes:"Yes, cancel it",cancel_done:"Entry cancelled",back2:"Back",sold_units:"sold",
-    tab_stock:"Stock",stock:"Stock",add_product:"Add product",product_name:"Product name",unit_price:"Selling price",in_stock:"In stock",
+    tab_stock:"Stock",stock:"Stock",is_service:"This is a service (no stock to count)",svc_tag:"Service",add_product:"Add product",product_name:"Product name",unit_price:"Selling price",in_stock:"In stock",
     low_alert:"Alert when this many are left",add_received:"Quantity received (add)",low:"Low",out:"Out",low_stock_title:"Running low",
     no_products:"No products yet. Add your items to track stock.",stock_value:"Stock value",err_pname:"Product name is required.",
     err_pdup:"This product already exists.",err_stock:(n,q)=>`Not enough stock for ${n}: ${q} left. Add stock first.`,
@@ -661,7 +662,7 @@ function viewHome(){
       <div class="amt"><div class="num" style="color:var(--owed)">${money(x.b)}</div>
       <button class="btn small primary" data-act="remind" data-id="${x.c.id}" style="margin-top:6px">${t("remind")}</button></div></div>`).join("");
   h+=`</div></section>`;
-  const lowp=S.products.filter(p=>p.qty<=p.low).sort((a,b)=>a.qty-b.qty).slice(0,8);
+  const lowp=S.products.filter(p=>!p.svc&&p.qty<=p.low).sort((a,b)=>a.qty-b.qty).slice(0,8);
   if(lowp.length){ h+=`<section class="sec"><h2>${t("low_stock_title")}<span>${lowp.length}</span></h2><div class="card flush">`+
     lowp.map(p=>`<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div></div><div class="amt"><span class="num">${p.qty}</span> ${p.qty<=0?`<span class="badge owed">${t("out")}</span>`:`<span class="badge late">${t("low")}</span>`}</div></button>`).join("")+`</div></section>`; }
   return h;
@@ -708,7 +709,7 @@ function viewSale(){
     <button class="btn primary" data-act="save-sale">${t("save_sale")}</button>
   </div></section>`;
 }
-function lineHint(l){ const p=l.pid&&S.products.find(x=>x.id===l.pid); if(!p) return ""; const q=parseAmt(l.q)||0; return `${t("in_stock")}: ${p.qty}`+(q>p.qty?" ⚠":""); }
+function lineHint(l){ const p=l.pid&&S.products.find(x=>x.id===l.pid); if(!p||p.svc) return ""; const q=parseAmt(l.q)||0; return `${t("in_stock")}: ${p.qty}`+(q>p.qty?" ⚠":""); }
 function updateSaleTotals(){
   if(!ui.draft) return;
   const tot=draftTotal(), paid=draftPaid();
@@ -843,7 +844,7 @@ function voidTx(id){
   const x=S.txs.find(y=>y.id===id); if(!x||x.void||!canCancel(x)) return;
   const r=($("#cn-reason")||{}).value||"";
   x.void={date:new Date().toISOString(),by:me()?me().name:"",reason:r.trim()};
-  if(x.type==="sale") x.lines.forEach(l=>{ if(l.pid){ const pr=S.products.find(z=>z.id===l.pid); if(pr) pr.qty=Math.round((pr.qty+l.q)*1000)/1000; } });
+  if(x.type==="sale") x.lines.forEach(l=>{ if(l.pid){ const pr=S.products.find(z=>z.id===l.pid); if(pr&&!pr.svc) pr.qty=Math.round((pr.qty+l.q)*1000)/1000; } });
   save(); ui.modal={type:"receipt",id:x.id}; render(); toast(t("cancel_done"));
 }
 
@@ -932,12 +933,12 @@ function viewReports(){
 /* --- stock --- */
 function viewStock(){
   const list=[...S.products].sort((a,b)=>a.name.localeCompare(b.name));
-  const val=S.products.reduce((s,p)=>s+Math.max(0,p.qty)*p.price,0);
+  const val=S.products.reduce((s,p)=>s+(p.svc?0:Math.max(0,p.qty)*p.price),0);
   let h=`<section class="sec"><h2>${t("stock")}${isOwner()?`<button class="btn small primary" data-act="add-product">${t("add_product")}</button>`:""}</h2>`;
   if(isOwner()&&list.length) h+=`<div class="card"><div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${t("stock_value")}</div><div class="num" style="font-size:1.35rem;margin-top:4px">${money(val)}</div></div>`;
   h+=`<div class="card flush">`;
   if(!list.length) h+=`<div class="empty">${t("no_products")}</div>`;
-  h+=list.map(p=>{ const st=p.qty<=0?`<span class="badge owed">${t("out")}</span>`:p.qty<=p.low?`<span class="badge late">${t("low")}</span>`:"";
+  h+=list.map(p=>{ if(p.svc) return `<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)}</div></div><div class="amt"><span class="badge">${t("svc_tag")}</span></div></button>`; const st=p.qty<=0?`<span class="badge owed">${t("out")}</span>`:p.qty<=p.low?`<span class="badge late">${t("low")}</span>`:"";
     return `<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)}</div></div><div class="amt"><div class="num">${p.qty}</div>${st}</div></button>`; }).join("");
   return h+`</div></section>`;
 }
@@ -945,11 +946,12 @@ function productModal(m){
   const p=m.id?S.products.find(x=>x.id===m.id):null, own=isOwner(), ro=own?"":"readonly";
   return `<div class="dlg form"><h2>${p?esc(p.name):t("add_product")}</h2>
     <div class="field"><label for="pr-name">${t("product_name")}</label><input id="pr-name" value="${esc(p?p.name:"")}" ${ro} autocomplete="off"></div>
+    <label class="chk"><input type="checkbox" id="pr-svc" ${p&&p.svc?"checked":""} ${own?"":"disabled"} onchange="document.getElementById('pr-stk').hidden=document.getElementById('pr-stk2').hidden=this.checked"> ${t("is_service")}</label>
     <div class="grid2"><div class="field"><label for="pr-price">${t("unit_price")}</label><input id="pr-price" value="${esc(p?p.price:"")}" inputmode="decimal" ${ro}></div>
-    <div class="field"><label for="pr-qty">${t("in_stock")}</label><input id="pr-qty" value="${esc(p?p.qty:"0")}" inputmode="decimal" ${ro}></div></div>
+    <div class="field" id="pr-stk" ${p&&p.svc?"hidden":""}><label for="pr-qty">${t("in_stock")}</label><input id="pr-qty" value="${esc(p?p.qty:"0")}" inputmode="decimal" ${ro}></div></div>
     ${own?`<div class="field"><label for="pr-cost">${t("cost_price")}</label><input id="pr-cost" value="${esc(p?(p.cost||""):"")}" inputmode="decimal"></div>`:""}
-    <div class="field"><label for="pr-low">${t("low_alert")}</label><input id="pr-low" value="${esc(p?p.low:"5")}" inputmode="numeric" ${ro}></div>
-    ${p?`<div class="field"><label for="pr-add">${t("add_received")}</label><input id="pr-add" inputmode="decimal" placeholder="0"></div>`:""}
+    <div id="pr-stk2" ${p&&p.svc?"hidden":""}><div class="field"><label for="pr-low">${t("low_alert")}</label><input id="pr-low" value="${esc(p?p.low:"5")}" inputmode="numeric" ${ro}></div>
+    ${p?`<div class="field"><label for="pr-add">${t("add_received")}</label><input id="pr-add" inputmode="decimal" placeholder="0"></div>`:""}</div>
     <div class="err" id="pr-err" role="alert"></div>
     <div class="actions"><button class="btn primary" data-act="save-product">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button>
     ${p&&own?`<button class="btn danger" data-act="del-product" data-id="${p.id}">${t("delete")}</button>`:""}</div></div>`;
@@ -959,11 +961,12 @@ function saveProduct(){
   if(own){
     const name=$("#pr-name").value.trim(); if(!name){ er.textContent=t("err_pname"); return; }
     if(S.products.some(x=>x.id!==(p&&p.id)&&x.name.toLowerCase()===name.toLowerCase())){ er.textContent=t("err_pdup"); return; }
-    const price=parseAmt($("#pr-price").value), qty=parseAmt($("#pr-qty").value), low=Math.max(0,parseAmt($("#pr-low").value));
+    const svc=!!($("#pr-svc")&&$("#pr-svc").checked);
+    const price=parseAmt($("#pr-price").value), qty=svc?0:parseAmt($("#pr-qty").value), low=svc?0:Math.max(0,parseAmt($("#pr-low").value));
     const cost=parseAmt(($("#pr-cost")||{}).value);
-    if(!p){ p={id:uid(),name,price,qty,low,cost}; S.products.push(p); } else { p.name=name; p.price=price; p.qty=qty; p.low=low; p.cost=cost; }
+    if(!p){ p={id:uid(),name,price,qty,low,cost,svc}; S.products.push(p); } else { p.name=name; p.price=price; p.qty=qty; p.low=low; p.cost=cost; p.svc=svc; }
   }
-  if(p){ const ae=$("#pr-add"); const add=ae?parseAmt(ae.value):0; if(add>0) p.qty=Math.round((p.qty+add)*1000)/1000; }
+  if(p&&!p.svc){ const ae=$("#pr-add"); const add=ae?parseAmt(ae.value):0; if(add>0) p.qty=Math.round((p.qty+add)*1000)/1000; }
   save(); ui.modal=null; render(); toast(t("product_saved"));
 }
 
@@ -1190,7 +1193,7 @@ function saveSale(){
   const total=lines.reduce((s,l)=>s+l.q*l.p,0);
   if(!lines.length||total<=0){ d.err=t("err_total"); $("#s-err").textContent=d.err; return; }
   const need={}; lines.forEach(l=>{ if(l.pid) need[l.pid]=(need[l.pid]||0)+l.q; });
-  for(const pid in need){ const pr=S.products.find(x=>x.id===pid); if(pr&&need[pid]>pr.qty){ d.err=t("err_stock",pr.name,pr.qty); $("#s-err").textContent=d.err; return; } }
+  for(const pid in need){ const pr=S.products.find(x=>x.id===pid); if(pr&&!pr.svc&&need[pid]>pr.qty){ d.err=t("err_stock",pr.name,pr.qty); $("#s-err").textContent=d.err; return; } }
   let paid=draftPaid(); if(paid>total) paid=total;
   let custId=d.cust||null;
   if(d.newCust){
@@ -1200,7 +1203,7 @@ function saveSale(){
   }
   if(!custId&&total-paid>0.001){ d.err=t("err_cust"); $("#s-err").textContent=d.err; return; }
   const x={id:uid(),no:++S.counter,type:"sale",cust:custId,date:new Date().toISOString(),lines,total,paid,due:(total-paid>0.001&&/^\d{4}-\d{2}-\d{2}$/.test(d.due||""))?d.due:"",note:d.note.trim(),by:me()?me().name:""};
-  for(const pid in need){ const pr=S.products.find(y=>y.id===pid); if(pr) pr.qty=Math.round((pr.qty-need[pid])*1000)/1000; }
+  for(const pid in need){ const pr=S.products.find(y=>y.id===pid); if(pr&&!pr.svc) pr.qty=Math.round((pr.qty-need[pid])*1000)/1000; }
   S.txs.push(x); save();
   ui.draft=null; ui.modal={type:"receipt",id:x.id}; ui.view="home"; render(); toast(t("created"));
 }
