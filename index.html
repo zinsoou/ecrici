@@ -148,7 +148,11 @@ input[type=number]{font-family:var(--font-mono)}
 .sheet{max-width:440px;margin:0 auto;display:grid;gap:12px}
 .dlg{background:var(--card);border-radius:14px;padding:16px;display:grid;gap:12px}
 .ticket{background:var(--card);border-radius:14px;padding:22px 20px;font-family:var(--font-body);font-size:.95rem;line-height:1.5}
-.ticket .hd{text-align:center;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.ticket{--acc:#2447d6}
+.ticket .hd{text-align:center;margin:-22px -20px 0;padding:20px 16px 16px;border-radius:14px 14px 0 0;background:var(--acc);color:#fff}
+.ticket .hd .sub{color:rgba(255,255,255,.88)}
+.ticket .mono{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-family:var(--font-display);font-weight:700;font-size:1.1rem;letter-spacing:.04em}
+.sw{display:flex;gap:7px;flex-wrap:wrap}.sw button{width:32px;height:32px;border-radius:50%;border:3px solid transparent;cursor:pointer;padding:0}.sw button[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 2px var(--card) inset}
 .ticket h3{font-family:var(--font-display);font-size:1.4rem;letter-spacing:.02em;text-transform:uppercase;overflow-wrap:anywhere}
 .ticket .sub{color:var(--muted);font-size:.88rem}
 .ticket .meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:12px 0;border-bottom:1px dashed var(--line);font-size:.88rem;color:var(--muted)}
@@ -160,7 +164,7 @@ input[type=number]{font-family:var(--font-mono)}
 .ticket td{padding:7px 0;vertical-align:top;text-align:left;border-bottom:1px solid var(--line)}
 .ticket td.r,.ticket th.r{text-align:right;white-space:nowrap;padding-left:10px;font-variant-numeric:tabular-nums}
 .ticket .tot{display:flex;justify-content:space-between;gap:10px;padding:5px 0}
-.ticket .tot.grand{font-size:1.15rem;font-weight:700;border-top:2px solid var(--ink);margin-top:6px;padding-top:10px}
+.ticket .tot.grand{font-size:1.15rem;font-weight:700;border-top:2px solid var(--acc);margin-top:6px;padding-top:10px}
 .ticket .owe{display:flex;justify-content:space-between;gap:10px;margin-top:10px;padding:10px 12px;border:1px solid var(--owed);border-radius:10px;color:var(--owed);font-weight:600}
 .ticket .note2{margin-top:8px;font-size:.88rem;color:var(--muted)}
 .ticket .bal{margin-top:10px;font-size:.88rem;color:var(--muted);display:flex;justify-content:space-between;gap:10px}
@@ -224,11 +228,11 @@ const T = {
     method:"Mode de paiement",cash:"Espèces",momo:"Mobile money",transfer:"Virement",
     receipts:"Reçus",no_receipts:"Aucun reçu pour l'instant.",sale:"Vente",payment:"Paiement",
     receipt:"REÇU",receipt_no:"N°",date:"Date",items:"Articles",paid:"Payé",balance_after:"Solde du client après ce reçu",
-    thanks:"Merci de votre confiance !",copy:"Copier",copied:"Copié",whatsapp:"WhatsApp",sms:"SMS",save_txt:"Télécharger",close:"Fermer",
+    thanks:"Merci de votre confiance !",pdf_send:"Envoyer en PDF",pdf_dl:"Télécharger PDF",pdf_saved:"PDF enregistré",copy:"Copier",copied:"Copié",whatsapp:"WhatsApp",sms:"SMS",save_txt:"Télécharger",close:"Fermer",
     send_reminder:"Message de rappel",reminder_hint:"Vérifiez le texte, puis envoyez-le par WhatsApp ou SMS. Rien n'est envoyé automatiquement.",
     msg_remind:(n,s,a)=>`Bonjour ${n}, c'est ${s}. Votre solde chez nous est de ${a}. Merci de passer le régler quand vous pouvez. Merci !`,
     msg_receipt_intro:(n)=>`Bonjour ${n}, voici votre reçu :`,
-    settings:"Réglages",shop_name:"Nom de la boutique",shop_phone:"Téléphone de la boutique",shop_addr:"Adresse (affichée sur les reçus)",country:"Pays",language:"Langue",
+    settings:"Réglages",shop_name:"Nom de la boutique",shop_phone:"Téléphone de la boutique",shop_addr:"Adresse (affichée sur les reçus)",rc_color:"Couleur de vos reçus",country:"Pays",language:"Langue",
     footer:"Message en bas du reçu",late_after:"Relancer après (jours)",save:"Enregistrer",saved_ok:"Enregistré",
     backup:"Sauvegarde",backup_note:"Vos données sont gardées dans votre compte si vous êtes connecté, sinon sur cet appareil. Faites une copie de temps en temps.",
     export_json:"Sauvegarde complète",export_csv:"Exporter en tableau (CSV)",import:"Restaurer une sauvegarde",imported:"Sauvegarde restaurée",bad_file:"Fichier non reconnu.",
@@ -294,11 +298,11 @@ const T = {
     method:"Payment method",cash:"Cash",momo:"Mobile money",transfer:"Transfer",
     receipts:"Receipts",no_receipts:"No receipts yet.",sale:"Sale",payment:"Payment",
     receipt:"RECEIPT",receipt_no:"No.",date:"Date",items:"Items",paid:"Paid",balance_after:"Customer balance after this receipt",
-    thanks:"Thank you for your business!",copy:"Copy",copied:"Copied",whatsapp:"WhatsApp",sms:"SMS",save_txt:"Download",close:"Close",
+    thanks:"Thank you for your business!",pdf_send:"Send as PDF",pdf_dl:"Download PDF",pdf_saved:"PDF saved",copy:"Copy",copied:"Copied",whatsapp:"WhatsApp",sms:"SMS",save_txt:"Download",close:"Close",
     send_reminder:"Reminder message",reminder_hint:"Check the text, then send it by WhatsApp or SMS. Nothing is sent automatically.",
     msg_remind:(n,s,a)=>`Hello ${n}, this is ${s}. Your balance with us is ${a}. Please come by and settle it when you can. Thank you!`,
     msg_receipt_intro:(n)=>`Hello ${n}, here is your receipt:`,
-    settings:"Settings",shop_name:"Shop name",shop_phone:"Shop phone",shop_addr:"Address (shown on receipts)",country:"Country",language:"Language",
+    settings:"Settings",shop_name:"Shop name",shop_phone:"Shop phone",shop_addr:"Address (shown on receipts)",rc_color:"Your receipt color",country:"Country",language:"Language",
     footer:"Receipt footer message",late_after:"Remind after (days)",save:"Save",saved_ok:"Saved",
     backup:"Backup",backup_note:"Your data is kept in your account when you are signed in, otherwise on this device. Make a copy now and then.",
     export_json:"Full backup",export_csv:"Export as spreadsheet (CSV)",import:"Restore a backup",imported:"Backup restored",bad_file:"File not recognised.",
@@ -1018,6 +1022,7 @@ function viewSettings(){
     </div>
     <p class="note" style="margin:0">${t("country_note")}</p>
     <div class="field"><label for="s-addr">${t("shop_addr")}</label><input id="s-addr" value="${esc(s.address||"")}" autocomplete="off"></div>
+    <div class="field"><label>${t("rc_color")}</label><div class="sw">${ACCENTS.map(c=>`<button type="button" data-act="set-accent" data-c="${c}" aria-pressed="${accentOf(s)===c}" style="background:${c}" aria-label="${c}"></button>`).join("")}</div></div>
     <div class="field"><label for="s-footer">${t("footer")}</label><input id="s-footer" value="${esc(s.footer)}" placeholder="${esc(t("default_footer"))}" autocomplete="off"></div>
     <div class="field"><label for="s-late">${t("late_after")}</label><input id="s-late" value="${esc(s.lateDays)}" inputmode="numeric"></div>
     <button class="btn primary" data-act="save-settings">${t("save")}</button>
@@ -1058,6 +1063,54 @@ function receiptLines(x,kind){
 }
 const receiptText=(x,kind)=>receiptLines(x,kind).join("\n");
 
+function browserDownload(filename,blob){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },4000);
+}
+/* ---- tiny PDF writer (no library, works offline) ---- */
+function pdfBlob(lines,acc,hdrN){
+  const CP={"—":0x97,"–":0x96,"’":0x92,"‘":0x91,"“":0x93,"”":0x94,"€":0x80,"…":0x85,"œ":0x9C,"Œ":0x8C};
+  const enc=str=>{ str=String(str).replace(/₦/g,"NGN ").replace(/GH₵/g,"GHS ").replace(/₵/g,"GHS ").replace(/[  ]/g," ");
+    let o=""; for(const ch of str){ const c=ch.codePointAt(0); o+= CP[ch]?String.fromCharCode(CP[ch]) : (c<256?ch:"?"); } return o.replace(/[\\()]/g,m=>"\\"+m); };
+  const W=300, M=24, LH=15, MAXC=44, out=[];
+  lines.forEach((ln,i)=>{ ln=String(ln);
+    if(!ln){ out.push({t:"",b:false}); return; }
+    if(/^-{3,}$/.test(ln)){ out.push({t:"",b:false,rule:true}); return; }
+    const words=ln.split(" "); let cur="";
+    for(const w of words){ if((cur+" "+w).trim().length>MAXC&&cur){ out.push({t:cur,b:i===0,h:i<(hdrN||1)}); cur=w; } else cur=(cur?cur+" ":"")+w; }
+    out.push({t:cur,b:i===0,h:i<(hdrN||1)});
+  });
+  const H=Math.max(260,M*2+out.length*LH+24);
+  let cs="", rs="", y=H-M-10;
+  const hex=(acc||"#2447d6").replace("#",""), rgb=[0,2,4].map(k=>(parseInt(hex.substr(k,2),16)/255).toFixed(3)).join(" ");
+  const nH=out.filter(o=>o.h).length; let hw=0, bk=0, bandH=M+10+nH*LH+12; y=H-M-10-4;
+  out.forEach((o,i)=>{ if(o.h&&!hw){ cs+="1 1 1 rg\n"; hw=1; } if(!o.h&&!bk){ cs+="0 0 0 rg\n"; bk=1; y-=10; bandH=H-(y+LH-1); } if(o.rule){ rs+="0.6 w "+M+" "+(y+LH/2-2)+" m "+(W-M)+" "+(y+LH/2-2)+" l S\n"; } if(o.t){ cs+=(o.b?"/F2 15 Tf":"/F1 10.5 Tf")+" 1 0 0 1 "+M+" "+y+" Tm ("+enc(o.t)+") Tj\n"; } y-=(o.b?LH+4:LH); });
+  rs=rgb+" rg 0 "+(H-bandH)+" "+W+" "+bandH+" re f\n"+rs; cs=rs+"BT\n"+cs+"ET";
+  const objs=[ "<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 "+W+" "+H+"] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>",
+    "<< /Length "+cs.length+" >>\nstream\n"+cs+"\nendstream",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>" ];
+  let pdf="%PDF-1.4\n", offs=[];
+  objs.forEach((o,i)=>{ offs.push(pdf.length); pdf+=(i+1)+" 0 obj\n"+o+"\nendobj\n"; });
+  const xr=pdf.length; pdf+="xref\n0 "+(objs.length+1)+"\n0000000000 65535 f \n"+offs.map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("")+"trailer\n<< /Size "+(objs.length+1)+" /Root 1 0 R >>\nstartxref\n"+xr+"\n%%EOF";
+  const u=new Uint8Array(pdf.length); for(let i=0;i<pdf.length;i++) u[i]=pdf.charCodeAt(i)&255;
+  return new Blob([u],{type:"application/pdf"});
+}
+async function receiptPdf(id,share){
+  const x=S.txs.find(y=>y.id===id); if(!x) return; const k=ui.modal&&ui.modal.kind;
+  const kind=(k==="invoice"&&x.type==="sale")?"invoice":"receipt";
+  const name=`${kind==="invoice"?"facture":"recu"}-${pad4(x.no)}.pdf`;
+  const blob=pdfBlob(receiptLines(x,kind),accentOf(S.shop),1+(S.shop.phone?1:0)+(S.shop.address?1:0)); const file=new File([blob],name,{type:"application/pdf"});
+  if(share&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],title:name}); return; }catch(e){ if(e&&e.name==="AbortError") return; }
+  }
+  browserDownload(name,blob); toast(t("pdf_saved"));
+}
+
+const ACCENTS=["#2447d6","#15803d","#b91c1c","#c2410c","#7e22ce","#0f766e","#be185d","#1f2937"];
+const accentOf=sh=>ACCENTS.includes(sh.accent)?sh.accent:ACCENTS[0];
+const initialsOf=n=>{ const w=String(n||"").trim().split(/\s+/).filter(Boolean); return ((w[0]||"?")[0]+((w[1]||"")[0]||"")).toUpperCase(); };
 const fmtPhone=v=>{ v=String(v||"").trim(); return /^\d{10,15}$/.test(v)?"+"+v:v; };
 function ticketHtml(x,kind){
   kind=kind||"receipt"; const sh=S.shop; let rows="", owe=x.type==="sale"?x.total-x.paid:0;
@@ -1070,7 +1123,7 @@ function ticketHtml(x,kind){
   }else{
     rows=`<div class="tot grand"><span>${t("payment")} · ${t(x.method||"cash")}</span><span class="num">${money(x.amount)}</span></div>`;
   }
-  return `<div class="ticket"><div class="hd"><h3>${esc(sh.name)}</h3>${sh.phone?`<div class="sub">${esc(fmtPhone(sh.phone))}</div>`:""}${sh.address?`<div class="sub">${esc(sh.address)}</div>`:""}</div>
+  return `<div class="ticket" style="--acc:${accentOf(sh)}"><div class="hd"><div class="mono">${esc(initialsOf(sh.name))}</div><h3>${esc(sh.name)}</h3>${sh.phone?`<div class="sub">${esc(fmtPhone(sh.phone))}</div>`:""}${sh.address?`<div class="sub">${esc(sh.address)}</div>`:""}</div>
     <div class="meta"><b>${docTitle(x,kind)}</b><span>${fmtDate(x.date)}</span></div>
     ${x.void?`<div style="color:var(--owed);font-weight:600;text-align:center;padding:8px 0">— ${t("cancelled").toUpperCase()} —</div>`:""}
     <div class="who"><span>${t("customer")}:</span> <b>${esc(custName(x.cust))}</b></div>
@@ -1098,7 +1151,8 @@ function renderModal(){
       <a class="btn primary" href="${wa}" target="_blank" rel="noopener">${t("whatsapp")}</a>
       <a class="btn" href="${sms}">${t("sms")}</a>
       <button class="btn" data-act="copy-receipt" data-id="${x.id}">${t("copy")}</button>
-      <button class="btn" data-act="txt-receipt" data-id="${x.id}">${t("save_txt")}</button>
+      <button class="btn" data-act="pdf-share" data-id="${x.id}">${t("pdf_send")}</button>
+      <button class="btn" data-act="pdf-dl" data-id="${x.id}">${t("pdf_dl")}</button>
       ${x.type==="sale"?`<button class="btn" data-act="toggle-doc" data-id="${x.id}">${kind==="invoice"?t("as_receipt"):t("as_invoice")}</button>`:""}
       ${(!x.void&&canCancel(x))?`<button class="btn danger" data-act="ask-cancel" data-id="${x.id}">${t("cancel_entry")}</button>`:""}</div>
       <p class="note" style="margin:0">${t("wa_note")}</p>
@@ -1265,6 +1319,9 @@ document.addEventListener("click",e=>{
     case "open-receipt": ui.modal={type:"receipt",id}; renderModal(); break;
     case "copy-receipt": { const k=ui.modal&&ui.modal.kind; copyText(receiptText(S.txs.find(x=>x.id===id),k)); break; }
     case "toggle-doc": ui.modal.kind=ui.modal.kind==="invoice"?"receipt":"invoice"; renderModal(); break;
+    case "set-accent": { const c=el.dataset.c; if(ACCENTS.includes(c)){ S.shop.accent=c; save(); document.querySelectorAll("[data-act=set-accent]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.c===c))); } break; }
+    case "pdf-share": receiptPdf(id,true); break;
+    case "pdf-dl": receiptPdf(id,false); break;
     case "txt-receipt": { const x=S.txs.find(y=>y.id===id); const k=ui.modal&&ui.modal.kind; saveFile(`${k==="invoice"?"facture":"recu"}-${pad4(x.no)}.txt`,receiptText(x,k)); break; }
     case "add-product": ui.modal={type:"product",id:null}; renderModal(); break;
     case "open-product": ui.modal={type:"product",id}; renderModal(); break;
