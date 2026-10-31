@@ -90,7 +90,7 @@ const G = {
     off_t: "Pas de connexion", off_p: "Impossible de vérifier votre abonnement pour l'instant. Réessayez avec internet.", retry: "Réessayer",
     err_t: "Compte introuvable", err_p: "Votre compte n'est pas encore prêt. Réessayez dans un instant.",
     chpw: "Changer le mot de passe", npw: "Nouveau mot de passe", npw2: "Répétez le mot de passe", chpw_go: "Enregistrer le mot de passe", chpw_ok: "Mot de passe changé", chpw_mismatch: "Les deux mots de passe sont différents.", chpw_weak: "6 caractères minimum.", chpw_fail: "Impossible pour le moment. Réessayez avec internet.", chpw_login: "Pour votre sécurité, déconnectez-vous puis reconnectez-vous avant de changer le mot de passe.",
-    inst: "Installer l'application", ios_t: "Sur iPhone : ouvrez ce site dans Safari, touchez ••• (en bas à droite) ou le bouton Partager (carré avec flèche), touchez Partager, puis faites défiler et touchez « Sur l'écran d'accueil ».",  hint_name: "Écrivez en MAJUSCULES, ex : BOUTIQUE DE VICTOR", hint_phone: "Chiffres seulement, sans le +. Ex :",  forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
+    inst: "Installer l'application", f_plan: "Abonnement :", f_help: "Besoin d'aide ? WhatsApp", f_priv: "Confidentialité et conditions", ios_t: "Sur iPhone : ouvrez ce site dans Safari, touchez ••• (en bas à droite) ou le bouton Partager (carré avec flèche), touchez Partager, puis faites défiler et touchez « Sur l'écran d'accueil ».",  hint_name: "Écrivez en MAJUSCULES, ex : BOUTIQUE DE VICTOR", hint_phone: "Chiffres seulement, sans le +. Ex :",  forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
     wa_new: (n, p) => `Bonjour, je viens de créer mon compte Ecrici pour la boutique ${n} (${p}). Merci de l'activer.`,
     wa_renew: (n, p) => `Bonjour, je souhaite renouveler mon abonnement Ecrici pour la boutique ${n} (${p}).`,
     acct: "Compte", until: d => `Actif jusqu'au ${d}`, sync_ok: "Synchronisé", sync_wait: "En attente de connexion", logout_q: "Se déconnecter ? Les données de cette boutique seront retirées de ce téléphone (elles restent dans votre compte).",
@@ -111,7 +111,7 @@ const G = {
     off_t: "No connection", off_p: "We can't check your subscription right now. Try again with internet.", retry: "Try again",
     err_t: "Account not found", err_p: "Your account isn't ready yet. Try again in a moment.",
     chpw: "Change password", npw: "New password", npw2: "Repeat the password", chpw_go: "Save password", chpw_ok: "Password changed", chpw_mismatch: "The two passwords are different.", chpw_weak: "6 characters minimum.", chpw_fail: "Not possible right now. Try again with internet.", chpw_login: "For your security, log out and log in again before changing the password.",
-    inst: "Install the app", ios_t: "On iPhone: open this site in Safari, tap ••• (bottom right) or the Share button (square with an arrow), tap Share, then scroll and tap \"Add to Home Screen\".",  hint_name: "Write in CAPITAL letters, e.g. VICTOR'S DRYCLEANER", hint_phone: "Digits only, no + sign. Example:",  forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
+    inst: "Install the app", f_plan: "Plan:", f_help: "Need help? WhatsApp", f_priv: "Privacy and terms", ios_t: "On iPhone: open this site in Safari, tap ••• (bottom right) or the Share button (square with an arrow), tap Share, then scroll and tap \"Add to Home Screen\".",  hint_name: "Write in CAPITAL letters, e.g. VICTOR'S DRYCLEANER", hint_phone: "Digits only, no + sign. Example:",  forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
     wa_new: (n, p) => `Hello, I just created my Ecrici account for the shop ${n} (${p}). Please activate it.`,
     wa_renew: (n, p) => `Hello, I would like to renew my Ecrici subscription for the shop ${n} (${p}).`,
     acct: "Account", until: d => `Active until ${d}`, sync_ok: "Synced", sync_wait: "Waiting for connection", logout_q: "Log out? This shop's data will be removed from this phone (it stays in your account).",
@@ -135,7 +135,9 @@ css.textContent = `#lg-gate{position:fixed;inset:0;z-index:9999;overflow:auto;ba
 #lg-gate .lg-chk{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
 #lg-gate .lg-chk input{width:auto}
 #lg-gate .lg-price{color:var(--muted);font-size:14px}
-#lg-gate a.btn{text-decoration:none;text-align:center}`;
+#lg-gate a.btn{text-decoration:none;text-align:center}
+#lg-gate .lg-foot{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:6px;text-align:center;color:var(--muted);font-size:13px}
+#lg-gate .lg-foot a{color:var(--muted);text-decoration:underline}`;
 document.head.appendChild(css);
 const gate = document.createElement("div"); gate.id = "lg-gate"; gate.setAttribute("role", "dialog"); gate.setAttribute("aria-modal", "true");
 document.body.appendChild(gate);
@@ -151,6 +153,12 @@ const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.
 let iosHelp = false;
 function canInst() { try { return typeof deferredInstall !== "undefined" && !!deferredInstall && !matchMedia("(display-mode: standalone)").matches; } catch (e) { return false; } }
 window.addEventListener("beforeinstallprompt", () => setTimeout(() => { if (gateKind === "auth") { grab(); drawGate(); } }, 50));
+const foot = () => {
+  const w = waLink(""), y = new Date().getFullYear();
+  return `<div class="lg-foot">${g("price") ? `<div>${esc(g("f_plan"))} <b>${esc(g("price"))}</b></div>` : ""}
+    <div>${w ? `<a href="${w}" target="_blank" rel="noopener">${esc(g("f_help"))}</a> · ` : ""}<a href="privacy.html" target="_blank" rel="noopener">${esc(g("f_priv"))}</a></div>
+    <div>© ${y} Ecrici</div></div>`;
+};
 function drawGate() {
   const a = shopRow();
   let h = "";
@@ -168,13 +176,12 @@ function drawGate() {
       <button class="btn primary" data-lg="submit" ${busyAuth ? "disabled" : ""}>${esc(busyAuth ? g("wait") : su ? g("signup") : g("login"))}</button>
       <button class="btn small ghost" data-lg="mode" style="justify-self:start">${esc(su ? g("have") : g("nohave"))}</button>
       ${!su && CFG.adminWhatsapp ? `<button class="btn small ghost" data-lg="forgot" style="justify-self:start">${esc(g("forgot"))}</button>` : ""}</div>
-      ${g("price") ? `<p class="lg-price">${esc(g("price"))}</p>` : ""}`;
+`;
   } else if (gateKind === "pending" || gateKind === "blocked") {
     const pend = gateKind === "pending";
     const w = waLink(pend ? g("wa_new", a.name || "", a.phone || "") : g("wa_renew", a.name || "", a.phone || ""));
     h = head() + `<div class="card form"><h2>${esc(pend ? g("pend_t") : g("blk_t"))}</h2>
       <div class="lg-msg">${esc(pend ? g("pend_p", a.name || "") : g("blk_p"))}</div>
-      ${g("price") ? `<p class="lg-price">${esc(g("price"))}</p>` : ""}
       ${w ? `<a class="btn primary" href="${w}" target="_blank" rel="noopener">${esc(g("wa"))}</a>` : ""}
       <button class="btn" data-lg="check">${esc(g("check"))}</button>
       ${!pend && lsGet(K.owner) === (sess && sess.uid) ? `<button class="btn" data-lg="backup">${esc(g("backup"))}</button>` : ""}
@@ -185,7 +192,7 @@ function drawGate() {
       <button class="btn primary" data-lg="check">${esc(g("retry"))}</button>
       <button class="btn small ghost" data-lg="logout" style="justify-self:start">${esc(g("out"))}</button></div>`;
   }
-  gate.innerHTML = `<div class="lg-wrap">${h}</div>`;
+  gate.innerHTML = `<div class="lg-wrap">${h}${gateKind === "loading" ? "" : foot()}</div>`;
   gate.hidden = false;
 }
 function showGate(kind) { gateKind = kind; drawGate(); }
@@ -437,6 +444,7 @@ window.viewSettings = function () {
     <div class="field"><label for="lg-npw">${esc(g("chpw"))}</label><input id="lg-npw" type="password" autocomplete="new-password" placeholder="${esc(g("npw"))}"></div>
     <div class="field"><input id="lg-npw2" type="password" autocomplete="new-password" placeholder="${esc(g("npw2"))}" aria-label="${esc(g("npw2"))}"></div>
     <button class="btn" data-lg-act="chpw">${esc(g("chpw_go"))}</button>
+    <a class="btn" href="privacy.html" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">${esc(g("f_priv"))}</a>
     <button class="btn danger" data-lg-act="logout">${esc(g("out"))}</button></div></section>`;
 };
 document.addEventListener("click", e => {
