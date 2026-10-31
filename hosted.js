@@ -70,7 +70,7 @@ function canon(country, raw) {
   if (/^\s*(\+|00)/.test(raw)) { d = d.replace(/^00/, ""); if (country === "BJ" && d.startsWith("229") && d.length === 13 && d.slice(3, 5) === "01") d = "229" + d.slice(5); return d; }
   if (d.startsWith(cc) && d.length >= cc.length + 8) return d;
   if (country === "BJ") { if (d.length === 10 && d.startsWith("01")) d = d.slice(2); return cc + d; }
-  return cc + d.replace(/^0+/, "");
+  return cc + (COUNTRIES[country].keep0 ? d : d.replace(/^0+/, ""));
 }
 const emailOf = id => id + "@" + (CFG.emailDomain || "ecrici.app");
 
@@ -119,7 +119,7 @@ const G = {
     price: CFG.priceText || ""
   }
 };
-const PH = { BJ: "01 97 00 00 11", NG: "0803 123 4567", GH: "024 123 4567", KE: "0712 345 678" };
+const PH = { BJ: "01 97 00 00 11", NG: "0803 123 4567", GH: "024 123 4567", KE: "0712 345 678", TG: "90 12 34 56", CI: "07 01 23 45 67", SN: "77 123 45 67", BF: "70 12 34 56", ML: "70 12 34 56", NE: "90 12 34 56", CM: "6 71 23 45 67", ZA: "082 123 4567", RW: "078 123 4567", TZ: "0712 345 678", UG: "0772 123 456" };
 const g = (k, ...a) => { const v = G[lang()][k]; return typeof v === "function" ? v(...a) : v; };
 
 /* ---------- gate (full-screen screen shown until the account is valid) ---------- */

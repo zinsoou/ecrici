@@ -206,7 +206,18 @@ const COUNTRIES = {
   BJ:{name:"Bénin",   sym:"FCFA", after:true,  cc:"229", lang:"fr", ph:"01 97 00 00 00"},
   NG:{name:"Nigeria", sym:"₦",    after:false, cc:"234", lang:"en", ph:"0803 000 0000"},
   GH:{name:"Ghana",   sym:"GH₵",  after:false, cc:"233", lang:"en", ph:"024 000 0000"},
-  KE:{name:"Kenya",   sym:"KSh",  after:false, cc:"254", lang:"en", ph:"0712 000 000"}
+  KE:{name:"Kenya",   sym:"KSh",  after:false, cc:"254", lang:"en", ph:"0712 000 000"},
+  TG:{name:"Togo",           sym:"FCFA", after:true, cc:"228", lang:"fr", ph:"90 00 00 00"},
+  CI:{name:"Côte d'Ivoire",  sym:"FCFA", after:true, cc:"225", lang:"fr", ph:"07 00 00 00 00", keep0:true},
+  SN:{name:"Sénégal",        sym:"FCFA", after:true, cc:"221", lang:"fr", ph:"77 000 00 00"},
+  BF:{name:"Burkina Faso",   sym:"FCFA", after:true, cc:"226", lang:"fr", ph:"70 00 00 00"},
+  ML:{name:"Mali",           sym:"FCFA", after:true, cc:"223", lang:"fr", ph:"70 00 00 00"},
+  NE:{name:"Niger",          sym:"FCFA", after:true, cc:"227", lang:"fr", ph:"90 00 00 00"},
+  CM:{name:"Cameroun",       sym:"FCFA", after:true, cc:"237", lang:"fr", ph:"6 70 00 00 00"},
+  ZA:{name:"South Africa",   sym:"R",    after:false, cc:"27",  lang:"en", ph:"082 000 0000"},
+  RW:{name:"Rwanda",         sym:"RWF",  after:true,  cc:"250", lang:"en", ph:"078 000 0000", dec:0},
+  TZ:{name:"Tanzania",       sym:"TSh",  after:false, cc:"255", lang:"en", ph:"0712 000 000", dec:0},
+  UG:{name:"Uganda",         sym:"USh",  after:false, cc:"256", lang:"en", ph:"0772 000 000", dec:0}
 };
 const EX_COST={"Riz 25 kg":15500,"Huile 5 L":5600,"Ciment (sac)":4700,"Sucre 1 kg":780,"Savon":250,"Boîtes de tomate":480,"Eau 1,5 L":300,"Pain":150,"Lait en poudre":1250};
 const T = {
@@ -370,7 +381,7 @@ const C = () => COUNTRIES[S.shop.country]||COUNTRIES.BJ;
 function money(n){
   n = Number(n)||0;
   const c=C();
-  const s = new Intl.NumberFormat(L()==="fr"?"fr-FR":"en-NG",{maximumFractionDigits:c.sym==="FCFA"?0:2}).format(n).replace(/[  ]/g," ");
+  const s = new Intl.NumberFormat(L()==="fr"?"fr-FR":"en-NG",{maximumFractionDigits:(c.sym==="FCFA"||c.dec===0)?0:2}).format(n).replace(/[  ]/g," ");
   return c.after ? `${s} ${c.sym}` : `${c.sym} ${s}`;
 }
 function parseAmt(v){ const n=parseFloat(String(v||"").replace(/[\s,]/g,"").replace(",",".")); return isFinite(n)?n:0; }
@@ -489,7 +500,7 @@ function intlPhone(raw){
   if(S.shop.country==="BJ"&&d.startsWith(cc)&&d.length===cc.length+8) return cc+"01"+d.slice(cc.length);
   if(d.startsWith(cc)&&d.length>=cc.length+8) return d;
   if(S.shop.country==="BJ"){ if(d.length===8) d="01"+d; return cc+d; }
-  return cc+d.replace(/^0+/,"");
+  return cc+(C().keep0?d:d.replace(/^0+/,""));
 }
 
 /* ---------- persistence ---------- */
