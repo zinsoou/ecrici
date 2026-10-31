@@ -7,7 +7,7 @@ const CFG = window.ECRICI || {};
 if (!CFG.url || !CFG.key || /PASTE|COLLEZ/i.test(CFG.url + CFG.key)) { if (hideStyle) hideStyle.remove();
 document.documentElement.setAttribute("translate", "no"); { const m = document.createElement("meta"); m.name = "google"; m.content = "notranslate"; document.head.appendChild(m); } return; }
 const BASE = CFG.url.replace(/\/+$/, "");
-const K = { sess: "ecrici-session", acct: "ecrici-acct", owner: "ecrici-owner", sync: "ecrici-synced" };
+const K = { sess: "ecrici-session", acct: "ecrici-acct", owner: "ecrici-owner", sync: "ecrici-synced", base: "ecrici-baseqty" };
 
 /* ---------- tiny helpers ---------- */
 const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -285,7 +285,7 @@ function unlockOffline() { active = true; storeMode = "device"; hideGate(); upda
 /* ---------- data: which copy wins ---------- */
 const hasReal = () => S.txs.some(x => !x.example) || S.customers.some(c => !c.example) || S.products.some(p => !p.example);
 function replaceLocal(d) {
-  S = migrate(d); lastSynced = S.updated || 0; lsSet(K.sync, String(lastSynced));
+  S = migrate(d); lastSynced = S.updated || 0; lsSet(K.sync, String(lastSynced)); saveBase();
   try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {}
   ui.view = "home"; ui.modal = null; ui.draft = null; render();
 }
@@ -294,23 +294,76 @@ function freshBlank(shop) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {}
   lastSynced = 0; ui.view = "home"; ui.modal = null; render();
 }
+/* ---------- merging two copies (nothing is lost when two phones save) ---------- */
+function saveBase() { try { const m = {}; (S.products || []).forEach(p => { m[p.id] = p.qty; }); lsSet(K.base, JSON.stringify(m)); } catch (e) {} }
+function unionById(a, b, pick) {
+  const out = [], seen = new Map();
+  (a || []).forEach(x => { seen.set(x.id, x); out.push(x); });
+  (b || []).forEach(y => { const x = seen.get(y.id); if (!x) { seen.set(y.id, y); out.push(y); } else if (pick) { const i = out.indexOf(x), z = pick(x, y); out[i] = z; seen.set(y.id, z); } });
+  return out;
+}
+function mergeLedgers(loc, rem) {
+  let base = {}; try { base = JSON.parse(lsGet(K.base) || "{}") || {}; } catch (e) {}
+  const m = Object.assign({}, rem, loc);
+  m.shop = loc.shop;
+  m.txs = unionById(loc.txs, rem.txs, (x, y) => (x.void ? x : y.void ? y : x)).sort((a, b) => (a.no || 0) - (b.no || 0));
+  m.customers = unionById(loc.customers, rem.customers, (x, y) => x);
+  m.staff = unionById(loc.staff, rem.staff, (x, y) => x);
+  m.expenses = unionById(loc.expenses, rem.expenses, (x, y) => x);
+  m.expRules = unionById(loc.expRules, rem.expRules, (x, y) => (String(x.next) >= String(y.next) ? x : y));
+  m.products = unionById(loc.products, rem.products, (x, y) => {
+    const b0 = base[x.id], z = Object.assign({}, x);
+    if (typeof b0 === "number") z.qty = Math.round((x.qty + y.qty - b0) * 1000) / 1000;
+    return z;
+  });
+  m.counter = Math.max(loc.counter || 0, rem.counter || 0, ...m.txs.map(t => t.no || 0));
+  m.updated = Math.max(Date.now(), (loc.updated || 0) + 1, (rem.updated || 0) + 1);
+  return m;
+}
+function applyMerged(m) {
+  S = migrate(m);
+  try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {}
+  try { render(); } catch (e) {}
+}
 async function reconcile(shop) {
   const r = await api("/rest/v1/ledgers?shop_id=eq." + sess.uid + "&select=data,updated");
   if (!r.ok) throw httpErr(r);
   const row = r.json && r.json[0], owner = lsGet(K.owner), mine = owner === sess.uid || (owner == null && hasReal());
   if (row && row.data && row.data.shop) {
-    if (mine) { if (row.updated > (S.updated || 0)) replaceLocal(row.data); else if (S.updated > row.updated || S.updated > lastSynced) await doPush(); else { lastSynced = S.updated; } }
-    else replaceLocal(row.data);
+    if (mine) {
+      const remoteChanged = row.updated > lastSynced, localChanged = (S.updated || 0) > lastSynced;
+      if (remoteChanged && !localChanged) replaceLocal(row.data);
+      else if (remoteChanged && localChanged) { applyMerged(mergeLedgers(S, row.data)); lastSynced = row.updated; lsSet(K.sync, String(lastSynced)); await doPush(); }
+      else if (localChanged) await doPush();
+      else { lastSynced = S.updated || lastSynced; }
+    } else replaceLocal(row.data);
   } else {
     if (mine) await doPush(); else { freshBlank(shop); await doPush(); }
   }
   lsSet(K.owner, sess.uid); storeMode = "account";
 }
 async function doPush() {
-  const snap = S.updated;
-  const r = await api("/rest/v1/ledgers?on_conflict=shop_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: { shop_id: sess.uid, data: S, updated: snap, updated_at: new Date().toISOString() } });
-  if (!r.ok) throw httpErr(r);
-  lastSynced = snap; lsSet(K.sync, String(snap)); storeMode = "account";
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const snap = S.updated, body = { data: S, updated: snap, updated_at: new Date().toISOString() };
+    if (lastSynced > 0) {
+      const r = await api("/rest/v1/ledgers?shop_id=eq." + sess.uid + "&updated=eq." + lastSynced, { method: "PATCH", headers: { Prefer: "return=representation" }, body });
+      if (!r.ok) throw httpErr(r);
+      if (Array.isArray(r.json) && r.json.length) { lastSynced = snap; lsSet(K.sync, String(snap)); saveBase(); storeMode = "account"; return; }
+    }
+    const g2 = await api("/rest/v1/ledgers?shop_id=eq." + sess.uid + "&select=data,updated");
+    if (!g2.ok) throw httpErr(g2);
+    const row = g2.json && g2.json[0];
+    if (!row) {
+      const r = await api("/rest/v1/ledgers", { method: "POST", headers: { Prefer: "return=minimal" }, body: Object.assign({ shop_id: sess.uid }, body) });
+      if (r.ok) { lastSynced = snap; lsSet(K.sync, String(snap)); saveBase(); storeMode = "account"; return; }
+      if (r.status === 409) continue;
+      throw httpErr(r);
+    }
+    if (row.updated === snap) { lastSynced = snap; lsSet(K.sync, String(snap)); saveBase(); storeMode = "account"; return; }
+    applyMerged(mergeLedgers(S, row.data));
+    lastSynced = row.updated; lsSet(K.sync, String(lastSynced));
+  }
+  throw new Error("sync busy");
 }
 window.pushCloud = async function () {
   if (!active || !sess) return;
