@@ -277,7 +277,7 @@ const T = {
     cost_price:"Prix d'achat",cancel_entry:"Annuler cette écriture",cancelled:"Annulé",cancel_title:"Annuler cette écriture ?",
     cancel_hint:"Le stock et le solde du client seront corrigés. L'écriture reste visible, marquée Annulé.",cancel_reason:"Raison (facultatif)",
     cancel_yes:"Oui, annuler",cancel_done:"Écriture annulée",back2:"Retour",sold_units:"vendus",
-    tab_stock:"Stock",stock:"Stock",is_service:"C'est un service (pas de stock à compter)",svc_tag:"Service",add_product:"Ajouter un produit",product_name:"Nom du produit",unit_price:"Prix de vente",in_stock:"En stock",
+    tab_stock:"Stock",stock:"Stock",bulk_btn:"Ajouter plusieurs",bulk_t:"Ajouter plusieurs produits",bulk_help:"Un produit par ligne : nom, prix, quantité. La quantité est facultative. Écrivez « service » à la place de la quantité pour un service. Ajoutez un prix d'achat à la fin si vous voulez : nom, prix, quantité, prix d'achat.",bulk_ph:"Sandales, 8000, 12\nBaskets, 25000, 5\nCoupe de cheveux, 1000, service",bulk_go:"Ajouter",bulk_empty:"Écrivez au moins un produit.",bulk_done:(a,d,b)=>`${a} ajouté(s)`+(d?`, ${d} déjà existant(s)`:"")+(b?`, ${b} ligne(s) ignorée(s)`:""),bulk_skip:"Lignes ignorées :",is_service:"C'est un service (pas de stock à compter)",svc_tag:"Service",add_product:"Ajouter un produit",product_name:"Nom du produit",unit_price:"Prix de vente",in_stock:"En stock",
     low_alert:"Alerte quand il en reste",add_received:"Quantité reçue (à ajouter)",low:"Bas",out:"Épuisé",low_stock_title:"Stock bas",
     no_products:"Aucun produit. Ajoutez vos articles pour suivre le stock.",stock_value:"Valeur du stock",err_pname:"Le nom du produit est obligatoire.",
     err_pdup:"Ce produit existe déjà.",err_stock:(n,q)=>`Stock insuffisant pour ${n} : ${q} restant(s). Ajoutez du stock d'abord.`,
@@ -347,7 +347,7 @@ const T = {
     cost_price:"Cost price",cancel_entry:"Cancel this entry",cancelled:"Cancelled",cancel_title:"Cancel this entry?",
     cancel_hint:"Stock and the customer's balance will be corrected. The entry stays visible, marked Cancelled.",cancel_reason:"Reason (optional)",
     cancel_yes:"Yes, cancel it",cancel_done:"Entry cancelled",back2:"Back",sold_units:"sold",
-    tab_stock:"Stock",stock:"Stock",is_service:"This is a service (no stock to count)",svc_tag:"Service",add_product:"Add product",product_name:"Product name",unit_price:"Selling price",in_stock:"In stock",
+    tab_stock:"Stock",stock:"Stock",bulk_btn:"Add many",bulk_t:"Add many products",bulk_help:"One product per line: name, price, quantity. Quantity is optional. Write \"service\" instead of the quantity for a service. You can add a buying price at the end: name, price, quantity, buying price.",bulk_ph:"Sandals, 8000, 12\nSneakers, 25000, 5\nHaircut, 1000, service",bulk_go:"Add",bulk_empty:"Write at least one product.",bulk_done:(a,d,b)=>`${a} added`+(d?`, ${d} already existed`:"")+(b?`, ${b} line(s) skipped`:""),bulk_skip:"Skipped lines:",is_service:"This is a service (no stock to count)",svc_tag:"Service",add_product:"Add product",product_name:"Product name",unit_price:"Selling price",in_stock:"In stock",
     low_alert:"Alert when this many are left",add_received:"Quantity received (add)",low:"Low",out:"Out",low_stock_title:"Running low",
     no_products:"No products yet. Add your items to track stock.",stock_value:"Stock value",err_pname:"Product name is required.",
     err_pdup:"This product already exists.",err_stock:(n,q)=>`Not enough stock for ${n}: ${q} left. Add stock first.`,
@@ -949,7 +949,7 @@ function viewReports(){
 function viewStock(){
   const list=[...S.products].sort((a,b)=>a.name.localeCompare(b.name));
   const val=S.products.reduce((s,p)=>s+(p.svc?0:Math.max(0,p.qty)*p.price),0);
-  let h=`<section class="sec"><h2>${t("stock")}${isOwner()?`<button class="btn small primary" data-act="add-product">${t("add_product")}</button>`:""}</h2>`;
+  let h=`<section class="sec"><h2>${t("stock")}${isOwner()?`<span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small" data-act="bulk-add">${t("bulk_btn")}</button><button class="btn small primary" data-act="add-product">${t("add_product")}</button></span>`:""}</h2>`;
   if(isOwner()&&list.length) h+=`<div class="card"><div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${t("stock_value")}</div><div class="num" style="font-size:1.35rem;margin-top:4px">${money(val)}</div></div>`;
   h+=`<div class="card flush">`;
   if(!list.length) h+=`<div class="empty">${t("no_products")}</div>`;
@@ -970,6 +970,25 @@ function productModal(m){
     <div class="err" id="pr-err" role="alert"></div>
     <div class="actions"><button class="btn primary" data-act="save-product">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button>
     ${p&&own?`<button class="btn danger" data-act="del-product" data-id="${p.id}">${t("delete")}</button>`:""}</div></div>`;
+}
+function saveBulk(){
+  const er=$("#bulk-err"), raw=($("#bulk-txt").value||"");
+  const lines=raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  if(!lines.length){ er.textContent=t("bulk_empty"); return; }
+  const names=new Set(S.products.map(p=>p.name.toLowerCase())); let added=0, dup=0; const bad=[];
+  for(const ln of lines){
+    const parts=ln.split(/[,;\t]/).map(x=>x.trim());
+    const name=parts[0], price=parseAmt(parts[1]);
+    if(!name||!(price>0)){ bad.push(ln); continue; }
+    if(names.has(name.toLowerCase())){ dup++; continue; }
+    const q=(parts[2]||"").toLowerCase(), svc=/^(service|svc|s)$/.test(q);
+    const qty=svc?0:Math.max(0,parseAmt(parts[2])), cost=svc&&parts[3]===undefined?0:parseAmt(parts[3]);
+    S.products.push({id:uid(),name,price,qty,low:svc?0:5,cost,svc}); names.add(name.toLowerCase()); added++;
+  }
+  if(added) save();
+  if(bad.length){ if(added) render(); const ta=$("#bulk-txt"), e2=$("#bulk-err"); if(ta) ta.value=bad.join("\n"); if(e2) e2.textContent=t("bulk_done",added,dup,bad.length)+". "+t("bulk_skip"); return; }
+  if(!added&&dup){ er.textContent=t("bulk_done",added,dup,0); return; }
+  ui.modal=null; render(); toast(t("bulk_done",added,dup,0));
 }
 function saveProduct(){
   const m=ui.modal, own=isOwner(), er=$("#pr-err"); let p=m.id?S.products.find(x=>x.id===m.id):null;
@@ -1214,6 +1233,11 @@ function renderModal(){
     const c=custById(m.id);
     inner=`<div class="dlg"><h2>${L()==="fr"?"Supprimer ce client ?":"Delete this customer?"}</h2><p class="note" style="margin:0">${esc(c?c.name:"")} — ${L()==="fr"?"Ses reçus restent dans l'historique.":"Their receipts stay in the history."}</p>
       <div class="actions"><button class="btn danger" data-act="del-cust-yes" data-id="${m.id}">${L()==="fr"?"Supprimer":"Delete"}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="bulk"){
+    inner=`<div class="dlg form"><h2>${t("bulk_t")}</h2><p class="note" style="margin:0">${t("bulk_help")}</p>
+      <div class="field"><textarea id="bulk-txt" rows="8" placeholder="${esc(t("bulk_ph"))}" autocomplete="off" style="width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)"></textarea></div>
+      <div class="err" id="bulk-err" role="alert"></div>
+      <div class="actions"><button class="btn primary" data-act="save-bulk">${t("bulk_go")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
   }else if(m.type==="product"){ inner=productModal(m);
   }else if(m.type==="editcust"){
     const c=custById(m.id); if(!c){ ui.modal=null; layer.innerHTML=""; return; }
@@ -1334,6 +1358,8 @@ document.addEventListener("click",e=>{
     case "pdf-share": receiptPdf(id,true); break;
     case "pdf-dl": receiptPdf(id,false); break;
     case "txt-receipt": { const x=S.txs.find(y=>y.id===id); const k=ui.modal&&ui.modal.kind; saveFile(`${k==="invoice"?"facture":"recu"}-${pad4(x.no)}.txt`,receiptText(x,k)); break; }
+    case "bulk-add": ui.modal={type:"bulk"}; renderModal(); break;
+    case "save-bulk": saveBulk(); break;
     case "add-product": ui.modal={type:"product",id:null}; renderModal(); break;
     case "open-product": ui.modal={type:"product",id}; renderModal(); break;
     case "save-product": saveProduct(); break;
