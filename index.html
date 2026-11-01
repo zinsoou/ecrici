@@ -277,7 +277,7 @@ const T = {
     cost_price:"Prix d'achat",cancel_entry:"Annuler cette écriture",cancelled:"Annulé",cancel_title:"Annuler cette écriture ?",
     cancel_hint:"Le stock et le solde du client seront corrigés. L'écriture reste visible, marquée Annulé.",cancel_reason:"Raison (facultatif)",
     cancel_yes:"Oui, annuler",cancel_done:"Écriture annulée",back2:"Retour",sold_units:"vendus",
-    tab_stock:"Stock",stock:"Stock",bulk_btn:"Ajouter plusieurs",bulk_t:"Ajouter plusieurs produits",bulk_help:"Un produit par ligne : nom, prix, quantité. La quantité est facultative. Écrivez « service » à la place de la quantité pour un service. Ajoutez un prix d'achat à la fin si vous voulez : nom, prix, quantité, prix d'achat.",bulk_ph:"Sandales, 8000, 12\nBaskets, 25000, 5\nCoupe de cheveux, 1000, service",bulk_go:"Ajouter",bulk_empty:"Écrivez au moins un produit.",bulk_done:(a,d,b)=>`${a} ajouté(s)`+(d?`, ${d} déjà existant(s)`:"")+(b?`, ${b} ligne(s) ignorée(s)`:""),bulk_skip:"Lignes ignorées :",is_service:"C'est un service (pas de stock à compter)",svc_tag:"Service",add_product:"Ajouter un produit",product_name:"Nom du produit",unit_price:"Prix de vente",in_stock:"En stock",
+    pick_btn:"Choisir dans mes produits",pick_t:"Choisir les produits",pick_q:"Rechercher un produit…",pick_done:"Terminé",pick_none:"Aucun produit trouvé",pick_hint:"Touchez un produit pour l'ajouter. Touchez encore pour +1.",pick_n:"articles",tab_stock:"Stock",stock:"Stock",bulk_btn:"Ajouter plusieurs",bulk_t:"Ajouter plusieurs produits",bulk_help:"Un produit par ligne : nom, prix, quantité. La quantité est facultative. Écrivez « service » à la place de la quantité pour un service. Ajoutez un prix d'achat à la fin si vous voulez : nom, prix, quantité, prix d'achat.",bulk_ph:"Sandales, 8000, 12\nBaskets, 25000, 5\nCoupe de cheveux, 1000, service",bulk_go:"Ajouter",bulk_empty:"Écrivez au moins un produit.",bulk_done:(a,d,b)=>`${a} ajouté(s)`+(d?`, ${d} déjà existant(s)`:"")+(b?`, ${b} ligne(s) ignorée(s)`:""),bulk_skip:"Lignes ignorées :",is_service:"C'est un service (pas de stock à compter)",svc_tag:"Service",add_product:"Ajouter un produit",product_name:"Nom du produit",unit_price:"Prix de vente",in_stock:"En stock",
     low_alert:"Alerte quand il en reste",add_received:"Quantité reçue (à ajouter)",low:"Bas",out:"Épuisé",low_stock_title:"Stock bas",
     no_products:"Aucun produit. Ajoutez vos articles pour suivre le stock.",stock_value:"Valeur du stock",err_pname:"Le nom du produit est obligatoire.",
     err_pdup:"Ce produit existe déjà.",err_stock:(n,q)=>`Stock insuffisant pour ${n} : ${q} restant(s). Ajoutez du stock d'abord.`,
@@ -347,7 +347,7 @@ const T = {
     cost_price:"Cost price",cancel_entry:"Cancel this entry",cancelled:"Cancelled",cancel_title:"Cancel this entry?",
     cancel_hint:"Stock and the customer's balance will be corrected. The entry stays visible, marked Cancelled.",cancel_reason:"Reason (optional)",
     cancel_yes:"Yes, cancel it",cancel_done:"Entry cancelled",back2:"Back",sold_units:"sold",
-    tab_stock:"Stock",stock:"Stock",bulk_btn:"Add many",bulk_t:"Add many products",bulk_help:"One product per line: name, price, quantity. Quantity is optional. Write \"service\" instead of the quantity for a service. You can add a buying price at the end: name, price, quantity, buying price.",bulk_ph:"Sandals, 8000, 12\nSneakers, 25000, 5\nHaircut, 1000, service",bulk_go:"Add",bulk_empty:"Write at least one product.",bulk_done:(a,d,b)=>`${a} added`+(d?`, ${d} already existed`:"")+(b?`, ${b} line(s) skipped`:""),bulk_skip:"Skipped lines:",is_service:"This is a service (no stock to count)",svc_tag:"Service",add_product:"Add product",product_name:"Product name",unit_price:"Selling price",in_stock:"In stock",
+    pick_btn:"Pick from my products",pick_t:"Choose products",pick_q:"Search products…",pick_done:"Done",pick_none:"No product found",pick_hint:"Tap a product to add it. Tap again for +1.",pick_n:"items",tab_stock:"Stock",stock:"Stock",bulk_btn:"Add many",bulk_t:"Add many products",bulk_help:"One product per line: name, price, quantity. Quantity is optional. Write \"service\" instead of the quantity for a service. You can add a buying price at the end: name, price, quantity, buying price.",bulk_ph:"Sandals, 8000, 12\nSneakers, 25000, 5\nHaircut, 1000, service",bulk_go:"Add",bulk_empty:"Write at least one product.",bulk_done:(a,d,b)=>`${a} added`+(d?`, ${d} already existed`:"")+(b?`, ${b} line(s) skipped`:""),bulk_skip:"Skipped lines:",is_service:"This is a service (no stock to count)",svc_tag:"Service",add_product:"Add product",product_name:"Product name",unit_price:"Selling price",in_stock:"In stock",
     low_alert:"Alert when this many are left",add_received:"Quantity received (add)",low:"Low",out:"Out",low_stock_title:"Running low",
     no_products:"No products yet. Add your items to track stock.",stock_value:"Stock value",err_pname:"Product name is required.",
     err_pdup:"This product already exists.",err_stock:(n,q)=>`Not enough stock for ${n}: ${q} left. Add stock first.`,
@@ -700,7 +700,7 @@ function viewSale(){
         <button class="btn small ghost" data-act="sale-newcust" style="justify-self:start">${t("new_customer")}</button>`}
     </div>
     <datalist id="plist">${S.products.map(p=>`<option value="${esc(p.name)}">`).join("")}</datalist>
-    <div class="field"><span class="lab">${t("items")}</span><div class="lines" id="lines">
+    <div class="field"><span class="lab">${t("items")}</span>${S.products.length?`<button class="btn primary" data-act="pick-open" style="justify-self:stretch">${t("pick_btn")} (${S.products.length})</button>`:""}<div class="lines" id="lines">
       ${d.lines.map((l,i)=>`<div class="line">
         <input data-bind="line.${i}.d" id="l${i}d" list="plist" value="${esc(l.d)}" placeholder="${t("item")}" autocomplete="off" aria-label="${t("item")}">
         <input data-bind="line.${i}.q" id="l${i}q" value="${esc(l.q)}" inputmode="decimal" aria-label="${t("qty")}">
@@ -723,6 +723,22 @@ function viewSale(){
     <div class="err" id="s-err" role="alert">${esc(d.err)}</div>
     <button class="btn primary" data-act="save-sale">${t("save_sale")}</button>
   </div></section>`;
+}
+function pickQty(id){ return ui.draft?ui.draft.lines.filter(l=>l.pid===id).reduce((s,l)=>s+(parseAmt(l.q)||0),0):0; }
+function pickList(q){
+  q=(q||"").trim().toLowerCase();
+  const list=S.products.filter(p=>!q||p.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
+  if(!list.length) return `<p class="note" style="text-align:center">${t("pick_none")}</p>`;
+  return list.map(p=>{ const n=pickQty(p.id); const sub=p.svc?t("svc_tag"):`${t("in_stock")}: ${p.qty}`;
+    return `<button class="row" data-act="pick-p" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)} · ${esc(sub)}</div></div>${n>0?`<div class="amt"><b>×${n}</b></div>`:""}</button>`; }).join("");
+}
+function pickAdd(id){
+  const pr=S.products.find(x=>x.id===id), d=ui.draft; if(!pr||!d) return;
+  const ex=d.lines.find(l=>l.pid===id);
+  if(ex){ ex.q=String((parseAmt(ex.q)||0)+1); return; }
+  let l=d.lines.find(x=>!x.d.trim()&&!parseAmt(x.p));
+  if(!l){ l={d:"",q:"1",p:"",pid:null,auto:false}; d.lines.push(l); }
+  l.d=pr.name; l.pid=pr.id; l.q="1"; l.p=String(pr.price); l.auto=true;
 }
 function lineHint(l){ const p=l.pid&&S.products.find(x=>x.id===l.pid); if(!p||p.svc) return ""; const q=parseAmt(l.q)||0; return `${t("in_stock")}: ${p.qty}`+(q>p.qty?" ⚠":""); }
 function updateSaleTotals(){
@@ -1240,6 +1256,13 @@ function renderModal(){
       <div class="field"><textarea id="bulk-txt" rows="8" placeholder="${esc(t("bulk_ph"))}" autocomplete="off" style="width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)"></textarea></div>
       <div class="err" id="bulk-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-bulk">${t("bulk_go")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="pick"){
+    const cnt=ui.draft?ui.draft.lines.filter(l=>l.pid).reduce((s,l)=>s+(parseAmt(l.q)||0),0):0;
+    inner=`<div class="dlg form" style="max-height:88vh;grid-template-rows:auto auto auto minmax(0,1fr) auto"><h2>${t("pick_t")}</h2>
+      <input id="pk-q" type="search" placeholder="${esc(t("pick_q"))}" autocomplete="off" aria-label="${esc(t("pick_q"))}">
+      <p class="note" style="margin:0">${t("pick_hint")}</p>
+      <div id="pk-list" style="overflow:auto;display:grid;gap:6px;align-content:start">${pickList("")}</div>
+      <div class="actions"><button class="btn primary" data-act="pick-done"><span id="pk-n">${cnt}</span> ${t("pick_n")} · ${t("pick_done")}</button></div></div>`;
   }else if(m.type==="product"){ inner=productModal(m);
   }else if(m.type==="editcust"){
     const c=custById(m.id); if(!c){ ui.modal=null; layer.innerHTML=""; return; }
@@ -1349,6 +1372,9 @@ document.addEventListener("click",e=>{
     case "sale-for": ui.draft=newDraft(id); ui.view="sale"; ui.custId=null; render(); window.scrollTo(0,0); break;
     case "sale-newcust": ui.draft.newCust=true; render(); $("#nc-name")&&$("#nc-name").focus(); break;
     case "sale-existing": ui.draft.newCust=false; render(); break;
+    case "pick-open": ui.modal={type:"pick"}; renderModal(); { const f=$("#pk-q"); f&&f.focus(); } break;
+    case "pick-p": { pickAdd(id); const L=$("#pk-list"), q=$("#pk-q"); if(L) L.innerHTML=pickList(q?q.value:""); const n=$("#pk-n"); if(n) n.textContent=ui.draft.lines.filter(l=>l.pid).reduce((s,l)=>s+(parseAmt(l.q)||0),0); break; }
+    case "pick-done": ui.modal=null; render(); break;
     case "add-line": ui.draft.lines.push({d:"",q:"1",p:"",pid:null,auto:false}); render(); { const i=ui.draft.lines.length-1; const f=$("#l"+i+"d"); f&&f.focus(); } break;
     case "del-line": ui.draft.lines.splice(+el.dataset.i,1); render(); break;
     case "mode": ui.draft.mode=el.dataset.m; render(); break;
@@ -1435,7 +1461,8 @@ document.addEventListener("click",async e=>{
   toast(L()==="fr"?`Message copié. Ouvrez vos SMS, écrivez à ${to||"votre client"} et collez.`:`Message copied. Open your SMS app, write to ${to||"your customer"} and paste.`);
 },true);
 document.addEventListener("input",e=>{
-  const el=e.target; if(!el.dataset||!el.dataset.bind) return;
+  const el=e.target;
+  if(el.id==="pk-q"){ const L=$("#pk-list"); if(L) L.innerHTML=pickList(el.value); return; } if(!el.dataset||!el.dataset.bind) return;
   const r=setBind(el.dataset.bind,el.value);
   if(r==="search"||r==="hsearch"){ const pos=el.selectionStart; render(); const n=$("#"+el.id); if(n){ n.focus(); try{n.setSelectionRange(pos,pos);}catch(_){} } return; }
   updateSaleTotals();
