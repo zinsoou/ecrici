@@ -4,8 +4,7 @@
 "use strict";
 const hideStyle = document.getElementById("lg-hide");
 const CFG = window.ECRICI || {};
-if (!CFG.url || !CFG.key || /PASTE|COLLEZ/i.test(CFG.url + CFG.key)) { if (hideStyle) hideStyle.remove();
-document.documentElement.setAttribute("translate", "no"); { const m = document.createElement("meta"); m.name = "google"; m.content = "notranslate"; document.head.appendChild(m); } return; }
+if (!CFG.url || !CFG.key || /PASTE|COLLEZ/i.test(CFG.url + CFG.key)) { if (hideStyle) hideStyle.remove(); return; }
 const BASE = CFG.url.replace(/\/+$/, "");
 const K = { sess: "ecrici-session", acct: "ecrici-acct", owner: "ecrici-owner", sync: "ecrici-synced", base: "ecrici-baseqty" };
 
@@ -36,6 +35,8 @@ const httpErr = r => { const e = new Error("http " + r.status); e.status = r.sta
 const authErr = () => { const e = new Error("auth"); e.auth = true; return e; };
 
 let sess = jget(K.sess), refreshing = null;
+let shopId = null, member = null, teamOk = true; window.__member = null;
+const setMember = info => { member = info && info.role === "employee" ? { id: "member", name: info.name || "", role: "staff" } : null; window.__member = member; };
 function setSess(j) {
   sess = { access: j.access_token, refresh: j.refresh_token, exp: Date.now() + (j.expires_in || 3600) * 1000, uid: (j.user && j.user.id) || (sess && sess.uid) };
   lsSet(K.sess, JSON.stringify(sess));
@@ -90,6 +91,8 @@ const G = {
     off_t: "Pas de connexion", off_p: "Impossible de vérifier votre abonnement pour l'instant. Réessayez avec internet.", retry: "Réessayer",
     err_t: "Compte introuvable", err_p: "Votre compte n'est pas encore prêt. Réessayez dans un instant.",
     chpw: "Changer le mot de passe", npw: "Nouveau mot de passe", npw2: "Répétez le mot de passe", chpw_go: "Enregistrer le mot de passe", chpw_ok: "Mot de passe changé", chpw_mismatch: "Les deux mots de passe sont différents.", chpw_weak: "6 caractères minimum.", chpw_fail: "Impossible pour le moment. Réessayez avec internet.", chpw_login: "Pour votre sécurité, déconnectez-vous puis reconnectez-vous avant de changer le mot de passe.",
+    join_t: "Rejoindre une boutique", code: "Code d'invitation", join_go: "Rejoindre", have_join: "J'ai un code d'invitation", join_hint: "Le propriétaire de la boutique vous a invité. Créez votre connexion.", e_invite: "Invitation invalide ou expirée. Demandez un nouveau lien au propriétaire.", e_hasshop: "Ce numéro a déjà sa propre boutique. Utilisez un autre numéro.", nolink_t: "Connexion non liée à une boutique", nolink_p: "Cet accès n'est lié à aucune boutique, ou le propriétaire l'a retiré. Demandez un nouveau lien d'invitation.", emp_blk_t: "Abonnement terminé", emp_blk_p: "L'abonnement de la boutique est terminé. Demandez au propriétaire de le renouveler.",
+    tl_t: "Employés avec leur propre connexion", tl_p: "Invitez un employé : il crée sa propre connexion sur son téléphone, sans votre mot de passe. Vous pouvez le retirer à tout moment.", tl_name: "Nom de l'employé", tl_go: "Créer l'invitation", tl_pend: "Invitations en attente (valables 48 h)", tl_team: "Employés", tl_none: "Aucun employé pour l'instant.", tl_wa: "Envoyer par WhatsApp", tl_copy: "Copier le lien", tl_cancel: "Annuler", tl_remove: "Retirer", tl_rm_q: "Retirer cet employé ? Sa connexion sera supprimée.", tl_err: "Impossible pour le moment. Réessayez.", tl_full: "Maximum 10 employés et invitations.", tl_plan: "L'abonnement doit être actif pour inviter.", tl_msg: (shop, name, link) => `Bonjour ${name}, je vous invite à rejoindre ${shop} sur Ecrici. Ouvrez ce lien et créez votre connexion : ${link}`, copied: "Lien copié",
     inst: "Installer l'application", f_plan: "Abonnement :", f_help: "Besoin d'aide ? WhatsApp", f_priv: "Confidentialité et conditions", ios_t: "Sur iPhone : ouvrez ce site dans Safari, touchez ••• (en bas à droite) ou le bouton Partager (carré avec flèche), touchez Partager, puis faites défiler et touchez « Sur l'écran d'accueil ».",  hint_name: "Écrivez en MAJUSCULES, ex : BOUTIQUE DE VICTOR", hint_phone: "Chiffres seulement, sans le +. Ex :",  forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
     wa_new: (n, p) => `Bonjour, je viens de créer mon compte Ecrici pour la boutique ${n} (${p}). Merci de l'activer.`,
     wa_renew: (n, p) => `Bonjour, je souhaite renouveler mon abonnement Ecrici pour la boutique ${n} (${p}).`,
@@ -111,6 +114,8 @@ const G = {
     off_t: "No connection", off_p: "We can't check your subscription right now. Try again with internet.", retry: "Try again",
     err_t: "Account not found", err_p: "Your account isn't ready yet. Try again in a moment.",
     chpw: "Change password", npw: "New password", npw2: "Repeat the password", chpw_go: "Save password", chpw_ok: "Password changed", chpw_mismatch: "The two passwords are different.", chpw_weak: "6 characters minimum.", chpw_fail: "Not possible right now. Try again with internet.", chpw_login: "For your security, log out and log in again before changing the password.",
+    join_t: "Join a shop", code: "Invitation code", join_go: "Join", have_join: "I have an invitation code", join_hint: "The shop owner invited you. Create your login.", e_invite: "Invitation invalid or expired. Ask the owner for a new link.", e_hasshop: "This number already has its own shop. Use another number.", nolink_t: "Login not linked to a shop", nolink_p: "This login is not linked to any shop, or the owner removed it. Ask for a new invitation link.", emp_blk_t: "Plan ended", emp_blk_p: "The shop's plan has ended. Ask the owner to renew it.",
+    tl_t: "Employees with their own login", tl_p: "Invite an employee: they create their own login on their phone, without your password. You can remove them at any time.", tl_name: "Employee name", tl_go: "Create invitation", tl_pend: "Pending invitations (valid 48 h)", tl_team: "Employees", tl_none: "No employees yet.", tl_wa: "Send on WhatsApp", tl_copy: "Copy link", tl_cancel: "Cancel", tl_remove: "Remove", tl_rm_q: "Remove this employee? Their login will be deleted.", tl_err: "Not possible right now. Try again.", tl_full: "Maximum 10 employees and invitations.", tl_plan: "The plan must be active to invite.", tl_msg: (shop, name, link) => `Hello ${name}, I'm inviting you to join ${shop} on Ecrici. Open this link and create your login: ${link}`, copied: "Link copied",
     inst: "Install the app", f_plan: "Plan:", f_help: "Need help? WhatsApp", f_priv: "Privacy and terms", ios_t: "On iPhone: open this site in Safari, tap ••• (bottom right) or the Share button (square with an arrow), tap Share, then scroll and tap \"Add to Home Screen\".",  hint_name: "Write in CAPITAL letters, e.g. VICTOR'S DRYCLEANER", hint_phone: "Digits only, no + sign. Example:",  forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
     wa_new: (n, p) => `Hello, I just created my Ecrici account for the shop ${n} (${p}). Please activate it.`,
     wa_renew: (n, p) => `Hello, I would like to renew my Ecrici subscription for the shop ${n} (${p}).`,
@@ -142,8 +147,14 @@ document.head.appendChild(css);
 const gate = document.createElement("div"); gate.id = "lg-gate"; gate.setAttribute("role", "dialog"); gate.setAttribute("aria-modal", "true");
 document.body.appendChild(gate);
 if (hideStyle) hideStyle.remove();
+document.documentElement.setAttribute("translate", "no"); { const m = document.createElement("meta"); m.name = "google"; m.content = "notranslate"; document.head.appendChild(m); }
 
-let gateKind = "loading", mode = "login", form = { country: "BJ", phone: "", name: "" }, busyAuth = false, authErrText = "";
+let gateKind = "loading", mode = "login", form = { country: "BJ", phone: "", name: "", code: "" }, busyAuth = false, authErrText = "";
+try {
+  const jc = new URLSearchParams(location.search).get("join");
+  if (jc) { lsSet("ecrici-join", String(jc).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 16)); history.replaceState(null, "", location.pathname); }
+  form.code = lsGet("ecrici-join") || ""; if (form.code) mode = "join";
+} catch (e) {}
 const COUNTRY_OPTS = () => Object.entries(COUNTRIES).map(([k, v]) => `<option value="${k}" ${form.country === k ? "selected" : ""}>${esc(v.name)} (+${v.cc})</option>`).join("");
 const shopRow = () => jget(K.acct) || {};
 const waLink = txt => CFG.adminWhatsapp ? `https://wa.me/${String(CFG.adminWhatsapp).replace(/\D/g, "")}?text=${encodeURIComponent(txt)}` : "";
@@ -165,27 +176,33 @@ function drawGate() {
   if (gateKind === "loading") {
     h = head() + `<p class="lg-tag">${esc(g("wait"))}</p>`;
   } else if (gateKind === "auth") {
-    const su = mode === "signup";
-    h = head() + `<div class="card form"><h2>${esc(su ? g("signup") : g("login"))}</h2>
+    const su = mode === "signup", jn = mode === "join";
+    h = head() + `<div class="card form"><h2>${esc(jn ? g("join_t") : su ? g("signup") : g("login"))}</h2>
+      ${jn ? `<p class="lg-tag" style="margin:0">${esc(g("join_hint"))}</p>` : ""}
       ${su ? `<div class="field"><label for="lg-name">${esc(g("shop"))}</label><input id="lg-name" value="${esc(form.name)}" autocomplete="organization" autocapitalize="characters" placeholder="${esc(lang() === "fr" ? "BOUTIQUE DE VICTOR" : "VICTOR'S DRYCLEANER")}" style="text-transform:uppercase"></div>` : ""}
       <div class="field"><label for="lg-country">${esc(g("country"))}</label><select id="lg-country">${COUNTRY_OPTS()}</select></div>
       <div class="field"><label for="lg-phone">${esc(g("phone"))}</label><input id="lg-phone" value="${esc(form.phone)}" inputmode="tel" autocomplete="tel" placeholder="${esc(PH[form.country] || "")}"><small class="lg-hint" style="opacity:.7;font-size:.8em">${esc(g("hint_phone"))} ${esc(PH[form.country] || "")}</small></div>
-      <div class="field"><label for="lg-pw">${esc(g("pw"))}</label><input id="lg-pw" type="password" autocomplete="${su ? "new-password" : "current-password"}"></div>
+      <div class="field"><label for="lg-pw">${esc(g("pw"))}</label><input id="lg-pw" type="password" autocomplete="${su || jn ? "new-password" : "current-password"}"></div>
+      ${jn ? `<div class="field"><label for="lg-code">${esc(g("code"))}</label><input id="lg-code" value="${esc(form.code)}" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase"></div>` : ""}
       <label class="lg-chk"><input type="checkbox" data-lg="showpw"> ${esc(g("show"))}</label>
       <div class="lg-err" id="lg-err" role="alert">${esc(authErrText)}</div>
-      <button class="btn primary" data-lg="submit" ${busyAuth ? "disabled" : ""}>${esc(busyAuth ? g("wait") : su ? g("signup") : g("login"))}</button>
-      <button class="btn small ghost" data-lg="mode" style="justify-self:start">${esc(su ? g("have") : g("nohave"))}</button>
-      ${!su && CFG.adminWhatsapp ? `<button class="btn small ghost" data-lg="forgot" style="justify-self:start">${esc(g("forgot"))}</button>` : ""}</div>
-`;
+      <button class="btn primary" data-lg="submit" ${busyAuth ? "disabled" : ""}>${esc(busyAuth ? g("wait") : jn ? g("join_go") : su ? g("signup") : g("login"))}</button>
+      <button class="btn small ghost" data-lg="mode" style="justify-self:start">${esc(su || jn ? g("have") : g("nohave"))}</button>
+      ${!su && !jn ? `<button class="btn small ghost" data-lg="tojoin" style="justify-self:start">${esc(g("have_join"))}</button>` : ""}
+      ${!su && !jn && CFG.adminWhatsapp ? `<button class="btn small ghost" data-lg="forgot" style="justify-self:start">${esc(g("forgot"))}</button>` : ""}</div>`;
   } else if (gateKind === "pending" || gateKind === "blocked") {
     const pend = gateKind === "pending";
     const w = waLink(pend ? g("wa_new", a.name || "", a.phone || "") : g("wa_renew", a.name || "", a.phone || ""));
-    h = head() + `<div class="card form"><h2>${esc(pend ? g("pend_t") : g("blk_t"))}</h2>
-      <div class="lg-msg">${esc(pend ? g("pend_p", a.name || "") : g("blk_p"))}</div>
-      ${w ? `<a class="btn primary" href="${w}" target="_blank" rel="noopener">${esc(g("wa"))}</a>` : ""}
+    h = head() + `<div class="card form"><h2>${esc(member ? g("emp_blk_t") : pend ? g("pend_t") : g("blk_t"))}</h2>
+      <div class="lg-msg">${esc(member ? g("emp_blk_p") : pend ? g("pend_p", a.name || "") : g("blk_p"))}</div>
+      ${w && !member ? `<a class="btn primary" href="${w}" target="_blank" rel="noopener">${esc(g("wa"))}</a>` : ""}
       <button class="btn" data-lg="check">${esc(g("check"))}</button>
-      ${!pend && lsGet(K.owner) === (sess && sess.uid) ? `<button class="btn" data-lg="backup">${esc(g("backup"))}</button>` : ""}
+      ${!pend && !member && lsGet(K.owner) === (sess && sess.uid) ? `<button class="btn" data-lg="backup">${esc(g("backup"))}</button>` : ""}
       <button class="btn small ghost" data-lg="logout" style="justify-self:start">${esc(g("out"))}</button></div>`;
+  } else if (gateKind === "nolink") {
+    h = head() + `<div class="card form"><h2>${esc(g("nolink_t"))}</h2><div class="lg-msg">${esc(g("nolink_p"))}</div>
+      <button class="btn primary" data-lg="tojoin">${esc(g("have_join"))}</button>
+      <button class="btn small ghost" data-lg="forcelogout" style="justify-self:start">${esc(g("out"))}</button></div>`;
   } else if (gateKind === "offline" || gateKind === "error") {
     const off = gateKind === "offline";
     h = head() + `<div class="card form"><h2>${esc(off ? g("off_t") : g("err_t"))}</h2><div class="lg-msg">${esc(off ? g("off_p") : g("err_p"))}</div>
@@ -203,6 +220,8 @@ gate.addEventListener("click", async e => {
   const act = b.dataset.lg;
   if (act === "lang") { S.shop.lang = lang() === "fr" ? "en" : "fr"; try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (x) {} drawGate(); }
   else if (act === "mode") { grab(); mode = mode === "login" ? "signup" : "login"; authErrText = ""; drawGate(); }
+  else if (act === "tojoin") { grab(); mode = "join"; authErrText = ""; gateKind = "auth"; drawGate(); }
+  else if (act === "forcelogout") forceLogout();
   else if (act === "showpw") { const p = gate.querySelector("#lg-pw"); if (p) p.type = b.checked ? "text" : "password"; }
   else if (act === "submit") submitAuth();
   else if (act === "forgot") { grab(); let id = ""; try { id = form.phone ? canon(form.country, form.phone) : ""; } catch (x) {} window.open(waLink(g("wa_pw", id ? "+" + id : "")), "_blank"); }
@@ -215,8 +234,8 @@ gate.addEventListener("change", e => { if (e.target.id === "lg-country") { grab(
 gate.addEventListener("keydown", e => { if (e.key === "Enter" && gateKind === "auth" && e.target.tagName === "INPUT" && e.target.type !== "checkbox") submitAuth(); });
 function grab() {
   const v = id => { const el = gate.querySelector(id); return el ? el.value : null; };
-  const c = v("#lg-country"), p = v("#lg-phone"), n = v("#lg-name");
-  if (c) form.country = c; if (p !== null) form.phone = p; if (n !== null) form.name = n;
+  const c = v("#lg-country"), p = v("#lg-phone"), n = v("#lg-name"), cd = v("#lg-code");
+  if (c) form.country = c; if (p !== null) form.phone = p; if (n !== null) form.name = n; if (cd !== null) form.code = cd.toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
 /* ---------- sign up / log in ---------- */
@@ -233,22 +252,32 @@ async function submitAuth() {
   if (busyAuth) return;
   grab();
   const pw = (gate.querySelector("#lg-pw") || {}).value || "";
-  const su = mode === "signup";
+  const su = mode === "signup", jn = mode === "join";
   const id = canon(form.country, form.phone);
   authErrText = "";
   if (id.length < 10 || id.length > 15) authErrText = g("e_phone");
   else if (su && !form.name.trim().toUpperCase()) authErrText = g("e_name");
   else if (pw.length < 6) authErrText = g("e_weak");
+  else if (jn && form.code.length < 6) authErrText = g("e_invite");
   if (authErrText) { drawGate(); return; }
   busyAuth = true; drawGate();
   try {
     let r;
     if (su) r = await http("/auth/v1/signup", { method: "POST", body: { email: emailOf(id), password: pw, data: { name: form.name.trim().toUpperCase(), phone: id, country: form.country } } });
+    else if (jn) {
+      r = await http("/auth/v1/signup", { method: "POST", body: { email: emailOf(id), password: pw, data: { join: form.code, phone: id, country: form.country } } });
+      if (!r.ok && /exists|already/i.test(String((r.json || {}).error_code || "") + String((r.json || {}).msg || ""))) r = await http("/auth/v1/token?grant_type=password", { method: "POST", body: { email: emailOf(id), password: pw } });
+    }
     else r = await http("/auth/v1/token?grant_type=password", { method: "POST", body: { email: emailOf(id), password: pw } });
     if (!r.ok) { authErrText = authMsg(r); }
     else if (!r.json || !r.json.access_token) { authErrText = g("e_confirm"); }
     else {
       sess = null; setSess(r.json);
+      if (jn) {
+        const jr = await api("/rest/v1/rpc/team_join", { method: "POST", body: { p_code: form.code } });
+        const m = String((jr.json && (jr.json.message || jr.json.msg)) || "");
+        if (!jr.ok && !/already in a team/i.test(m)) { authErrText = /already has a shop/i.test(m) ? g("e_hasshop") : g("e_invite"); busyAuth = false; drawGate(); return; }
+      }
       if (su) { try { if (!S.shop.name || S.shop.name === "Ma Boutique") S.shop.name = form.name.trim().toUpperCase(); S.shop.country = form.country; S.shop.phone = id; } catch (e) {} }
       busyAuth = false; await enter(); return;
     }
@@ -262,29 +291,42 @@ const offlineOk = a => !!a && a.uid === (sess && sess.uid) && a.status === "acti
 let active = false, lastSynced = Number(lsGet(K.sync)) || 0, busyPush = false, dirtyPush = false, lastCheck = 0;
 
 async function getShop() {
-  const r = await api("/rest/v1/shops?id=eq." + sess.uid + "&select=*");
+  const r = await api("/rest/v1/shops?id=eq." + (shopId || sess.uid) + "&select=*");
   if (!r.ok) throw httpErr(r);
   return (r.json && r.json[0]) || null;
+}
+async function loadMe() {
+  const r = await api("/rest/v1/rpc/me_info", { method: "POST", body: {} });
+  if (r.status === 404) { teamOk = false; return { role: "owner", shop_id: sess.uid, legacy: true }; }
+  if (!r.ok) throw httpErr(r);
+  teamOk = true;
+  return r.json || {};
 }
 async function enter() {
   if (!sess) { showGate("auth"); return; }
   showGate("loading");
   let shop;
-  try { shop = await getShop(); }
+  try {
+    const info = await loadMe();
+    if (info.role === "none") { setMember(null); shopId = null; showGate("nolink"); return; }
+    shopId = info.shop_id || sess.uid; setMember(info);
+    shop = await getShop();
+  }
   catch (e) {
     if (e.auth) { active = false; showGate("auth"); return; }
     if (e.offline || !e.status || e.status >= 500) {
       const c = jget(K.acct);
-      if (offlineOk(c)) { unlockOffline(); return; }
+      if (offlineOk(c)) { shopId = c.shopId || sess.uid; setMember(c.role === "employee" ? { role: "employee", name: c.mname } : null); unlockOffline(); return; }
       showGate("offline"); return;
     }
     showGate("error"); return;
   }
   if (!shop) { showGate("error"); return; }
-  const a = { uid: sess.uid, status: shop.status, paid_until: shop.paid_until, name: shop.name, phone: shop.phone, country: shop.country, checked: Date.now() };
+  const a = { uid: sess.uid, shopId, role: member ? "employee" : "owner", mname: member ? member.name : "", status: shop.status, paid_until: shop.paid_until, name: shop.name, phone: shop.phone, country: shop.country, checked: Date.now() };
   lsSet(K.acct, JSON.stringify(a));
-  if (!valid(a)) { active = false; showGate(a.status === "pending" ? "pending" : "blocked"); return; }
+  if (!valid(a)) { active = false; showGate(member ? "blocked" : a.status === "pending" ? "pending" : "blocked"); return; }
   try { await reconcile(shop); } catch (e) { if (e.auth) { showGate("auth"); return; } }
+  lsDel("ecrici-join"); form.code = ""; if (mode === "join") mode = "login";
   active = true; lastCheck = Date.now(); hideGate(); updateStatus(); render();
 }
 function unlockOffline() { active = true; storeMode = "device"; hideGate(); updateStatus(); render(); }
@@ -312,7 +354,7 @@ function unionById(a, b, pick) {
 function mergeLedgers(loc, rem) {
   let base = {}; try { base = JSON.parse(lsGet(K.base) || "{}") || {}; } catch (e) {}
   const m = Object.assign({}, rem, loc);
-  m.shop = loc.shop;
+  m.shop = member ? rem.shop : loc.shop;
   m.txs = unionById(loc.txs, rem.txs, (x, y) => (x.void ? x : y.void ? y : x)).sort((a, b) => (a.no || 0) - (b.no || 0));
   m.customers = unionById(loc.customers, rem.customers, (x, y) => x);
   m.staff = unionById(loc.staff, rem.staff, (x, y) => x);
@@ -333,9 +375,9 @@ function applyMerged(m) {
   try { render(); } catch (e) {}
 }
 async function reconcile(shop) {
-  const r = await api("/rest/v1/ledgers?shop_id=eq." + sess.uid + "&select=data,updated");
+  const r = await api("/rest/v1/ledgers?shop_id=eq." + shopId + "&select=data,updated");
   if (!r.ok) throw httpErr(r);
-  const row = r.json && r.json[0], owner = lsGet(K.owner), mine = owner === sess.uid || (owner == null && hasReal());
+  const row = r.json && r.json[0], owner = lsGet(K.owner), mine = owner === shopId || (!member && owner == null && hasReal());
   if (row && row.data && row.data.shop) {
     if (mine) {
       const remoteChanged = row.updated > lastSynced, localChanged = (S.updated || 0) > lastSynced;
@@ -347,21 +389,21 @@ async function reconcile(shop) {
   } else {
     if (mine) await doPush(); else { freshBlank(shop); await doPush(); }
   }
-  lsSet(K.owner, sess.uid); storeMode = "account";
+  lsSet(K.owner, shopId); storeMode = "account";
 }
 async function doPush() {
   for (let attempt = 0; attempt < 4; attempt++) {
     const snap = S.updated, body = { data: S, updated: snap, updated_at: new Date().toISOString() };
     if (lastSynced > 0) {
-      const r = await api("/rest/v1/ledgers?shop_id=eq." + sess.uid + "&updated=eq." + lastSynced, { method: "PATCH", headers: { Prefer: "return=representation" }, body });
+      const r = await api("/rest/v1/ledgers?shop_id=eq." + shopId + "&updated=eq." + lastSynced, { method: "PATCH", headers: { Prefer: "return=representation" }, body });
       if (!r.ok) throw httpErr(r);
       if (Array.isArray(r.json) && r.json.length) { lastSynced = snap; lsSet(K.sync, String(snap)); saveBase(); storeMode = "account"; return; }
     }
-    const g2 = await api("/rest/v1/ledgers?shop_id=eq." + sess.uid + "&select=data,updated");
+    const g2 = await api("/rest/v1/ledgers?shop_id=eq." + shopId + "&select=data,updated");
     if (!g2.ok) throw httpErr(g2);
     const row = g2.json && g2.json[0];
     if (!row) {
-      const r = await api("/rest/v1/ledgers", { method: "POST", headers: { Prefer: "return=minimal" }, body: Object.assign({ shop_id: sess.uid }, body) });
+      const r = await api("/rest/v1/ledgers", { method: "POST", headers: { Prefer: "return=minimal" }, body: Object.assign({ shop_id: shopId }, body) });
       if (r.ok) { lastSynced = snap; lsSet(K.sync, String(snap)); saveBase(); storeMode = "account"; return; }
       if (r.status === 409) continue;
       throw httpErr(r);
@@ -391,8 +433,8 @@ async function refresh() {
   if (!active || !sess || Date.now() - lastCheck < 20000) return;
   lastCheck = Date.now();
   try {
-    const shop = await getShop(); if (!shop) return;
-    const a = { uid: sess.uid, status: shop.status, paid_until: shop.paid_until, name: shop.name, phone: shop.phone, country: shop.country, checked: Date.now() };
+    const shop = await getShop(); if (!shop) { if (member) enter(); return; }
+    const a = { uid: sess.uid, shopId, role: member ? "employee" : "owner", mname: member ? member.name : "", status: shop.status, paid_until: shop.paid_until, name: shop.name, phone: shop.phone, country: shop.country, checked: Date.now() };
     lsSet(K.acct, JSON.stringify(a));
     if (!valid(a)) { active = false; showGate(a.status === "pending" ? "pending" : "blocked"); return; }
     await reconcile(shop); updateStatus();
@@ -406,7 +448,7 @@ setInterval(() => { if (active && document.visibilityState === "visible") refres
 
 /* ---------- log out ---------- */
 async function logout(fromGate) {
-  const owned = lsGet(K.owner) === (sess && sess.uid);
+  const owned = lsGet(K.owner) === (shopId || (sess && sess.uid));
   if (owned && S.updated > lastSynced) {
     let ok = false;
     if (active) { try { await doPush(); ok = true; } catch (e) {} }
@@ -419,6 +461,12 @@ async function logout(fromGate) {
   location.reload();
 }
 
+window.__logout = () => logout(false);
+async function forceLogout() {
+  if (sess) { try { await api("/auth/v1/logout", { method: "POST" }); } catch (e) {} }
+  [K.sess, K.acct, K.sync, K.owner, K.base, "ecrici-join"].forEach(lsDel); lsDel(LS_KEY);
+  location.reload();
+}
 async function changePassword() {
   const a = document.getElementById("lg-npw"), c = document.getElementById("lg-npw2"); if (!a || !c) return;
   if (a.value.length < 6) { toast(g("chpw_weak")); return; }
@@ -431,6 +479,43 @@ async function changePassword() {
   } catch (e) { toast(g("chpw_fail")); }
 }
 
+/* ---------- Settings: employees with their own login ---------- */
+const team = { loaded: false, loading: false, at: 0, members: [], pending: [], err: "" };
+async function loadTeam() {
+  if (team.loading) return; team.loading = true;
+  try {
+    const a = await api("/rest/v1/rpc/team_list", { method: "POST", body: {} });
+    const b = await api("/rest/v1/rpc/team_pending", { method: "POST", body: {} });
+    if (a.ok && b.ok) { team.members = a.json || []; team.pending = b.json || []; team.err = ""; } else team.err = g("tl_err");
+  } catch (e) { team.err = g("tl_err"); }
+  team.loaded = true; team.loading = false; team.at = Date.now();
+  if (ui.view === "set") { try { render(); } catch (e) {} }
+}
+const inviteLink = c => location.origin + location.pathname.replace(/[^/]*$/, "") + "?join=" + c;
+async function teamCall(fn, body) {
+  try {
+    const r = await api("/rest/v1/rpc/" + fn, { method: "POST", body });
+    if (!r.ok) { const m = String((r.json && (r.json.message || r.json.msg)) || ""); team.err = /plan inactive/i.test(m) ? g("tl_plan") : /too many/i.test(m) ? g("tl_full") : g("tl_err"); }
+    else team.err = "";
+  } catch (e) { team.err = g("tl_err"); }
+  team.loaded = false; await loadTeam();
+}
+function teamSection() {
+  if (member || !active || !teamOk) return "";
+  if (!team.loading && (!team.loaded || Date.now() - team.at > 15000)) loadTeam();
+  const shopName = S.shop.name || "";
+  const rows = team.members.map(m => `<div class="row" style="cursor:default"><div class="main"><div class="name">${esc(m.name)}</div></div><button class="btn small danger" data-lg-act="tm-remove" data-id="${esc(m.user_id)}">${esc(g("tl_remove"))}</button></div>`).join("");
+  const pend = team.pending.map(p => { const link = inviteLink(p.code), msg = g("tl_msg", shopName, p.name, link);
+    return `<div class="card flush" style="background:var(--paper);padding:10px;display:grid;gap:8px"><div class="name">${esc(p.name)}</div><div class="note" style="word-break:break-all;margin:0">${esc(link)}</div><div class="actions"><a class="btn small primary" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener" style="text-decoration:none">${esc(g("tl_wa"))}</a><button class="btn small" data-lg-act="tm-copy" data-link="${esc(link)}">${esc(g("tl_copy"))}</button><button class="btn small" data-lg-act="tm-cancel" data-id="${esc(p.code)}">${esc(g("tl_cancel"))}</button></div></div>`; }).join("");
+  return `<section class="sec"><h2>${esc(g("tl_t"))}</h2><div class="card form"><p class="note" style="margin:0">${esc(g("tl_p"))}</p>
+    ${team.err ? `<div class="err" role="alert">${esc(team.err)}</div>` : ""}
+    <div class="field"><label for="tm-name">${esc(g("tl_name"))}</label><input id="tm-name" autocomplete="off"></div>
+    <button class="btn primary" data-lg-act="tm-invite">${esc(g("tl_go"))}</button>
+    ${team.pending.length ? `<div class="note" style="margin:0;font-weight:600">${esc(g("tl_pend"))}</div>${pend}` : ""}
+    <div class="note" style="margin:0;font-weight:600">${esc(g("tl_team"))}</div>
+    ${team.members.length ? `<div class="card flush" style="background:var(--paper)">${rows}</div>` : `<div class="note" style="margin:0">${esc(g("tl_none"))}</div>`}</div></section>`;
+}
+
 /* ---------- Settings: account block ---------- */
 const baseSettings = window.viewSettings;
 window.viewSettings = function () {
@@ -438,7 +523,7 @@ window.viewSettings = function () {
   const until = a.paid_until ? new Date(a.paid_until + "T12:00:00").toLocaleDateString(l === "fr" ? "fr-FR" : "en-GB", { day: "numeric", month: "long", year: "numeric" }) : "";
   const dirty = S.updated > lastSynced;
   const w = waLink("");
-  return baseSettings() + `<section class="sec"><h2>${esc(g("acct"))}</h2><div class="card form">
+  return baseSettings() + teamSection() + `<section class="sec"><h2>${esc(g("acct"))}</h2><div class="card form">
     <div class="note" style="margin:0">${esc(a.phone ? "+" + a.phone : "")}${until ? " · " + esc(g("until", until)) : ""}<br>${esc(dirty ? g("sync_wait") : g("sync_ok"))}</div>
     ${w ? `<a class="btn" href="${w}" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">${esc(g("help"))}</a>` : ""}
     <div class="field"><label for="lg-npw">${esc(g("chpw"))}</label><input id="lg-npw" type="password" autocomplete="new-password" placeholder="${esc(g("npw"))}"></div>
@@ -452,6 +537,10 @@ document.addEventListener("click", e => {
   e.stopPropagation();
   if (b.dataset.lgAct === "logout") logout(false);
   else if (b.dataset.lgAct === "chpw") changePassword();
+  else if (b.dataset.lgAct === "tm-invite") { const n = ((document.getElementById("tm-name") || {}).value || "").trim(); if (n) teamCall("team_invite", { p_name: n }); }
+  else if (b.dataset.lgAct === "tm-copy") copyText(b.dataset.link);
+  else if (b.dataset.lgAct === "tm-cancel") teamCall("team_cancel", { p_code: b.dataset.id });
+  else if (b.dataset.lgAct === "tm-remove") { if (confirm(g("tl_rm_q"))) teamCall("team_remove", { target: b.dataset.id }); }
 }, true);
 
 /* ---------- start ---------- */

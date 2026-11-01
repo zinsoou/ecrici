@@ -282,10 +282,10 @@ const T = {
     no_products:"Aucun produit. Ajoutez vos articles pour suivre le stock.",stock_value:"Valeur du stock",err_pname:"Le nom du produit est obligatoire.",
     err_pdup:"Ce produit existe déjà.",err_stock:(n,q)=>`Stock insuffisant pour ${n} : ${q} restant(s). Ajoutez du stock d'abord.`,
     product_saved:"Produit enregistré",delete:"Supprimer",confirm_del_product:"Supprimer ce produit ?",
-    staff:"Équipe",staff_security:"Les codes PIN servent à garder les employés hors des réglages et des sauvegardes. Ce n'est pas une sécurité bancaire, et les données restent sur cet appareil.",
-    add_person:"Ajouter une personne",owner:"Propriétaire",employee:"Employé",role:"Rôle",err_sname:"Le nom est obligatoire.",err_pin:"Le PIN doit avoir exactement 4 chiffres.",
+    staff:"Équipe",staff_security:"Les codes PIN permettent à vos employés d'utiliser l'application sans voir les Réglages ni le Bilan. Étapes : 1) Ajoutez-vous d'abord comme Propriétaire avec un PIN. 2) Ajoutez votre employé avec son propre PIN. 3) Touchez « Activer le verrouillage par PIN ». Ce n'est pas une sécurité bancaire.",lock_s_on:"Verrouillage actif : chacun entre avec son PIN.",lock_s_off:"Verrouillage désactivé : tout le monde voit tout.",pin4:"PIN (4 chiffres)",first_owner:"Commencez par vous ajouter vous-même comme Propriétaire.",
+    add_person:"Ajouter un membre de l'équipe",owner:"Propriétaire",employee:"Employé",role:"Rôle",err_sname:"Le nom est obligatoire.",err_pin:"Le PIN doit avoir exactement 4 chiffres.",
     err_need_owner:"Ajoutez d'abord un propriétaire avec un PIN.",err_last_owner:"Gardez au moins un propriétaire tant que le verrouillage est actif.",
-    lock_on:"Activer le verrouillage par PIN",lock_off:"Désactiver le verrouillage",lock:"Verrouiller",unlock:"Ouvrir",who:"Qui êtes-vous ?",wrong_pin:"PIN incorrect.",
+    lock_on:"Activer le verrouillage par PIN",lock_off:"Désactiver le verrouillage",member_out:"Déconnexion",lock:"Verrouiller",unlock:"Ouvrir",who:"Qui êtes-vous ?",wrong_pin:"PIN incorrect.",
     forgot:"PIN oublié ?",reset_access:"Désactiver le verrouillage",reset_access_hint:"Entrez le code de secours (affiché au propriétaire dans les réglages).",reset_wrong:"Code de secours incorrect.",
     recovery:"Code de secours (notez-le)",served_by:"Servi par",
     invoice:"FACTURE",as_invoice:"Voir en facture",as_receipt:"Voir en reçu",invoice_note:"Facture simple, sans valeur fiscale.",due:"Reste dû",balance_now:"Solde total du client",
@@ -352,10 +352,10 @@ const T = {
     no_products:"No products yet. Add your items to track stock.",stock_value:"Stock value",err_pname:"Product name is required.",
     err_pdup:"This product already exists.",err_stock:(n,q)=>`Not enough stock for ${n}: ${q} left. Add stock first.`,
     product_saved:"Product saved",delete:"Delete",confirm_del_product:"Delete this product?",
-    staff:"Team",staff_security:"PINs keep employees out of settings and backups. This is not bank-grade security, and the data stays on this device.",
-    add_person:"Add a person",owner:"Owner",employee:"Employee",role:"Role",err_sname:"Name is required.",err_pin:"The PIN must be exactly 4 digits.",
+    staff:"Team",staff_security:"PINs let your employees use the app without seeing Settings or Reports. Steps: 1) First add yourself as Owner with a PIN. 2) Add your employee with their own PIN. 3) Tap \"Turn on PIN lock\". This is not bank-grade security.",lock_s_on:"Lock is on: everyone enters with their PIN.",lock_s_off:"Lock is off: everyone sees everything.",pin4:"PIN (4 digits)",first_owner:"Start by adding yourself as the Owner.",
+    add_person:"Add a team member",owner:"Owner",employee:"Employee",role:"Role",err_sname:"Name is required.",err_pin:"The PIN must be exactly 4 digits.",
     err_need_owner:"Add an owner with a PIN first.",err_last_owner:"Keep at least one owner while the lock is on.",
-    lock_on:"Turn on PIN lock",lock_off:"Turn off PIN lock",lock:"Lock",unlock:"Open",who:"Who are you?",wrong_pin:"Wrong PIN.",
+    lock_on:"Turn on PIN lock",lock_off:"Turn off PIN lock",member_out:"Sign out",lock:"Lock",unlock:"Open",who:"Who are you?",wrong_pin:"Wrong PIN.",
     forgot:"Forgot PIN?",reset_access:"Turn off the lock",reset_access_hint:"Enter the recovery code (shown to the owner in Settings).",reset_wrong:"Wrong recovery code.",
     recovery:"Recovery code (write it down)",served_by:"Served by",
     invoice:"INVOICE",as_invoice:"View as invoice",as_receipt:"View as receipt",invoice_note:"Simple invoice, no tax validity.",due:"Amount due",balance_now:"Customer's total balance",
@@ -485,8 +485,8 @@ function remindText(c){
   return o?t("msg_remind_due",c.name,S.shop.name,money(balanceOf(c.id)),fmtDay(o.due)):t("msg_remind",c.name,S.shop.name,money(balanceOf(c.id)));
 }
 function ageDays(iso){ return iso?Math.floor((Date.now()-new Date(iso).getTime())/864e5):0; }
-const me = () => (S&&S.staff&&S.staff.find(x=>x.id===ui.me))||null;
-const isOwner = () => !S.shop.staffOn || (me()&&me().role==="owner");
+const me = () => window.__member || (S&&S.staff&&S.staff.find(x=>x.id===ui.me))||null;
+const isOwner = () => window.__member ? false : (!S.shop.staffOn || (me()&&me().role==="owner"));
 const custById = id => S.customers.find(c=>c.id===id);
 const custName = id => id?(custById(id)?.name||"?"):t("walk");
 
@@ -613,9 +613,9 @@ function render(){
   if(S.shop.staffOn&&!me()){ ui.modal=null; $("#app").innerHTML=viewLock(); $("#tabs").innerHTML=""; $("#layer").innerHTML=""; return; }
   if((ui.view==="set"||ui.view==="rep")&&!isOwner()) ui.view="home";
   const v=ui.view;
-  const who=S.shop.staffOn?me():null;
+  const who=(S.shop.staffOn||window.__member)?me():null;
   let html=`<header class="top"><div class="brand"><h1>${esc(S.shop.name)}</h1><small>${esc(C().name)}${who?` · ${esc(who.name)}`:""} · <span id="status"></span></small></div>
-    <div class="chips" style="flex-wrap:wrap;justify-content:flex-end">${isOwner()?`<button class="pill" data-act="tab" data-v="set" ${ui.view==="set"?'aria-pressed="true"':""}>${t("set_btn")}</button>`:""}${who?`<button class="pill" data-act="lock">${t("lock")}</button>`:""}<button class="pill" data-act="lang" aria-label="${t("language")}">${L()==="fr"?"FR → EN":"EN → FR"}</button></div></header>`;
+    <div class="chips" style="flex-wrap:wrap;justify-content:flex-end">${isOwner()?`<button class="pill" data-act="tab" data-v="set" ${ui.view==="set"?'aria-pressed="true"':""}>${t("set_btn")}</button>`:""}${who?`<button class="pill" data-act="lock">${window.__member?t("member_out"):t("lock")}</button>`:""}<button class="pill" data-act="lang" aria-label="${t("language")}">${L()==="fr"?"FR → EN":"EN → FR"}</button></div></header>`;
   if(v==="home") html+=viewHome();
   else if(v==="sale") html+=viewSale();
   else if(v==="stock") html+=viewStock();
@@ -1025,6 +1025,7 @@ function doUnlock(){
 function staffSection(){
   const on=S.shop.staffOn;
   return `<section class="sec"><h2>${t("staff")}</h2><div class="card form"><p class="note" style="margin:0">${t("staff_security")}</p>
+    <div class="note" style="margin:0;font-weight:600;color:${on?"var(--paid)":"var(--owed)"}">${on?t("lock_s_on"):t("lock_s_off")}</div>
     ${S.staff.length?`<div class="card flush" style="background:var(--paper)">${S.staff.map(s=>`<div class="row" style="cursor:default"><div class="main"><div class="name">${esc(s.name)}</div><div class="sub">${s.role==="owner"?t("owner"):t("employee")}</div></div><button class="btn small danger" data-act="del-staff" data-id="${s.id}">${t("delete")}</button></div>`).join("")}</div>`:""}
     ${on&&S.shop.recovery?`<div class="field"><span class="lab">${t("recovery")}</span><div class="code">${esc(S.shop.recovery)}</div></div>`:""}
     <div class="actions"><button class="btn" data-act="add-person">${t("add_person")}</button>
@@ -1032,10 +1033,11 @@ function staffSection(){
     <div class="err" id="st-err" role="alert"></div></div></section>`;
 }
 function staffModal(){
-  return `<div class="dlg form"><h2>${t("add_person")}</h2>
+  const noOwner=!S.staff.some(x=>x.role==="owner");
+  return `<div class="dlg form"><h2>${t("add_person")}</h2>${noOwner?`<p class="note" style="margin:0;font-weight:600">${t("first_owner")}</p>`:""}
     <div class="field"><label for="st-name">${t("name")}</label><input id="st-name" autocomplete="off"></div>
-    <div class="field"><label for="st-role">${t("role")}</label><select id="st-role"><option value="staff">${t("employee")}</option><option value="owner">${t("owner")}</option></select></div>
-    <div class="field"><label for="st-pin">PIN</label><input id="st-pin" type="password" class="pin" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+    <div class="field"><label for="st-role">${t("role")}</label><select id="st-role"><option value="staff" ${noOwner?"":"selected"}>${t("employee")}</option><option value="owner" ${noOwner?"selected":""}>${t("owner")}</option></select></div>
+    <div class="field"><label for="st-pin">${t("pin4")}</label><input id="st-pin" type="password" class="pin" inputmode="numeric" maxlength="4" autocomplete="off"></div>
     <div class="err" id="st-err2" role="alert"></div>
     <div class="actions"><button class="btn primary" data-act="save-staff">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
 }
@@ -1379,7 +1381,7 @@ document.addEventListener("click",e=>{
       if(!S.staff.some(x=>x.role==="owner")){ $("#st-err").textContent=t("err_need_owner"); break; }
       S.shop.staffOn=true; S.shop.recovery=String(Math.floor(100000+Math.random()*900000)); ui.me=null; save(); render(); break;
     case "lock-off": S.shop.staffOn=false; S.shop.recovery=""; save(); render(); break;
-    case "lock": ui.me=null; ui.view="home"; ui.custId=null; render(); break;
+    case "lock": if(window.__member){ if(window.__logout) window.__logout(); break; } ui.me=null; ui.view="home"; ui.custId=null; render(); break;
     case "unlock": doUnlock(); break;
     case "forgot": ui.lockForgot=true; render(); break;
     case "reset-access": {
