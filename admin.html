@@ -47,7 +47,7 @@ const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
 const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
 let sess=null; try{ sess=JSON.parse(lsGet(SK)); }catch(e){}
-let shops=[], q="", filter="all", err="", msg="", msgLink="", lastEmail="";
+let shops=[], branches=[], q="", filter="all", err="", msg="", msgLink="", lastEmail="";
 
 async function http(path,o){
   o=o||{};
@@ -66,6 +66,9 @@ async function api(path,o){
   }
   return http(path,Object.assign({},o,{token:sess.access}));
 }
+const BASE_AMT=Number(CFG.baseAmount)||1000, EXTRA_AMT=Number(CFG.extraAmount)||700, CUR=CFG.currency||"FCFA";
+const brOf=id=>branches.filter(b=>b.owner_id===id);
+const fmtAmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g," ")+" "+CUR;
 const state=s=>{ if(s.status==="pending") return "pending"; if(s.status==="suspended") return "suspended"; return (s.paid_until&&s.paid_until>=today())?"active":"expired"; };
 const daysLeft=s=>s.paid_until?Math.round((new Date(s.paid_until+"T12:00:00Z")-new Date(today()+"T12:00:00Z"))/864e5):null;
 
@@ -87,15 +90,16 @@ async function load(){
   if(r.status===401){ err="Session ended. Log in again."; login(); return; }
   if(!r.ok){ err="Could not load ("+r.status+")."; login(); return; }
   shops=r.json||[];
+  const rb=await api("/rest/v1/branches?select=*&order=created_at.asc"); branches=(rb.ok&&Array.isArray(rb.json))?rb.json:[];
   draw();
 }
 function draw(){
-  const cnt={pending:0,active:0,expired:0,suspended:0}; shops.forEach(s=>cnt[state(s)]++);
-  const order={pending:0,expired:1,suspended:2,active:3};
+  const cnt={pending:0,active:0,expired:0,suspended:0}; shops.forEach(s=>cnt[state(s)]++); const reqs=branches.filter(b=>b.status==="pending").length;
+  const order={pending:0,expired:1,suspended:2,active:3}, pk=s=>brOf(s.id).some(b=>b.status==="pending")?-1:order[state(s)];
   const list=shops.filter(s=>(filter==="all"||state(s)===filter)&&(!q||(s.name+" "+s.phone).toLowerCase().includes(q.toLowerCase())))
-    .sort((a,b)=>order[state(a)]-order[state(b)]||String(b.created_at).localeCompare(String(a.created_at)));
+    .sort((a,b)=>pk(a)-pk(b)||String(b.created_at).localeCompare(String(a.created_at)));
   app.innerHTML=`<div class="top"><h1>Ecrici Admin</h1><button id="out">Log out</button></div>
-    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>
+    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>${reqs?`<div class="muted"><b>${reqs}</b> extra shop request${reqs>1?"s":""} waiting for activation</div>`:""}
     <input id="q" placeholder="Search name or phone" value="${esc(q)}">
     <div class="row">${["all","pending","active","expired","suspended"].map(k=>`<button data-f="${k}" class="${filter===k?"p":""}">${k}</button>`).join("")}</div>
     <div class="err" id="er">${esc(err)}</div>${msg?`<div class="muted">${esc(msg)}${msgLink?` <a href="${esc(msgLink)}" target="_blank" rel="noopener">Send on WhatsApp</a>`:""}</div>`:""}
@@ -104,18 +108,43 @@ function draw(){
   $("#q").oninput=e=>{ q=e.target.value; const pos=e.target.selectionStart; draw(); const n=$("#q"); n.focus(); n.setSelectionRange(pos,pos); };
   app.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{ filter=b.dataset.f; draw(); });
   app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(b.dataset.id,b.dataset.a));
+  app.querySelectorAll("[data-ba]").forEach(b=>b.onclick=()=>bact(b.dataset.bid,b.dataset.ba));
 }
 function card(s){
   const st=state(s), dl=daysLeft(s), wa=s.phone?`https://wa.me/${String(s.phone).replace(/\D/g,"")}`:"";
   const info=s.paid_until?`Paid until ${s.paid_until}${dl!=null?` (${dl>=0?dl+" days left":Math.abs(dl)+" days ago"})`:""}`:"Not paid yet";
   return `<div class="card" data-shop="${esc(s.id)}"><div class="top"><div><div class="name">${esc(s.name||"(no name)")}</div><div class="muted">+${esc(s.phone)} · ${esc(s.country)}</div></div><span class="chip ${st}">${st}</span></div>
-    <div class="muted">${esc(info)}</div>
+    <div class="muted">${esc(info)}</div>${shopsBlock(s)}
     <div class="row">${st==="pending"?`<button class="p" data-id="${esc(s.id)}" data-a="trial">Approve · 7 days</button>`:""}
       <button data-id="${esc(s.id)}" data-a="m1">+1 month</button><button data-id="${esc(s.id)}" data-a="m3">+3 months</button><button data-id="${esc(s.id)}" data-a="m12">+12 months</button></div>
     <div class="row">${wa?`<a class="b" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`:""}
       <button data-id="${esc(s.id)}" data-a="pw">Reset password</button>
       ${s.status==="suspended"?`<button data-id="${esc(s.id)}" data-a="react">Reactivate</button>`:`<button class="d" data-id="${esc(s.id)}" data-a="susp">Suspend</button>`}
       ${s.status==="suspended"?`<button class="d" data-id="${esc(s.id)}" data-a="del">Delete forever</button>`:""}</div></div>`;
+}
+function shopsBlock(s){
+  const bs=brOf(s.id), n=1+bs.filter(b=>b.status==="active").length;
+  if(!bs.length) return "";
+  return `<div class="muted"><b>${n} shop${n>1?"s":""}</b> · ${esc(fmtAmt(BASE_AMT+EXTRA_AMT*(n-1)))} / month</div>`+bs.map(b=>`<div class="card" style="padding:10px;gap:8px"><div class="top"><div class="name" style="font-size:15px">${esc(b.name)}</div><span class="chip ${b.status==="active"?"active":b.status==="pending"?"pending":"suspended"}">${esc(b.status)}</span></div>
+    <div class="row">${b.status==="pending"?`<button class="p" data-bid="${esc(b.id)}" data-ba="on">Activate (+${esc(fmtAmt(EXTRA_AMT))})</button>`:""}${b.status==="suspended"?`<button data-bid="${esc(b.id)}" data-ba="on">Reactivate</button>`:""}${b.status==="active"?`<button class="d" data-bid="${esc(b.id)}" data-ba="off">Suspend</button>`:""}${b.status!=="active"?`<button class="d" data-bid="${esc(b.id)}" data-ba="del">Delete</button>`:""}</div></div>`).join("");
+}
+async function bact(id,a){
+  const b=branches.find(x=>x.id===id); if(!b) return; err=""; msg=""; msgLink="";
+  if(a==="del"){
+    const t=prompt("DELETE this shop and all its data forever: "+b.name+"\nType DELETE to confirm:"); if(t===null) return;
+    if(t.trim()!=="DELETE"){ err="Not deleted."; draw(); return; }
+    const r=await api("/rest/v1/rpc/admin_delete_branch",{method:"POST",body:{target:id}});
+    if(!r.ok){ err=r.status===401?"Session ended. Log in again.":((r.json&&r.json.message)||"Not deleted")+(r.status===404?" (run upgrade-multishop.sql in Supabase first)":""); draw(); return; }
+    branches=branches.filter(x=>x.id!==id); msg="Deleted shop: "+b.name; draw(); return;
+  }
+  if(a==="off"&&!confirm("Suspend "+b.name+"?")) return;
+  const r=await api("/rest/v1/branches?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{Prefer:"return=representation"},body:{status:a==="on"?"active":"suspended"}});
+  if(!r.ok||!Array.isArray(r.json)||!r.json.length){ err=r.status===401?"Session ended. Log in again.":"Not saved."; draw(); return; }
+  Object.assign(b,r.json[0]);
+  const o=shops.find(x=>x.id===b.owner_id), n=1+brOf(b.owner_id).filter(x=>x.status==="active").length;
+  msg="Saved: "+b.name+" is "+b.status+". Owner now pays "+fmtAmt(BASE_AMT+EXTRA_AMT*(n-1))+" / month. ";
+  if(a==="on"&&o&&o.phone){ msgLink="https://wa.me/"+String(o.phone).replace(/\D/g,"")+"?text="+encodeURIComponent("Hello, your shop "+b.name+" is now active on Ecrici."); }
+  draw();
 }
 function addTo(base,a){
   const d=new Date(base+"T12:00:00Z");

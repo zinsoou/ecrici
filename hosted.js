@@ -36,6 +36,8 @@ const authErr = () => { const e = new Error("auth"); e.auth = true; return e; };
 
 let sess = jget(K.sess), refreshing = null;
 let shopId = null, member = null, teamOk = true; window.__member = null;
+let lid = null, branches = [], multiOk = false, ledgerName = null, branchBlocked = false;
+const ledShop = x => ledgerName ? Object.assign({}, x, { name: ledgerName }) : x;
 const setMember = info => { member = info && info.role === "employee" ? { id: "member", name: info.name || "", role: "staff" } : null; window.__member = member; };
 function setSess(j) {
   sess = { access: j.access_token, refresh: j.refresh_token, exp: Date.now() + (j.expires_in || 3600) * 1000, uid: (j.user && j.user.id) || (sess && sess.uid) };
@@ -93,6 +95,7 @@ const G = {
     chpw: "Changer le mot de passe", npw: "Nouveau mot de passe", npw2: "Répétez le mot de passe", chpw_go: "Enregistrer le mot de passe", chpw_ok: "Mot de passe changé", chpw_mismatch: "Les deux mots de passe sont différents.", chpw_weak: "6 caractères minimum.", chpw_fail: "Impossible pour le moment. Réessayez avec internet.", chpw_login: "Pour votre sécurité, déconnectez-vous puis reconnectez-vous avant de changer le mot de passe.",
     join_t: "Rejoindre une boutique", code: "Code d'invitation", join_go: "Rejoindre", have_join: "J'ai un code d'invitation", join_hint: "Le propriétaire de la boutique vous a invité. Créez votre connexion.", e_invite: "Invitation invalide ou expirée. Demandez un nouveau lien au propriétaire.", e_hasshop: "Ce numéro a déjà sa propre boutique. Utilisez un autre numéro.", nolink_t: "Connexion non liée à une boutique", nolink_p: "Cet accès n'est lié à aucune boutique, ou le propriétaire l'a retiré. Demandez un nouveau lien d'invitation.", emp_blk_t: "Abonnement terminé", emp_blk_p: "L'abonnement de la boutique est terminé. Demandez au propriétaire de le renouveler.",
     tl_t: "Employés avec leur propre connexion", tl_p: "Invitez un employé : il crée sa propre connexion sur son téléphone, sans votre mot de passe. Vous pouvez le retirer à tout moment.", tl_name: "Nom de l'employé", tl_go: "Créer l'invitation", tl_pend: "Invitations en attente (valables 48 h)", tl_team: "Employés", tl_none: "Aucun employé pour l'instant.", tl_wa: "Envoyer par WhatsApp", tl_copy: "Copier le lien", tl_cancel: "Annuler", tl_remove: "Retirer", tl_rm_q: "Retirer cet employé ? Sa connexion sera supprimée.", tl_err: "Impossible pour le moment. Réessayez.", tl_full: "Maximum 10 employés et invitations.", tl_plan: "L'abonnement doit être actif pour inviter.", tl_msg: (shop, name, link) => `Bonjour ${name}, je vous invite à rejoindre ${shop} sur Ecrici. Ouvrez ce lien et créez votre connexion : ${link}`, copied: "Lien copié",
+    sh_t: "Mes boutiques", sh_chip: "Boutiques", sh_p: "Gérez plusieurs boutiques avec un seul compte. Chaque boutique a ses propres clients, produits et stock.", sh_price: p => `Chaque boutique en plus : ${p} par mois.`, sh_manage: "Voir mes boutiques", sh_add: "Ajouter une boutique", sh_name: "Nom de la nouvelle boutique", sh_go: "Demander l'ajout", sh_close: "Fermer", sh_back: "Retour", sh_open: "Ouvrir", sh_cur: "Boutique ouverte", sh_pend: "En attente d'activation", sh_susp: "Suspendue", sh_all: "Vue d'ensemble de toutes les boutiques", sh_sent: "Demande envoyée. Écrivez-nous sur WhatsApp pour activer la boutique.", sh_wa: (n, s, p) => `Bonjour, je souhaite ajouter la boutique « ${n} » à mon compte Ecrici (${s}, +${p}).`, sh_err: "Impossible pour le moment. Réessayez.", sh_plan: "L'abonnement doit être actif pour ajouter une boutique.", sh_max: "Nombre maximum de boutiques atteint.", sh_pending_max: "Deux demandes sont déjà en attente. Attendez leur activation.", ov_t: "Toutes les boutiques", ov_today: "Ventes du jour", ov_month: "Ventes du mois", ov_owed: "À recevoir (crédits)", ov_all_today: "Total ventes du jour", ov_skip: n => `${n} boutique(s) pas encore synchronisée(s).`, tl_branch: "Boutique de l'employé",
     inst: "Installer l'application", f_plan: "Abonnement :", f_help: "Besoin d'aide ? WhatsApp", f_priv: "Confidentialité et conditions", ios_t: "Sur iPhone : ouvrez ce site dans Safari, touchez ••• (en bas à droite) ou le bouton Partager (carré avec flèche), touchez Partager, puis faites défiler et touchez « Sur l'écran d'accueil ».",  hint_name: "Écrivez en MAJUSCULES, ex : BOUTIQUE DE VICTOR", hint_phone: "Chiffres seulement, sans le +. Ex :",  forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
     wa_new: (n, p) => `Bonjour, je viens de créer mon compte Ecrici pour la boutique ${n} (${p}). Merci de l'activer.`,
     wa_renew: (n, p) => `Bonjour, je souhaite renouveler mon abonnement Ecrici pour la boutique ${n} (${p}).`,
@@ -116,6 +119,7 @@ const G = {
     chpw: "Change password", npw: "New password", npw2: "Repeat the password", chpw_go: "Save password", chpw_ok: "Password changed", chpw_mismatch: "The two passwords are different.", chpw_weak: "6 characters minimum.", chpw_fail: "Not possible right now. Try again with internet.", chpw_login: "For your security, log out and log in again before changing the password.",
     join_t: "Join a shop", code: "Invitation code", join_go: "Join", have_join: "I have an invitation code", join_hint: "The shop owner invited you. Create your login.", e_invite: "Invitation invalid or expired. Ask the owner for a new link.", e_hasshop: "This number already has its own shop. Use another number.", nolink_t: "Login not linked to a shop", nolink_p: "This login is not linked to any shop, or the owner removed it. Ask for a new invitation link.", emp_blk_t: "Plan ended", emp_blk_p: "The shop's plan has ended. Ask the owner to renew it.",
     tl_t: "Employees with their own login", tl_p: "Invite an employee: they create their own login on their phone, without your password. You can remove them at any time.", tl_name: "Employee name", tl_go: "Create invitation", tl_pend: "Pending invitations (valid 48 h)", tl_team: "Employees", tl_none: "No employees yet.", tl_wa: "Send on WhatsApp", tl_copy: "Copy link", tl_cancel: "Cancel", tl_remove: "Remove", tl_rm_q: "Remove this employee? Their login will be deleted.", tl_err: "Not possible right now. Try again.", tl_full: "Maximum 10 employees and invitations.", tl_plan: "The plan must be active to invite.", tl_msg: (shop, name, link) => `Hello ${name}, I'm inviting you to join ${shop} on Ecrici. Open this link and create your login: ${link}`, copied: "Link copied",
+    sh_t: "My shops", sh_chip: "Shops", sh_p: "Manage several shops with one account. Each shop has its own customers, products and stock.", sh_price: p => `Each extra shop: ${p} per month.`, sh_manage: "See my shops", sh_add: "Add a shop", sh_name: "New shop name", sh_go: "Request this shop", sh_close: "Close", sh_back: "Back", sh_open: "Open", sh_cur: "Open now", sh_pend: "Waiting for activation", sh_susp: "Suspended", sh_all: "Overview of all shops", sh_sent: "Request sent. Message us on WhatsApp to activate the shop.", sh_wa: (n, s, p) => `Hello, I would like to add the shop "${n}" to my Ecrici account (${s}, +${p}).`, sh_err: "Not possible right now. Try again.", sh_plan: "The plan must be active to add a shop.", sh_max: "Maximum number of shops reached.", sh_pending_max: "Two requests are already waiting. Wait until they are activated.", ov_t: "All shops", ov_today: "Sales today", ov_month: "Sales this month", ov_owed: "To collect (credit)", ov_all_today: "Total sales today", ov_skip: n => `${n} shop(s) not synced yet.`, tl_branch: "Employee's shop",
     inst: "Install the app", f_plan: "Plan:", f_help: "Need help? WhatsApp", f_priv: "Privacy and terms", ios_t: "On iPhone: open this site in Safari, tap ••• (bottom right) or the Share button (square with an arrow), tap Share, then scroll and tap \"Add to Home Screen\".",  hint_name: "Write in CAPITAL letters, e.g. VICTOR'S DRYCLEANER", hint_phone: "Digits only, no + sign. Example:",  forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
     wa_new: (n, p) => `Hello, I just created my Ecrici account for the shop ${n} (${p}). Please activate it.`,
     wa_renew: (n, p) => `Hello, I would like to renew my Ecrici subscription for the shop ${n} (${p}).`,
@@ -308,24 +312,35 @@ async function enter() {
   let shop;
   try {
     const info = await loadMe();
-    if (info.role === "none") { setMember(null); shopId = null; showGate("nolink"); return; }
+    if (info.role === "none") { setMember(null); shopId = null; lid = null; showGate("nolink"); return; }
     shopId = info.shop_id || sess.uid; setMember(info);
+    lid = info.ledger_id || shopId; ledgerName = member ? (info.branch_name || null) : null; branchBlocked = !!member && info.branch_ok === false;
+    if (!member) {
+      await loadBranches();
+      const ab = lsGet("ecrici-branch");
+      if (ab) {
+        const br = branches.find(b => b.id === ab);
+        if (br && br.status === "active") { lid = ab; ledgerName = br.name; }
+        else if (multiOk) { stashOut(ab); stashIn(shopId); lsDel("ecrici-branch"); location.reload(); return; }
+        else lid = ab;
+      }
+    }
     shop = await getShop();
   }
   catch (e) {
     if (e.auth) { active = false; showGate("auth"); return; }
     if (e.offline || !e.status || e.status >= 500) {
       const c = jget(K.acct);
-      if (offlineOk(c)) { shopId = c.shopId || sess.uid; setMember(c.role === "employee" ? { role: "employee", name: c.mname } : null); unlockOffline(); return; }
+      if (offlineOk(c)) { shopId = c.shopId || sess.uid; lid = c.lid || shopId; ledgerName = c.ledgerName || null; branches = c.branches || []; multiOk = !!c.branches; setMember(c.role === "employee" ? { role: "employee", name: c.mname } : null); unlockOffline(); return; }
       showGate("offline"); return;
     }
     showGate("error"); return;
   }
   if (!shop) { showGate("error"); return; }
-  const a = { uid: sess.uid, shopId, role: member ? "employee" : "owner", mname: member ? member.name : "", status: shop.status, paid_until: shop.paid_until, name: shop.name, phone: shop.phone, country: shop.country, checked: Date.now() };
+  const a = { uid: sess.uid, shopId, lid, ledgerName, branches: member || !multiOk ? undefined : branches, role: member ? "employee" : "owner", mname: member ? member.name : "", status: shop.status, paid_until: shop.paid_until, name: shop.name, phone: shop.phone, country: shop.country, checked: Date.now() };
   lsSet(K.acct, JSON.stringify(a));
-  if (!valid(a)) { active = false; showGate(member ? "blocked" : a.status === "pending" ? "pending" : "blocked"); return; }
-  try { await reconcile(shop); } catch (e) { if (e.auth) { showGate("auth"); return; } }
+  if (!valid(a) || branchBlocked) { active = false; showGate(member ? "blocked" : a.status === "pending" ? "pending" : "blocked"); return; }
+  try { await reconcile(ledShop(shop)); } catch (e) { if (e.auth) { showGate("auth"); return; } }
   lsDel("ecrici-join"); form.code = ""; if (mode === "join") mode = "login";
   active = true; lastCheck = Date.now(); hideGate(); updateStatus(); render();
 }
@@ -375,9 +390,9 @@ function applyMerged(m) {
   try { render(); } catch (e) {}
 }
 async function reconcile(shop) {
-  const r = await api("/rest/v1/ledgers?shop_id=eq." + shopId + "&select=data,updated");
+  const r = await api("/rest/v1/ledgers?shop_id=eq." + lid + "&select=data,updated");
   if (!r.ok) throw httpErr(r);
-  const row = r.json && r.json[0], owner = lsGet(K.owner), mine = owner === shopId || (!member && owner == null && hasReal());
+  const row = r.json && r.json[0], owner = lsGet(K.owner), mine = owner === lid || (!member && owner == null && hasReal());
   if (row && row.data && row.data.shop) {
     if (mine) {
       const remoteChanged = row.updated > lastSynced, localChanged = (S.updated || 0) > lastSynced;
@@ -389,21 +404,21 @@ async function reconcile(shop) {
   } else {
     if (mine) await doPush(); else { freshBlank(shop); await doPush(); }
   }
-  lsSet(K.owner, shopId); storeMode = "account";
+  lsSet(K.owner, lid); storeMode = "account";
 }
 async function doPush() {
   for (let attempt = 0; attempt < 4; attempt++) {
     const snap = S.updated, body = { data: S, updated: snap, updated_at: new Date().toISOString() };
     if (lastSynced > 0) {
-      const r = await api("/rest/v1/ledgers?shop_id=eq." + shopId + "&updated=eq." + lastSynced, { method: "PATCH", headers: { Prefer: "return=representation" }, body });
+      const r = await api("/rest/v1/ledgers?shop_id=eq." + lid + "&updated=eq." + lastSynced, { method: "PATCH", headers: { Prefer: "return=representation" }, body });
       if (!r.ok) throw httpErr(r);
       if (Array.isArray(r.json) && r.json.length) { lastSynced = snap; lsSet(K.sync, String(snap)); saveBase(); storeMode = "account"; return; }
     }
-    const g2 = await api("/rest/v1/ledgers?shop_id=eq." + shopId + "&select=data,updated");
+    const g2 = await api("/rest/v1/ledgers?shop_id=eq." + lid + "&select=data,updated");
     if (!g2.ok) throw httpErr(g2);
     const row = g2.json && g2.json[0];
     if (!row) {
-      const r = await api("/rest/v1/ledgers", { method: "POST", headers: { Prefer: "return=minimal" }, body: Object.assign({ shop_id: shopId }, body) });
+      const r = await api("/rest/v1/ledgers", { method: "POST", headers: { Prefer: "return=minimal" }, body: Object.assign({ shop_id: lid }, body) });
       if (r.ok) { lastSynced = snap; lsSet(K.sync, String(snap)); saveBase(); storeMode = "account"; return; }
       if (r.status === 409) continue;
       throw httpErr(r);
@@ -434,10 +449,10 @@ async function refresh() {
   lastCheck = Date.now();
   try {
     const shop = await getShop(); if (!shop) { if (member) enter(); return; }
-    const a = { uid: sess.uid, shopId, role: member ? "employee" : "owner", mname: member ? member.name : "", status: shop.status, paid_until: shop.paid_until, name: shop.name, phone: shop.phone, country: shop.country, checked: Date.now() };
+    const a = { uid: sess.uid, shopId, lid, ledgerName, branches: member || !multiOk ? undefined : branches, role: member ? "employee" : "owner", mname: member ? member.name : "", status: shop.status, paid_until: shop.paid_until, name: shop.name, phone: shop.phone, country: shop.country, checked: Date.now() };
     lsSet(K.acct, JSON.stringify(a));
     if (!valid(a)) { active = false; showGate(a.status === "pending" ? "pending" : "blocked"); return; }
-    await reconcile(shop); updateStatus();
+    await reconcile(ledShop(shop)); updateStatus();
   } catch (e) { if (e.auth) { active = false; showGate("auth"); } }
 }
 document.addEventListener("visibilitychange", () => {
@@ -448,7 +463,7 @@ setInterval(() => { if (active && document.visibilityState === "visible") refres
 
 /* ---------- log out ---------- */
 async function logout(fromGate) {
-  const owned = lsGet(K.owner) === (shopId || (sess && sess.uid));
+  const owned = lsGet(K.owner) === (lid || shopId || (sess && sess.uid));
   if (owned && S.updated > lastSynced) {
     let ok = false;
     if (active) { try { await doPush(); ok = true; } catch (e) {} }
@@ -456,7 +471,7 @@ async function logout(fromGate) {
   }
   if (!confirm(g("logout_q"))) return;
   if (sess) { try { await api("/auth/v1/logout", { method: "POST" }); } catch (e) {} }
-  [K.sess, K.acct, K.sync].forEach(lsDel);
+  [K.sess, K.acct, K.sync].forEach(lsDel); clearStash();
   if (owned) { lsDel(K.owner); lsDel(LS_KEY); }
   location.reload();
 }
@@ -464,7 +479,7 @@ async function logout(fromGate) {
 window.__logout = () => logout(false);
 async function forceLogout() {
   if (sess) { try { await api("/auth/v1/logout", { method: "POST" }); } catch (e) {} }
-  [K.sess, K.acct, K.sync, K.owner, K.base, "ecrici-join"].forEach(lsDel); lsDel(LS_KEY);
+  [K.sess, K.acct, K.sync, K.owner, K.base, "ecrici-join"].forEach(lsDel); clearStash(); lsDel(LS_KEY);
   location.reload();
 }
 async function changePassword() {
@@ -503,13 +518,15 @@ async function teamCall(fn, body) {
 function teamSection() {
   if (member || !active || !teamOk) return "";
   if (!team.loading && (!team.loaded || Date.now() - team.at > 15000)) loadTeam();
-  const shopName = S.shop.name || "";
-  const rows = team.members.map(m => `<div class="row" style="cursor:default"><div class="main"><div class="name">${esc(m.name)}</div></div><button class="btn small danger" data-lg-act="tm-remove" data-id="${esc(m.user_id)}">${esc(g("tl_remove"))}</button></div>`).join("");
-  const pend = team.pending.map(p => { const link = inviteLink(p.code), msg = g("tl_msg", shopName, p.name, link);
-    return `<div class="card flush" style="background:var(--paper);padding:10px;display:grid;gap:8px"><div class="name">${esc(p.name)}</div><div class="note" style="word-break:break-all;margin:0">${esc(link)}</div><div class="actions"><a class="btn small primary" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener" style="text-decoration:none">${esc(g("tl_wa"))}</a><button class="btn small" data-lg-act="tm-copy" data-link="${esc(link)}">${esc(g("tl_copy"))}</button><button class="btn small" data-lg-act="tm-cancel" data-id="${esc(p.code)}">${esc(g("tl_cancel"))}</button></div></div>`; }).join("");
+  const mainNm = (lid === shopId ? ledName() : shopRow().name) || "", actBr = branches.filter(b => b.status === "active");
+  const brName = id => id ? ((branches.find(b => b.id === id) || {}).name || "") : (branches.length ? mainNm : "");
+  const rows = team.members.map(m => `<div class="row" style="cursor:default"><div class="main"><div class="name">${esc(m.name)}</div>${brName(m.branch_id) ? `<div class="sub">${esc(brName(m.branch_id))}</div>` : ""}</div><button class="btn small danger" data-lg-act="tm-remove" data-id="${esc(m.user_id)}">${esc(g("tl_remove"))}</button></div>`).join("");
+  const pend = team.pending.map(p => { const link = inviteLink(p.code), msg = g("tl_msg", (p.branch_id ? brName(p.branch_id) : mainNm), p.name, link);
+    return `<div class="card flush" style="background:var(--paper);padding:10px;display:grid;gap:8px"><div class="name">${esc(p.name)}</div>${brName(p.branch_id) ? `<div class="sub">${esc(brName(p.branch_id))}</div>` : ""}<div class="note" style="word-break:break-all;margin:0">${esc(link)}</div><div class="actions"><a class="btn small primary" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener" style="text-decoration:none">${esc(g("tl_wa"))}</a><button class="btn small" data-lg-act="tm-copy" data-link="${esc(link)}">${esc(g("tl_copy"))}</button><button class="btn small" data-lg-act="tm-cancel" data-id="${esc(p.code)}">${esc(g("tl_cancel"))}</button></div></div>`; }).join("");
   return `<section class="sec"><h2>${esc(g("tl_t"))}</h2><div class="card form"><p class="note" style="margin:0">${esc(g("tl_p"))}</p>
     ${team.err ? `<div class="err" role="alert">${esc(team.err)}</div>` : ""}
     <div class="field"><label for="tm-name">${esc(g("tl_name"))}</label><input id="tm-name" autocomplete="off"></div>
+    ${actBr.length ? `<div class="field"><label for="tm-branch">${esc(g("tl_branch"))}</label><select id="tm-branch"><option value="">${esc(mainNm)}</option>${actBr.map(b => `<option value="${esc(b.id)}">${esc(b.name)}</option>`).join("")}</select></div>` : ""}
     <button class="btn primary" data-lg-act="tm-invite">${esc(g("tl_go"))}</button>
     ${team.pending.length ? `<div class="note" style="margin:0;font-weight:600">${esc(g("tl_pend"))}</div>${pend}` : ""}
     <div class="note" style="margin:0;font-weight:600">${esc(g("tl_team"))}</div>
@@ -523,7 +540,7 @@ window.viewSettings = function () {
   const until = a.paid_until ? new Date(a.paid_until + "T12:00:00").toLocaleDateString(l === "fr" ? "fr-FR" : "en-GB", { day: "numeric", month: "long", year: "numeric" }) : "";
   const dirty = S.updated > lastSynced;
   const w = waLink("");
-  return baseSettings() + teamSection() + `<section class="sec"><h2>${esc(g("acct"))}</h2><div class="card form">
+  return baseSettings() + shopsSection() + teamSection() + `<section class="sec"><h2>${esc(g("acct"))}</h2><div class="card form">
     <div class="note" style="margin:0">${esc(a.phone ? "+" + a.phone : "")}${until ? " · " + esc(g("until", until)) : ""}<br>${esc(dirty ? g("sync_wait") : g("sync_ok"))}</div>
     ${w ? `<a class="btn" href="${w}" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">${esc(g("help"))}</a>` : ""}
     <div class="field"><label for="lg-npw">${esc(g("chpw"))}</label><input id="lg-npw" type="password" autocomplete="new-password" placeholder="${esc(g("npw"))}"></div>
@@ -535,13 +552,113 @@ window.viewSettings = function () {
 document.addEventListener("click", e => {
   const b = e.target.closest && e.target.closest("[data-lg-act]"); if (!b) return;
   e.stopPropagation();
-  if (b.dataset.lgAct === "logout") logout(false);
+  if (b.dataset.lgAct === "shops") { sh.open = true; sh.view = "list"; sh.err = ""; sh.msg = ""; sh.wa = ""; drawShops(); }
+  else if (b.dataset.lgAct === "sh-veil") { if (e.target === b) { sh.open = false; drawShops(); } }
+  else if (b.dataset.lgAct === "sh-close") { sh.open = false; drawShops(); }
+  else if (b.dataset.lgAct === "sh-open") switchLedger(b.dataset.id);
+  else if (b.dataset.lgAct === "sh-all") { sh.view = "overview"; loadOverview(); }
+  else if (b.dataset.lgAct === "sh-back") { sh.view = "list"; drawShops(); }
+  else if (b.dataset.lgAct === "sh-add") addShop();
+  else if (b.dataset.lgAct === "logout") logout(false);
   else if (b.dataset.lgAct === "chpw") changePassword();
-  else if (b.dataset.lgAct === "tm-invite") { const n = ((document.getElementById("tm-name") || {}).value || "").trim(); if (n) teamCall("team_invite", { p_name: n }); }
+  else if (b.dataset.lgAct === "tm-invite") { const n = ((document.getElementById("tm-name") || {}).value || "").trim(); if (n) { const bs = document.getElementById("tm-branch"), body = { p_name: n }; if (bs && bs.value) body.p_branch = bs.value; teamCall("team_invite", body); } }
   else if (b.dataset.lgAct === "tm-copy") copyText(b.dataset.link);
   else if (b.dataset.lgAct === "tm-cancel") teamCall("team_cancel", { p_code: b.dataset.id });
   else if (b.dataset.lgAct === "tm-remove") { if (confirm(g("tl_rm_q"))) teamCall("team_remove", { target: b.dataset.id }); }
 }, true);
+
+/* ---------- several shops in one account ---------- */
+const sh = { open: false, view: "list", msg: "", err: "", busy: false, ov: null, ovBusy: false };
+const STASH_KEYS = () => [LS_KEY, K.sync, K.base, K.owner];
+const stashOut = id => STASH_KEYS().forEach(k => { const v = lsGet(k); if (v != null) lsSet("ecrici-stash:" + id + ":" + k, v); else lsDel("ecrici-stash:" + id + ":" + k); });
+const stashIn = id => STASH_KEYS().forEach(k => { const v = lsGet("ecrici-stash:" + id + ":" + k); if (v != null) lsSet(k, v); else lsDel(k); });
+function clearStash() { try { Object.keys(localStorage).filter(k => k.indexOf("ecrici-stash:") === 0 || k === "ecrici-branch").forEach(k => localStorage.removeItem(k)); } catch (e) {} }
+async function loadBranches() {
+  try {
+    const r = await api("/rest/v1/rpc/branch_list", { method: "POST", body: {} });
+    if (r.status === 404) { multiOk = false; branches = []; return; }
+    if (!r.ok) throw httpErr(r);
+    multiOk = true; branches = r.json || [];
+  } catch (e) { if (e.auth) throw e; /* keep what we know when offline */ }
+}
+async function switchLedger(target, force) {
+  if (target === lid) return;
+  if (!force && active && S.updated > lastSynced) { try { await doPush(); } catch (e) { alert(g("logout_unsynced")); return; } }
+  stashOut(lid); stashIn(target);
+  if (target === shopId) lsDel("ecrici-branch"); else lsSet("ecrici-branch", target);
+  location.reload();
+}
+const ledName = () => (S && S.shop && S.shop.name) || "";
+window.__shopChip = () => (!member && active && multiOk && branches.length) ? `<button class="pill" data-lg-act="shops" aria-haspopup="dialog">${esc(g("sh_chip"))} ▾</button>` : "";
+const extraPrice = () => CFG.extraPriceText || "+700 FCFA";
+function shopsSection() {
+  if (member || !active || !multiOk) return "";
+  return `<section class="sec"><h2>${esc(g("sh_t"))}</h2><div class="card form"><p class="note" style="margin:0">${esc(g("sh_p"))} ${esc(g("sh_price", extraPrice()))}</p>
+    <button class="btn primary" data-lg-act="shops">${esc(branches.length ? g("sh_manage") : g("sh_add"))}</button></div></section>`;
+}
+const statLabel = s => s === "active" ? "" : s === "pending" ? g("sh_pend") : g("sh_susp");
+function drawShops() {
+  let el = document.getElementById("lg-shops");
+  if (!sh.open) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement("div"); el.id = "lg-shops"; document.body.appendChild(el); }
+  const a = shopRow(), mainName = (lid === shopId ? ledName() : a.name) || a.name || "";
+  let inner = "";
+  if (sh.view === "overview") {
+    const o = sh.ov;
+    inner = `<div class="dlg"><h2>${esc(g("ov_t"))}</h2>${sh.ovBusy || !o ? `<p class="note" style="margin:0">${esc(g("wait"))}</p>` : `
+      ${o.rows.map(r => `<div class="card flush" style="background:var(--paper);padding:10px;display:grid;gap:4px"><div class="name">${esc(r.name)}</div>
+        <div class="stat" style="padding:2px 0;border:0"><span>${esc(g("ov_today"))}</span><span class="num">${money(r.today)}</span></div>
+        <div class="stat" style="padding:2px 0;border:0"><span>${esc(g("ov_month"))}</span><span class="num">${money(r.month)}</span></div>
+        <div class="stat" style="padding:2px 0;border:0"><span>${esc(g("ov_owed"))}</span><span class="num">${money(r.owed)}</span></div></div>`).join("")}
+      <div class="total"><span>${esc(g("ov_all_today"))}</span><span class="num">${money(o.today)}</span></div>
+      <div class="stat" style="border:0;padding:0"><span>${esc(g("ov_month"))}</span><span class="num">${money(o.month)}</span></div>
+      <div class="stat" style="border:0;padding:0"><span>${esc(g("ov_owed"))}</span><span class="num">${money(o.owed)}</span></div>
+      ${o.skipped ? `<p class="note" style="margin:0">${esc(g("ov_skip", o.skipped))}</p>` : ""}`}
+      <div class="actions"><button class="btn" data-lg-act="sh-back">${esc(g("sh_back"))}</button></div></div>`;
+  } else {
+    const rows = [{ id: shopId, name: mainName, status: "active" }].concat(branches);
+    inner = `<div class="dlg"><h2>${esc(g("sh_t"))}</h2>
+      <div class="card flush">${rows.map(b => { const cur = b.id === lid, ok = b.status === "active";
+        return `<button class="row" ${ok && !cur ? `data-lg-act="sh-open" data-id="${esc(b.id)}"` : "disabled"} style="${ok ? "" : "opacity:.6;cursor:default"}"><div class="main"><div class="name">${esc(b.name || "")}</div><div class="sub">${esc(cur ? g("sh_cur") : statLabel(b.status))}</div></div>${ok && !cur ? `<span class="badge paid">${esc(g("sh_open"))}</span>` : ""}</button>`; }).join("")}</div>
+      ${branches.some(b => b.status === "active") ? `<button class="btn" data-lg-act="sh-all">${esc(g("sh_all"))}</button>` : ""}
+      <div class="field"><label for="sh-name">${esc(g("sh_name"))}</label><input id="sh-name" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase"></div>
+      <p class="note" style="margin:0">${esc(g("sh_price", extraPrice()))}</p>
+      ${sh.err ? `<div class="err" role="alert">${esc(sh.err)}</div>` : ""}
+      ${sh.msg ? `<div class="lg-msg" style="background:var(--warn-bg);color:var(--warn-ink);border-radius:12px;padding:10px 12px;font-size:14px">${esc(sh.msg)}</div>${waLink(sh.wa || "") && sh.wa ? `<a class="btn primary" href="${waLink(sh.wa)}" target="_blank" rel="noopener" style="text-decoration:none">${esc(g("wa"))}</a>` : ""}` : ""}
+      <button class="btn primary" data-lg-act="sh-add" ${sh.busy ? "disabled" : ""}>${esc(sh.busy ? g("wait") : g("sh_go"))}</button>
+      <button class="btn" data-lg-act="sh-close">${esc(g("sh_close"))}</button></div>`;
+  }
+  el.innerHTML = `<div class="veil" data-lg-act="sh-veil"><div class="sheet" role="dialog" aria-modal="true">${inner}</div></div>`;
+}
+function ledgerStats(d) {
+  const tk = new Date().toLocaleDateString("sv"), mk = tk.slice(0, 7), bal = {}; let today = 0, month = 0;
+  (d.txs || []).forEach(x => { if (x.void) return; const day = new Date(x.date).toLocaleDateString("sv");
+    if (x.type === "sale") { if (day === tk) today += x.total; if (day.slice(0, 7) === mk) month += x.total; if (x.cust) bal[x.cust] = (bal[x.cust] || 0) + x.total - x.paid; }
+    else if (x.cust) bal[x.cust] = (bal[x.cust] || 0) - x.amount; });
+  return { today, month, owed: Object.values(bal).reduce((s, v) => s + Math.max(0, v), 0) };
+}
+async function loadOverview() {
+  sh.ovBusy = true; sh.ov = null; drawShops();
+  let remote = {};
+  try { const r = await api("/rest/v1/ledgers?select=shop_id,data"); if (r.ok) (r.json || []).forEach(x => { remote[x.shop_id] = x.data; }); } catch (e) {}
+  const list = [{ id: shopId, name: (lid === shopId ? ledName() : shopRow().name) || "" }].concat(branches.filter(b => b.status === "active").map(b => ({ id: b.id, name: b.name })));
+  const rows = []; let skipped = 0;
+  list.forEach(s => { const d = s.id === lid ? S : remote[s.id]; if (!d) { skipped++; return; } rows.push(Object.assign({ name: s.name }, ledgerStats(d))); });
+  sh.ov = { rows, skipped, today: rows.reduce((s, r) => s + r.today, 0), month: rows.reduce((s, r) => s + r.month, 0), owed: rows.reduce((s, r) => s + r.owed, 0) };
+  sh.ovBusy = false; drawShops();
+}
+async function addShop() {
+  const el = document.getElementById("sh-name"), n = ((el && el.value) || "").trim().toUpperCase();
+  sh.err = ""; sh.msg = "";
+  if (!n) { sh.err = g("e_name"); drawShops(); return; }
+  sh.busy = true; drawShops();
+  try {
+    const r = await api("/rest/v1/rpc/branch_add", { method: "POST", body: { p_name: n } });
+    if (!r.ok) { const m = String((r.json && (r.json.message || r.json.msg)) || ""); sh.err = /plan inactive/i.test(m) ? g("sh_plan") : /too many pending/i.test(m) ? g("sh_pending_max") : /too many/i.test(m) ? g("sh_max") : g("sh_err"); }
+    else { await loadBranches(); const a = shopRow(); lsSet(K.acct, JSON.stringify(Object.assign(a, { branches }))); sh.msg = g("sh_sent"); sh.wa = g("sh_wa", n, a.name || "", a.phone || ""); try { render(); } catch (e) {} }
+  } catch (e) { sh.err = e.offline ? g("offline") : g("sh_err"); }
+  sh.busy = false; drawShops();
+}
 
 /* ---------- start ---------- */
 if (sess) enter(); else showGate("auth");

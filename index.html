@@ -614,7 +614,7 @@ function render(){
   const v=ui.view;
   const who=(S.shop.staffOn||window.__member)?me():null;
   let html=`<header class="top"><div class="brand"><h1>${esc(S.shop.name)}</h1><small>${esc(C().name)}${who?` · ${esc(who.name)}`:""} · <span id="status"></span></small></div>
-    <div class="chips" style="flex-wrap:wrap;justify-content:flex-end">${isOwner()?`<button class="pill" data-act="tab" data-v="set" ${ui.view==="set"?'aria-pressed="true"':""}>${t("set_btn")}</button>`:""}${who?`<button class="pill" data-act="lock">${window.__member?t("member_out"):t("lock")}</button>`:""}<button class="pill" data-act="lang" aria-label="${t("language")}">${L()==="fr"?"FR → EN":"EN → FR"}</button></div></header>`;
+    <div class="chips" style="flex-wrap:wrap;justify-content:flex-end">${isOwner()?`<button class="pill" data-act="tab" data-v="set" ${ui.view==="set"?'aria-pressed="true"':""}>${t("set_btn")}</button>`:""}${window.__shopChip?window.__shopChip():""}${who?`<button class="pill" data-act="lock">${window.__member?t("member_out"):t("lock")}</button>`:""}<button class="pill" data-act="lang" aria-label="${t("language")}">${L()==="fr"?"FR → EN":"EN → FR"}</button></div></header>`;
   if(v==="home") html+=viewHome();
   else if(v==="sale") html+=viewSale();
   else if(v==="stock") html+=viewStock();
