@@ -194,6 +194,37 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;color:inherit}
 .nav .lbl2{flex:1;text-align:center;font-weight:600;text-transform:capitalize;min-width:0;overflow-wrap:anywhere}
 .up{color:var(--paid)}.down{color:var(--owed)}
 
+/* bigger screens: tablets and computers */
+@media (min-width:600px){
+  .wrap{max-width:820px}
+  .sum{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .sheet{max-width:520px}
+  .veil{padding-top:max(5vh,16px)}
+}
+@media (min-width:600px) and (max-width:899px){
+  .line{grid-template-columns:minmax(0,1fr) 90px 140px 40px}
+  .line>input:first-child{grid-column:auto}
+}
+@media (min-width:900px){
+  body{padding-left:calc(232px + 24px);padding-right:24px;padding-bottom:48px}
+  body:has(.tabs:empty){padding-left:24px}
+  .wrap{max-width:900px}
+  .tabs{left:0;right:auto;top:0;bottom:0;width:216px;display:flex;flex-direction:column;gap:4px;padding:20px 12px;border-top:0;border-right:1px solid var(--line)}
+  .tabs:empty{display:none}
+  .tabs::before{content:"Ecrici";font-family:var(--font-display);font-weight:700;font-size:1.5rem;padding:4px 14px 18px;color:var(--ink)}
+  .tabs button{display:flex;align-items:center;gap:12px;text-align:left;font-size:.95rem;padding:12px 14px;white-space:nowrap}
+  .tabs svg{margin:0}
+  .toast{bottom:28px;left:calc(50% + 116px)}
+  .items{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;align-items:start}
+  .items>.lab{grid-column:1/-1}
+  .items>#pk-inline,.items>#pk-inl,.items>.pk-hint{grid-column:1}
+  .items>#lines{grid-column:2;grid-row:2 / span 3}
+  .items>[data-act=add-line]{grid-column:2}
+  #pk-inl{max-height:380px!important}
+  .sheet{max-width:560px}
+}
+@media (hover:hover){ .row:hover{background:var(--paper)} .btn:hover,.pill:hover{filter:brightness(.96)} .tabs button:hover{background:var(--paper)} }
+
 @media (prefers-reduced-motion:no-preference){.veil{animation:fade .12s ease-out}@keyframes fade{from{opacity:0}to{opacity:1}}}
 </style>
 
@@ -698,8 +729,8 @@ function viewSale(){
       :`<select id="f-cust" data-bind="cust">${opts}</select>
         <button class="btn small ghost" data-act="sale-newcust" style="justify-self:start">${t("new_customer")}</button>`}
     </div>
-    <div class="field"><span class="lab">${S.products.length?t("pick_lab"):t("items")}</span>${S.products.length?`<input id="pk-inline" type="search" data-bind="pq" value="${esc(d.pq||"")}" placeholder="${esc(t("pick_q"))}" autocomplete="off" aria-label="${esc(t("pick_q"))}">
-      <div class="card flush" id="pk-inl" style="max-height:232px;overflow:auto">${pickList(d.pq)}</div><p class="note" style="margin:0">${t("pick_hint")}</p>`:""}<div class="lines" id="lines">${linesHtml()}</div>
+    <div class="field${S.products.length?" items":""}"><span class="lab">${S.products.length?t("pick_lab"):t("items")}</span>${S.products.length?`<input id="pk-inline" type="search" data-bind="pq" value="${esc(d.pq||"")}" placeholder="${esc(t("pick_q"))}" autocomplete="off" aria-label="${esc(t("pick_q"))}">
+      <div class="card flush" id="pk-inl" style="max-height:232px;overflow:auto">${pickList(d.pq)}</div><p class="note pk-hint" style="margin:0">${t("pick_hint")}</p>`:""}<div class="lines" id="lines">${linesHtml()}</div>
       <button class="btn small ghost" data-act="add-line" style="justify-self:start">${t("add_line")}</button></div>
     <div class="total"><span>${t("total")}</span><span class="num" id="s-total"></span></div>
     <div class="field"><span class="lab">${t("paid_now")}</span>
@@ -1564,7 +1595,7 @@ document.addEventListener("change",e=>{
     fr.readAsText(el.files[0]);
   }
 });
-document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&ui.modal){ ui.modal=null; renderModal(); } if(e.key==="Enter"&&e.target.id==="lk-pin") doUnlock(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="pk-inline"&&ui.draft){ e.preventDefault(); const f=document.querySelector("#pk-inl [data-act=pick-p]"); if(f){ pickAdd(f.dataset.id); ui.draft.pq=""; e.target.value=""; refreshPicks(); } return; } if(e.key==="Escape"&&ui.modal){ ui.modal=null; renderModal(); } if(e.key==="Enter"&&e.target.id==="lk-pin") doUnlock(); });
 
 function blank(){ return {v:1,updated:Date.now(),counter:0,shop:{name:"Ma Boutique",phone:"",country:"BJ",lang:"fr",footer:"",lateDays:14,staffOn:false,recovery:""},customers:[],txs:[],products:[],staff:[],expenses:[],expRules:[]}; }
 
