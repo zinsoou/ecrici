@@ -1,8 +1,9 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" translate="no">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="google" content="notranslate">
 <title>Ecrici</title>
 <meta name="description" content="Ecrici : cahier de ventes, crédits, stock et reçus pour votre boutique. Fonctionne sans internet.">
 <meta name="theme-color" content="#2447d6">
@@ -12,9 +13,6 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
 <style id="lg-hide">body>*:not(#lg-gate){visibility:hidden}</style>
 <script>setTimeout(function(){var s=document.getElementById("lg-hide");if(s)s.remove()},5000)</script>
 <style>
@@ -22,7 +20,13 @@
 html,body{margin:0}
 img{max-width:100%}
 [hidden]{display:none!important}
-
+</style>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+<style>
 /* Layout: a notebook-style ledger. Header with shop name, one scrolling column, fixed tab bar at the bottom. */
 :root{
   --paper:#f3f5fa;
@@ -192,8 +196,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;color:inherit}
 
 @media (prefers-reduced-motion:no-preference){.veil{animation:fade .12s ease-out}@keyframes fade{from{opacity:0}to{opacity:1}}}
 </style>
-</head>
-<body>
+
 <div class="wrap" id="app"></div>
 <nav class="tabs" id="tabs" aria-label="Navigation"></nav>
 <div id="layer"></div>
@@ -264,7 +267,7 @@ const T = {
     bc_fill:"Remplacez les crochets [ ] avant d'envoyer.",bc_nophone:"sans numéro",bc_sent:"Ouvert ✓",bc_open:"WhatsApp",bc_copy:"Copier le message (pour Statut ou groupe)",
     bc_none:"Aucun client dans ce groupe.",bc_progress:(a,b)=>`${a} sur ${b} ouverts`,
     load_examples:"Charger des exemples",examples_loaded:"Exemples chargés",empty_home:"Il n'y a encore rien ici. Chargez des exemples pour voir comment l'app fonctionne, ou ajoutez votre premier client.",
-    start_t:"Pour commencer",start_1:"1. Ajoutez vos produits",start_2:"2. Enregistrez une vente",start_3:"3. Voyez qui vous doit",start_hide:"Masquer",
+    start_t:"Pour commencer",start_1:"1. Ajoutez vos produits et services",start_2:"2. Enregistrez une vente",start_3:"3. Voyez qui vous doit",start_hide:"Masquer",
     due_label:"À payer le (facultatif)",due_on:"Échéance",overdue_d:(n)=>`${n} j de retard`,next_due:"Prochaine échéance",
     msg_remind_due:(n,s,a,d)=>`Bonjour ${n}, c'est ${s}. Votre solde de ${a} était à payer le ${d}. Merci de passer le régler dès que possible. Merci !`,
     exp_title:"Dépenses",exp_rep:"Répéter",exp_rep0:"Une seule fois",exp_rep1:"Chaque semaine",exp_rep2:"Chaque mois",exp_rep3:"Chaque année",exp_rules:"Dépenses qui se répètent",exp_stop_q:"Arrêter cette dépense répétée ? Les dépenses déjà ajoutées restent.",exp_w:"/ semaine",exp_m:"/ mois",exp_y:"/ an",exp_cash:"Argent reçu moins dépenses",exp_cash_note:"Argent encaissé (ventes + dettes payées) moins les dépenses. Marche pour tous les commerces.",exp_add:"Ajouter une dépense",exp_label:"Motif (loyer, transport…)",exp_amount:"Montant",exp_date:"Date",exp_none:"Aucune dépense sur cette période.",exp_total:"Dépenses",exp_net:"Bénéfice net",exp_net_note:"Bénéfice sur les articles avec prix d'achat, moins les dépenses.",exp_del_q:"Supprimer cette dépense ?",err_exp:"Écrivez le motif et un montant.",
@@ -277,15 +280,15 @@ const T = {
     cost_price:"Prix d'achat",cancel_entry:"Annuler cette écriture",cancelled:"Annulé",cancel_title:"Annuler cette écriture ?",
     cancel_hint:"Le stock et le solde du client seront corrigés. L'écriture reste visible, marquée Annulé.",cancel_reason:"Raison (facultatif)",
     cancel_yes:"Oui, annuler",cancel_done:"Écriture annulée",back2:"Retour",sold_units:"vendus",
-    pick_btn:"Choisir dans mes produits",pick_t:"Choisir les produits",pick_q:"Rechercher un produit…",pick_done:"Terminé",pick_none:"Aucun produit trouvé",pick_hint:"Touchez un produit pour l'ajouter. Touchez encore pour +1.",pick_n:"articles",tab_stock:"Stock",stock:"Stock",bulk_btn:"Ajouter plusieurs",bulk_t:"Ajouter plusieurs produits",bulk_help:"Un produit par ligne : nom, prix, quantité. La quantité est facultative. Écrivez « service » à la place de la quantité pour un service. Ajoutez un prix d'achat à la fin si vous voulez : nom, prix, quantité, prix d'achat.",bulk_ph:"Sandales, 8000, 12\nBaskets, 25000, 5\nCoupe de cheveux, 1000, service",bulk_go:"Ajouter",bulk_empty:"Écrivez au moins un produit.",bulk_done:(a,d,b)=>`${a} ajouté(s)`+(d?`, ${d} déjà existant(s)`:"")+(b?`, ${b} ligne(s) ignorée(s)`:""),bulk_skip:"Lignes ignorées :",is_service:"C'est un service (pas de stock à compter)",svc_tag:"Service",add_product:"Ajouter un produit",product_name:"Nom du produit",unit_price:"Prix de vente",in_stock:"En stock",
+    pick_btn:"Choisir dans mes produits et services",pick_t:"Choisir produits et services",pick_q:"Rechercher un produit ou service…",pick_done:"Terminé",pick_none:"Aucun produit trouvé",pick_hint:"Touchez un produit pour l'ajouter. Touchez encore pour +1.",pick_n:"articles",tab_stock:"Articles",stock:"Produits et services",bulk_btn:"Ajouter plusieurs",bulk_t:"Ajouter plusieurs produits ou services",bulk_help:"Un produit par ligne : nom, prix, quantité. La quantité est facultative. Écrivez « service » à la place de la quantité pour un service. Ajoutez un prix d'achat à la fin si vous voulez : nom, prix, quantité, prix d'achat.",bulk_ph:"Sandales, 8000, 12\nBaskets, 25000, 5\nCoupe de cheveux, 1000, service",bulk_go:"Ajouter",bulk_empty:"Écrivez au moins un produit.",bulk_done:(a,d,b)=>`${a} ajouté(s)`+(d?`, ${d} déjà existant(s)`:"")+(b?`, ${b} ligne(s) ignorée(s)`:""),bulk_skip:"Lignes ignorées :",is_service:"C'est un service (pas de stock à compter)",svc_tag:"Service",add_product:"Ajouter un produit ou service",product_name:"Nom du produit",unit_price:"Prix de vente",in_stock:"En stock",
     low_alert:"Alerte quand il en reste",add_received:"Quantité reçue (à ajouter)",low:"Bas",out:"Épuisé",low_stock_title:"Stock bas",
-    no_products:"Aucun produit. Ajoutez vos articles pour suivre le stock.",stock_value:"Valeur du stock",err_pname:"Le nom du produit est obligatoire.",
+    no_products:"Rien pour l'instant. Ajoutez vos produits et services : le stock se compte seulement pour les produits.",stock_value:"Valeur du stock",err_pname:"Le nom du produit est obligatoire.",
     err_pdup:"Ce produit existe déjà.",err_stock:(n,q)=>`Stock insuffisant pour ${n} : ${q} restant(s). Ajoutez du stock d'abord.`,
     product_saved:"Produit enregistré",delete:"Supprimer",confirm_del_product:"Supprimer ce produit ?",
     staff:"Équipe",staff_security:"Les codes PIN permettent à vos employés d'utiliser l'application sans voir les Réglages ni le Bilan. Étapes : 1) Ajoutez-vous d'abord comme Propriétaire avec un PIN. 2) Ajoutez votre employé avec son propre PIN. 3) Touchez « Activer le verrouillage par PIN ». Ce n'est pas une sécurité bancaire.",lock_s_on:"Verrouillage actif : chacun entre avec son PIN.",lock_s_off:"Verrouillage désactivé : tout le monde voit tout.",pin4:"PIN (4 chiffres)",first_owner:"Commencez par vous ajouter vous-même comme Propriétaire.",
     add_person:"Ajouter un membre de l'équipe",owner:"Propriétaire",employee:"Employé",role:"Rôle",err_sname:"Le nom est obligatoire.",err_pin:"Le PIN doit avoir exactement 4 chiffres.",
     err_need_owner:"Ajoutez d'abord un propriétaire avec un PIN.",err_last_owner:"Gardez au moins un propriétaire tant que le verrouillage est actif.",
-    lock_on:"Activer le verrouillage par PIN",lock_off:"Désactiver le verrouillage",member_out:"Déconnexion",lock:"Verrouiller",unlock:"Ouvrir",who:"Qui êtes-vous ?",wrong_pin:"PIN incorrect.",
+    lock_on:"Activer le verrouillage par PIN",lock_off:"Désactiver le verrouillage",member_out:"Déconnexion",signout_phone:"Se déconnecter de ce téléphone",signout_hint:"Pour retirer ce compte de ce téléphone sans lever le verrouillage. Il faudra le mot de passe pour se reconnecter.",lock:"Verrouiller",unlock:"Ouvrir",who:"Qui êtes-vous ?",wrong_pin:"PIN incorrect.",
     forgot:"PIN oublié ?",reset_access:"Désactiver le verrouillage",reset_access_hint:"Entrez le code de secours (affiché au propriétaire dans les réglages).",reset_wrong:"Code de secours incorrect.",
     recovery:"Code de secours (notez-le)",served_by:"Servi par",
     invoice:"FACTURE",as_invoice:"Voir en facture",as_receipt:"Voir en reçu",invoice_note:"Facture simple, sans valeur fiscale.",due:"Reste dû",balance_now:"Solde total du client",
@@ -334,7 +337,7 @@ const T = {
     bc_fill:"Replace the [ ] brackets before sending.",bc_nophone:"no number",bc_sent:"Opened ✓",bc_open:"WhatsApp",bc_copy:"Copy the message (for Status or a group)",
     bc_none:"No customers in this group.",bc_progress:(a,b)=>`${a} of ${b} opened`,
     load_examples:"Load examples",examples_loaded:"Examples loaded",empty_home:"Nothing here yet. Load examples to see how the app works, or add your first customer.",
-    start_t:"Getting started",start_1:"1. Add your products",start_2:"2. Record a sale",start_3:"3. See who owes you",start_hide:"Hide",
+    start_t:"Getting started",start_1:"1. Add your products and services",start_2:"2. Record a sale",start_3:"3. See who owes you",start_hide:"Hide",
     due_label:"Pay by (optional)",due_on:"Due",overdue_d:(n)=>`${n} d overdue`,next_due:"Next due date",
     msg_remind_due:(n,s,a,d)=>`Hello ${n}, this is ${s}. Your balance of ${a} was due on ${d}. Please come by and settle it as soon as you can. Thank you!`,
     exp_title:"Expenses",exp_rep:"Repeat",exp_rep0:"Only once",exp_rep1:"Every week",exp_rep2:"Every month",exp_rep3:"Every year",exp_rules:"Repeating expenses",exp_stop_q:"Stop this repeating expense? Expenses already added stay.",exp_w:"/ week",exp_m:"/ month",exp_y:"/ year",exp_cash:"Money received minus expenses",exp_cash_note:"Cash collected (sales + debts paid) minus expenses. Works for every kind of business.",exp_add:"Add an expense",exp_label:"Reason (rent, transport…)",exp_amount:"Amount",exp_date:"Date",exp_none:"No expenses in this period.",exp_total:"Expenses",exp_net:"Net profit",exp_net_note:"Profit on items with a cost price, minus expenses.",exp_del_q:"Delete this expense?",err_exp:"Enter a reason and an amount.",
@@ -347,15 +350,15 @@ const T = {
     cost_price:"Cost price",cancel_entry:"Cancel this entry",cancelled:"Cancelled",cancel_title:"Cancel this entry?",
     cancel_hint:"Stock and the customer's balance will be corrected. The entry stays visible, marked Cancelled.",cancel_reason:"Reason (optional)",
     cancel_yes:"Yes, cancel it",cancel_done:"Entry cancelled",back2:"Back",sold_units:"sold",
-    pick_btn:"Pick from my products",pick_t:"Choose products",pick_q:"Search products…",pick_done:"Done",pick_none:"No product found",pick_hint:"Tap a product to add it. Tap again for +1.",pick_n:"items",tab_stock:"Stock",stock:"Stock",bulk_btn:"Add many",bulk_t:"Add many products",bulk_help:"One product per line: name, price, quantity. Quantity is optional. Write \"service\" instead of the quantity for a service. You can add a buying price at the end: name, price, quantity, buying price.",bulk_ph:"Sandals, 8000, 12\nSneakers, 25000, 5\nHaircut, 1000, service",bulk_go:"Add",bulk_empty:"Write at least one product.",bulk_done:(a,d,b)=>`${a} added`+(d?`, ${d} already existed`:"")+(b?`, ${b} line(s) skipped`:""),bulk_skip:"Skipped lines:",is_service:"This is a service (no stock to count)",svc_tag:"Service",add_product:"Add product",product_name:"Product name",unit_price:"Selling price",in_stock:"In stock",
+    pick_btn:"Pick from my products and services",pick_t:"Choose products and services",pick_q:"Search products or services…",pick_done:"Done",pick_none:"No product found",pick_hint:"Tap a product to add it. Tap again for +1.",pick_n:"items",tab_stock:"Items",stock:"Products and services",bulk_btn:"Add many",bulk_t:"Add many products or services",bulk_help:"One product per line: name, price, quantity. Quantity is optional. Write \"service\" instead of the quantity for a service. You can add a buying price at the end: name, price, quantity, buying price.",bulk_ph:"Sandals, 8000, 12\nSneakers, 25000, 5\nHaircut, 1000, service",bulk_go:"Add",bulk_empty:"Write at least one product.",bulk_done:(a,d,b)=>`${a} added`+(d?`, ${d} already existed`:"")+(b?`, ${b} line(s) skipped`:""),bulk_skip:"Skipped lines:",is_service:"This is a service (no stock to count)",svc_tag:"Service",add_product:"Add product or service",product_name:"Product name",unit_price:"Selling price",in_stock:"In stock",
     low_alert:"Alert when this many are left",add_received:"Quantity received (add)",low:"Low",out:"Out",low_stock_title:"Running low",
-    no_products:"No products yet. Add your items to track stock.",stock_value:"Stock value",err_pname:"Product name is required.",
+    no_products:"Nothing yet. Add your products and services: stock is counted for products only.",stock_value:"Stock value",err_pname:"Product name is required.",
     err_pdup:"This product already exists.",err_stock:(n,q)=>`Not enough stock for ${n}: ${q} left. Add stock first.`,
     product_saved:"Product saved",delete:"Delete",confirm_del_product:"Delete this product?",
     staff:"Team",staff_security:"PINs let your employees use the app without seeing Settings or Reports. Steps: 1) First add yourself as Owner with a PIN. 2) Add your employee with their own PIN. 3) Tap \"Turn on PIN lock\". This is not bank-grade security.",lock_s_on:"Lock is on: everyone enters with their PIN.",lock_s_off:"Lock is off: everyone sees everything.",pin4:"PIN (4 digits)",first_owner:"Start by adding yourself as the Owner.",
     add_person:"Add a team member",owner:"Owner",employee:"Employee",role:"Role",err_sname:"Name is required.",err_pin:"The PIN must be exactly 4 digits.",
     err_need_owner:"Add an owner with a PIN first.",err_last_owner:"Keep at least one owner while the lock is on.",
-    lock_on:"Turn on PIN lock",lock_off:"Turn off PIN lock",member_out:"Sign out",lock:"Lock",unlock:"Open",who:"Who are you?",wrong_pin:"Wrong PIN.",
+    lock_on:"Turn on PIN lock",lock_off:"Turn off PIN lock",member_out:"Sign out",signout_phone:"Sign out of this phone",signout_hint:"Removes this account from this phone without turning off the lock. The password is needed to sign back in.",lock:"Lock",unlock:"Open",who:"Who are you?",wrong_pin:"Wrong PIN.",
     forgot:"Forgot PIN?",reset_access:"Turn off the lock",reset_access_hint:"Enter the recovery code (shown to the owner in Settings).",reset_wrong:"Wrong recovery code.",
     recovery:"Recovery code (write it down)",served_by:"Served by",
     invoice:"INVOICE",as_invoice:"View as invoice",as_receipt:"View as receipt",invoice_note:"Simple invoice, no tax validity.",due:"Amount due",balance_now:"Customer's total balance",
@@ -572,13 +575,9 @@ async function copyText(text){
 }
 async function saveFile(filename,data){
   try{
-    const type=/\.json$/.test(filename)?"application/json":/\.csv$/.test(filename)?"text/csv":"text/plain";
-    const blob=new Blob([data],{type:type+";charset=utf-8"});
-    const url=URL.createObjectURL(blob);
-    const el=document.createElement("a"); el.href=url; el.download=filename; document.body.appendChild(el); el.click(); el.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),4000);
-    return true;
-  }catch(e){ toast("—"); return false; }
+    const dl=await claude.use("downloads"); if(!dl){ toast("—"); return false; }
+    await dl.save({filename,data}); return true;
+  }catch(e){ if(e&&e.code!=="declined") toast("—"); return false; }
 }
 async function backupNow(){
   const prev=S.shop.lastBackup||"";
@@ -684,7 +683,7 @@ function viewHome(){
 }
 
 /* --- sale form --- */
-function newDraft(custId){ return {cust:custId||"",newCust:false,nc:{name:"",phone:""},lines:[{d:"",q:"1",p:"",pid:null,auto:false}],mode:"full",part:"",due:"",note:"",err:""}; }
+function newDraft(custId){ return {cust:custId||"",newCust:false,nc:{name:"",phone:""},lines:[{d:"",q:"1",p:"",pid:null,auto:false}],mode:"full",part:"",due:"",note:"",err:"",pq:""}; }
 function draftTotal(){ return ui.draft.lines.reduce((s,l)=>s+(parseAmt(l.q)||0)*parseAmt(l.p),0); }
 function draftPaid(){ const d=ui.draft,tot=draftTotal(); return d.mode==="full"?tot:d.mode==="credit"?0:Math.min(parseAmt(d.part),tot); }
 function viewSale(){
@@ -699,14 +698,8 @@ function viewSale(){
       :`<select id="f-cust" data-bind="cust">${opts}</select>
         <button class="btn small ghost" data-act="sale-newcust" style="justify-self:start">${t("new_customer")}</button>`}
     </div>
-    <datalist id="plist">${S.products.map(p=>`<option value="${esc(p.name)}">`).join("")}</datalist>
-    <div class="field"><span class="lab">${t("items")}</span>${S.products.length?`<button class="btn primary" data-act="pick-open" style="justify-self:stretch">${t("pick_btn")} (${S.products.length})</button>`:""}<div class="lines" id="lines">
-      ${d.lines.map((l,i)=>`<div class="line">
-        <input data-bind="line.${i}.d" id="l${i}d" list="plist" value="${esc(l.d)}" placeholder="${t("item")}" autocomplete="off" aria-label="${t("item")}">
-        <input data-bind="line.${i}.q" id="l${i}q" value="${esc(l.q)}" inputmode="decimal" aria-label="${t("qty")}">
-        <input data-bind="line.${i}.p" id="l${i}p" value="${esc(l.p)}" inputmode="decimal" placeholder="${t("price")}" aria-label="${t("price")}">
-        <button class="x" data-act="del-line" data-i="${i}" aria-label="×" ${d.lines.length===1?"disabled":""}>×</button><div class="hint" id="h${i}">${esc(lineHint(l))}</div></div>`).join("")}
-      </div>
+    <div class="field"><span class="lab">${t("items")}</span>${S.products.length?`<input id="pk-inline" type="search" data-bind="pq" value="${esc(d.pq||"")}" placeholder="${esc(t("pick_q"))}" autocomplete="off" aria-label="${esc(t("pick_q"))}">
+      <div class="card flush" id="pk-inl" style="max-height:232px;overflow:auto">${pickList(d.pq)}</div><p class="note" style="margin:0">${t("pick_hint")}</p>`:""}<div class="lines" id="lines">${linesHtml()}</div>
       <button class="btn small ghost" data-act="add-line" style="justify-self:start">${t("add_line")}</button></div>
     <div class="total"><span>${t("total")}</span><span class="num" id="s-total"></span></div>
     <div class="field"><span class="lab">${t("paid_now")}</span>
@@ -724,21 +717,31 @@ function viewSale(){
     <button class="btn primary" data-act="save-sale">${t("save_sale")}</button>
   </div></section>`;
 }
+function linesHtml(){ const d=ui.draft; return d.lines.map((l,i)=>`<div class="line">
+        <input data-bind="line.${i}.d" id="l${i}d" value="${esc(l.d)}" placeholder="${t("item")}" autocomplete="off" aria-label="${t("item")}">
+        <input data-bind="line.${i}.q" id="l${i}q" value="${esc(l.q)}" inputmode="decimal" aria-label="${t("qty")}">
+        <input data-bind="line.${i}.p" id="l${i}p" value="${esc(l.p)}" inputmode="decimal" placeholder="${t("price")}" aria-label="${t("price")}">
+        <button class="x" data-act="del-line" data-i="${i}" aria-label="×" ${d.lines.length===1?"disabled":""}>×</button><div class="hint" id="h${i}">${esc(lineHint(l))}</div></div>`).join(""); }
+function refreshPicks(){ const q=ui.draft?ui.draft.pq:"", m=$("#pk-q"), a=$("#pk-list"), b=$("#pk-inl"), n=$("#pk-n");
+  if(a) a.innerHTML=pickList(m?m.value:""); if(b) b.innerHTML=pickList(q);
+  const ln=$("#lines"); if(ln) ln.innerHTML=linesHtml();
+  if(n) n.textContent=ui.draft.lines.filter(l=>l.pid).reduce((s,l)=>s+(parseAmt(l.q)||0),0); updateSaleTotals(); }
 function pickQty(id){ return ui.draft?ui.draft.lines.filter(l=>l.pid===id).reduce((s,l)=>s+(parseAmt(l.q)||0),0):0; }
 function pickList(q){
   q=(q||"").trim().toLowerCase();
   const list=S.products.filter(p=>!q||p.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
   if(!list.length) return `<p class="note" style="text-align:center">${t("pick_none")}</p>`;
-  return list.map(p=>{ const n=pickQty(p.id); const sub=p.svc?t("svc_tag"):`${t("in_stock")}: ${p.qty}`;
-    return `<button class="row" data-act="pick-p" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)} · ${esc(sub)}</div></div>${n>0?`<div class="amt"><b>×${n}</b></div>`:""}</button>`; }).join("");
+  return list.map(p=>{ const n=pickQty(p.id); const out=!p.svc&&p.qty<=0, sub=p.svc?t("svc_tag"):out?t("out"):`${t("in_stock")}: ${p.qty}`;
+    return `<button class="row" data-act="pick-p" data-id="${p.id}"${out?' style="opacity:.5"':""}><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)} · ${esc(sub)}</div></div>${n>0?`<div class="amt"><b>×${n}</b></div>`:""}</button>`; }).join("");
 }
 function pickAdd(id){
   const pr=S.products.find(x=>x.id===id), d=ui.draft; if(!pr||!d) return;
-  const ex=d.lines.find(l=>l.pid===id);
-  if(ex){ ex.q=String((parseAmt(ex.q)||0)+1); return; }
+  const ex=d.lines.find(l=>l.pid===id), have=pickQty(id);
+  if(!pr.svc&&have+1>pr.qty){ toast(t("err_stock",pr.name,pr.qty)); return false; }
+  if(ex){ ex.q=String((parseAmt(ex.q)||0)+1); return true; }
   let l=d.lines.find(x=>!x.d.trim()&&!parseAmt(x.p));
   if(!l){ l={d:"",q:"1",p:"",pid:null,auto:false}; d.lines.push(l); }
-  l.d=pr.name; l.pid=pr.id; l.q="1"; l.p=String(pr.price); l.auto=true;
+  l.d=pr.name; l.pid=pr.id; l.q="1"; l.p=String(pr.price); l.auto=true; return true;
 }
 function lineHint(l){ const p=l.pid&&S.products.find(x=>x.id===l.pid); if(!p||p.svc) return ""; const q=parseAmt(l.q)||0; return `${t("in_stock")}: ${p.qty}`+(q>p.qty?" ⚠":""); }
 function updateSaleTotals(){
@@ -793,12 +796,21 @@ function rowTx(x){
     <div class="amt"><div class="num">${money(amt)}</div>
     ${x.void?`<span class="badge late">${t("cancelled")}</span>`:isSale&&x.total-x.paid>0.001?`<span class="badge owed">${t("owes")} ${money(x.total-x.paid)}</span>`:`<span class="badge paid">${isSale?t("paid"):"✓"}</span>`}</div></button>`;
 }
+function txMatch(x,q){
+  const qd=q.replace(/[\s,.]/g,""), amt=String(Math.round((x.type==="sale"?x.total:x.amount)*100)/100).replace(/\./g,""), dt=new Date(x.date);
+  const dl=dt.toLocaleDateString("fr-FR"), di=dkey(x.date);
+  return custName(x.cust).toLowerCase().includes(q)||String(x.no).includes(q)||pad4(x.no).includes(q)||(qd&&/^\d+$/.test(qd)&&amt.includes(qd))||fmtDate(x.date).toLowerCase().includes(q)||dl.includes(q)||di.includes(q)||(x.note||"").toLowerCase().includes(q);
+}
+function docFile(x,kind,ext){
+  const nm=(x.cust?custName(x.cust):(L()==="fr"?"client-de-passage":"walk-in")).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"client";
+  return `${nm}-${kind==="invoice"?(L()==="fr"?"facture":"invoice"):(L()==="fr"?"recu":"receipt")}-${pad4(x.no)}.${ext}`;
+}
 function viewHistory(){
   const q=ui.histSearch.trim().toLowerCase();
   const list=[...S.txs].sort((a,b)=>b.no-a.no)
-    .filter(x=>!q||custName(x.cust).toLowerCase().includes(q)||String(x.no).includes(q)).slice(0,150);
+    .filter(x=>!q||txMatch(x,q)).slice(0,150);
   return `<section class="sec"><h2>${t("receipts")}</h2>
-    <input id="f-hsearch" data-bind="hsearch" value="${esc(ui.histSearch)}" placeholder="${t("search")}" aria-label="${t("search")}" autocomplete="off">
+    <input id="f-hsearch" data-bind="hsearch" value="${esc(ui.histSearch)}" placeholder="${esc(L()==="fr"?"Nom, montant, date ou n°":"Name, amount, date or no.")}" aria-label="${t("search")}" autocomplete="off">
     <div class="card flush">${list.length?list.map(rowTx).join(""):`<div class="empty">${t("no_receipts")}</div>`}</div></section>`;
 }
 
@@ -1030,6 +1042,7 @@ function viewLock(){
     <button class="btn primary" data-act="unlock">${t("unlock")}</button>
     ${ui.lockForgot?`<div class="field"><label for="lk-rec">${t("reset_access_hint")}</label><input id="lk-rec" inputmode="numeric" autocomplete="off"></div><button class="btn danger" data-act="reset-access">${t("reset_access")}</button>`
       :`<button class="btn small ghost" data-act="forgot" style="justify-self:start">${t("forgot")}</button>`}
+    ${window.__logout?`<div style="border-top:1px solid var(--line);padding-top:12px;display:grid;gap:6px"><button class="btn small" data-act="signout" style="justify-self:start">${t("signout_phone")}</button><p class="note" style="margin:0;font-size:.78rem">${t("signout_hint")}</p></div>`:""}
   </div></div>`;
 }
 function doUnlock(){
@@ -1145,11 +1158,82 @@ function pdfBlob(lines,acc,hdrN){
   const u=new Uint8Array(pdf.length); for(let i=0;i<pdf.length;i++) u[i]=pdf.charCodeAt(i)&255;
   return new Blob([u],{type:"application/pdf"});
 }
+/* ---- receipt PDF that mirrors the on-screen ticket ---- */
+const HW=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+const BW=[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+const pdfClean=s=>String(s==null?"":s).replace(/₦/g,"NGN ").replace(/GH₵/g,"GHS ").replace(/₵/g,"GHS ").replace(/[  ]/g," ");
+const pdfEsc=str=>{ const CP={"—":0x97,"–":0x96,"’":0x92,"‘":0x91,"“":0x93,"”":0x94,"€":0x80,"…":0x85,"œ":0x9C,"Œ":0x8C}; let o="";
+  for(const ch of pdfClean(str)){ const c=ch.codePointAt(0); o+=CP[ch]?String.fromCharCode(CP[ch]):(c<256?ch:"?"); } return o.replace(/[\\()]/g,m=>"\\"+m); };
+function pdfW(str,font,size){ if(font==="F3"||font==="F4") return pdfClean(str).length*0.6*size; const T=font==="F2"?BW:HW; let w=0;
+  for(const ch of pdfClean(str)){ let c=ch.normalize("NFD")[0].charCodeAt(0); if(ch==="×") w+=584; else if(c>=32&&c<=126) w+=T[c-32]; else w+=556; } return w*size/1000; }
+function pdfWrap(str,font,size,maxW){ const out=[]; let cur="";
+  for(const word of pdfClean(str).split(" ")){ let w=word;
+    while(pdfW(w,font,size)>maxW&&w.length>1){ let k=w.length; while(k>1&&pdfW(w.slice(0,k),font,size)>maxW) k--; if(cur){ out.push(cur); cur=""; } out.push(w.slice(0,k)); w=w.slice(k); }
+    if(cur&&pdfW(cur+" "+w,font,size)>maxW){ out.push(cur); cur=w; } else cur=cur?cur+" "+w:w; }
+  if(cur||!out.length) out.push(cur); return out; }
+function ticketPdf(x,kind){
+  kind=kind||"receipt"; const sh=S.shop, W=320, M=22, IW=W-2*M, owe=x.type==="sale"?x.total-x.paid:0;
+  const hex=accentOf(sh).replace("#",""), A=[0,2,4].map(k=>parseInt(hex.substr(k,2),16)/255);
+  const rg=a=>a.map(v=>v.toFixed(3)).join(" "), h2=h=>[0,2,4].map(k=>parseInt(h.substr(k,2),16)/255);
+  const INK=h2("16203f"), MUT=h2("5d6784"), LINE=h2("dde2ee"), RED=h2("b4321f"), WHITE=[1,1,1];
+  const mix=(a,p)=>a.map(v=>v*(1-p)+p);
+  const ops=[]; let y=0; // y measured from top
+  const txt=(s,xx,yy,font,size,col,align)=>{ let px=xx; const w=pdfW(s,font,size); if(align==="r") px=xx-w; else if(align==="c") px=xx-w/2; ops.push(`${rg(col)} rg BT /${font} ${size} Tf 1 0 0 1 ${px.toFixed(2)} @${yy.toFixed(2)} Tm (${pdfEsc(s)}) Tj ET`); };
+  const hline=(yy,x1,x2,col,w,dash)=>ops.push(`${rg(col)} RG ${w} w ${dash?"[3 3] 0 d":"[] 0 d"} ${x1} @${yy.toFixed(2)} m ${x2} @${yy.toFixed(2)} l S [] 0 d`);
+  // header band
+  const hdr=[]; hdr.push({s:sh.name.toUpperCase(),f:"F2",z:15,c:WHITE,wrap:true});
+  if(sh.phone) hdr.push({s:fmtPhone(sh.phone),f:"F1",z:9.5,c:mix(A,0.88)}); if(sh.address) hdr.push({s:sh.address,f:"F1",z:9.5,c:mix(A,0.88),wrap:true});
+  let hy=18; const circleY=hy+20; hy+=40+10;
+  const hl=[]; hdr.forEach(h=>{ (h.wrap?pdfWrap(h.s,h.f,h.z,IW):[h.s]).forEach(l=>{ hy+=h.z+4; hl.push({s:l,f:h.f,z:h.z,c:h.c,y:hy}); }); }); hy+=14;
+  ops.push(`${rg(A)} rg 0 0 ${W} ${hy} re f`.replace("0 0 "+W,"0 @"+hy+" "+W).replace(" re f"," re f")); ops[ops.length-1]=`BAND`;
+  const band={h:hy};
+  // circle
+  const cx=W/2, cr=20, k=0.5523*cr, cc=mix(A,0.22);
+  ops.push(`${rg(cc)} rg ${cx} @${circleY-cr} m ${cx+k} @${circleY-cr} ${cx+cr} @${circleY-k} ${cx+cr} @${circleY} c ${cx+cr} @${circleY+k} ${cx+k} @${circleY+cr} ${cx} @${circleY+cr} c ${cx-k} @${circleY+cr} ${cx-cr} @${circleY+k} ${cx-cr} @${circleY} c ${cx-cr} @${circleY-k} ${cx-k} @${circleY-cr} ${cx} @${circleY-cr} c f`);
+  txt(initialsOf(sh.name),cx,circleY+4.5,"F2",13,WHITE,"c");
+  hl.forEach(l=>txt(l.s,W/2,l.y,l.f,l.z,l.c,"c")); y=hy+16;
+  // meta
+  const title=docTitle(x,kind), date=fmtDate(x.date);
+  txt(title,M,y+8,"F2",10.5,INK); txt(date,W-M,y+8,"F1",8.5,MUT,"r"); y+=18; hline(y,M,W-M,LINE,0.8,true); y+=8;
+  if(x.void){ y+=10; txt("— "+t("cancelled").toUpperCase()+" —",W/2,y+4,"F2",10.5,RED,"c"); y+=12; }
+  // customer
+  y+=12; const lab=t("customer")+": "; txt(lab,M,y,"F1",10,MUT); txt(custName(x.cust),M+pdfW(lab,"F1",10),y,"F2",10,INK); y+=6;
+  if(x.by){ y+=12; const l2=t("served_by")+": "; txt(l2,M,y,"F1",9,MUT); txt(x.by,M+pdfW(l2,"F1",9),y,"F1",9,INK); y+=2; }
+  y+=8;
+  if(x.type==="sale"){
+    txt(t("item").toUpperCase(),M,y+8,"F1",7.5,MUT); txt(t("total").toUpperCase(),W-M,y+8,"F1",7.5,MUT,"r"); y+=14; hline(y,M,W-M,LINE,0.8); 
+    const AW=88;
+    x.lines.forEach(l=>{ const wl=pdfWrap(`${l.q} × ${l.d||t("goods")}`,"F1",10,IW-AW); const am=money(l.q*l.p);
+      txt(am,W-M,y+17,"F3",9,INK,"r"); wl.forEach((s,i)=>txt(s,M,y+17+i*13,"F1",10,INK)); y+=wl.length*13+10; hline(y,M,W-M,LINE,0.6); });
+    y+=8; hline(y,M,W-M,A,1.6); y+=18; txt(t("total"),M,y,"F2",11.5,INK); txt(money(x.total),W-M,y,"F4",12,INK,"r");
+    y+=17; txt(t("paid"),M,y,"F1",10,INK); txt(money(x.paid),W-M,y,"F3",9.5,INK,"r"); y+=6;
+    if(owe>0.001){ y+=8; const bh=30; ops.push(`${rg(RED)} RG 0.9 w ${M+6} @${y} m ${W-M-6} @${y} l ${W-M} @${y} ${W-M} @${y+6} ${W-M} @${y+6} c ${W-M} @${y+bh-6} l ${W-M} @${y+bh} ${W-M-6} @${y+bh} ${W-M-6} @${y+bh} c ${M+6} @${y+bh} l ${M} @${y+bh} ${M} @${y+bh-6} ${M} @${y+bh-6} c ${M} @${y+6} l ${M} @${y} ${M+6} @${y} ${M+6} @${y} c S`);
+      txt(kind==="invoice"?t("due"):t("balance_left"),M+12,y+19,"F2",10,RED); txt(money(owe),W-M-12,y+19,"F4",10,RED,"r"); y+=bh; }
+  }else{
+    y+=6; hline(y,M,W-M,A,1.6); y+=20; const lb=`${t("payment")} · ${t(x.method||"cash")}`; txt(lb,M,y,"F2",11,INK); txt(money(x.amount),W-M,y,"F4",12,INK,"r"); y+=6;
+  }
+  if(x.due&&x.type==="sale"&&owe>0.001){ y+=14; const l3=t("due_on")+": "; txt(l3,M,y,"F1",9,MUT); txt(fmtDay(x.due),M+pdfW(l3,"F1",9),y,"F2",9,INK); }
+  if(x.note){ pdfWrap(x.note,"F1",9,IW).forEach(s=>{ y+=13; txt(s,M,y,"F1",9,MUT); }); }
+  if(x.cust){ y+=20; const bl=pdfWrap(kind==="invoice"?t("balance_now"):t("balance_after"),"F1",8.5,IW-90); bl.forEach((s,i)=>txt(s,M,y+i*11,"F1",8.5,MUT));
+    txt(money(Math.max(0,balanceOf(x.cust,x.no))),W-M,y,"F4",9.5,INK,"r"); y+=(bl.length-1)*11+4; }
+  y+=16; hline(y,M,W-M,LINE,0.8,true); y+=6;
+  pdfWrap(kind==="invoice"?t("invoice_note"):(sh.footer||t("default_footer")),"F1",9,IW).forEach(s=>{ y+=14; txt(s,W/2,y,"F1",9,MUT,"c"); });
+  const H=Math.ceil(y+24);
+  let cs=ops.map(o=>o==="BAND"?`${rg(A)} rg 0 ${H-band.h} ${W} ${band.h} re f`:o.replace(/@(-?[\d.]+)/g,(m,v)=>(H-parseFloat(v)).toFixed(2))).join("\n");
+  const objs=["<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R /F3 7 0 R /F4 8 0 R >> >> >>`,
+    `<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`,
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>","<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>","<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold /Encoding /WinAnsiEncoding >>"];
+  let pdf="%PDF-1.4\n", offs=[]; objs.forEach((o,i)=>{ offs.push(pdf.length); pdf+=(i+1)+" 0 obj\n"+o+"\nendobj\n"; });
+  const xr=pdf.length; pdf+="xref\n0 "+(objs.length+1)+"\n0000000000 65535 f \n"+offs.map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("")+"trailer\n<< /Size "+(objs.length+1)+" /Root 1 0 R >>\nstartxref\n"+xr+"\n%%EOF";
+  const u=new Uint8Array(pdf.length); for(let i=0;i<pdf.length;i++) u[i]=pdf.charCodeAt(i)&255; return new Blob([u],{type:"application/pdf"});
+}
 async function receiptPdf(id,share){
   const x=S.txs.find(y=>y.id===id); if(!x) return; const k=ui.modal&&ui.modal.kind;
   const kind=(k==="invoice"&&x.type==="sale")?"invoice":"receipt";
-  const name=`${kind==="invoice"?"facture":"recu"}-${pad4(x.no)}.pdf`;
-  const blob=pdfBlob(receiptLines(x,kind),accentOf(S.shop),1+(S.shop.phone?1:0)+(S.shop.address?1:0)); const file=new File([blob],name,{type:"application/pdf"});
+  const name=docFile(x,kind,"pdf");
+  const blob=ticketPdf(x,kind); const file=new File([blob],name,{type:"application/pdf"});
   if(share&&navigator.canShare&&navigator.canShare({files:[file]})){
     try{ await navigator.share({files:[file],title:name}); return; }catch(e){ if(e&&e.name==="AbortError") return; }
   }
@@ -1373,7 +1457,7 @@ document.addEventListener("click",e=>{
     case "sale-newcust": ui.draft.newCust=true; render(); $("#nc-name")&&$("#nc-name").focus(); break;
     case "sale-existing": ui.draft.newCust=false; render(); break;
     case "pick-open": ui.modal={type:"pick"}; renderModal(); { const f=$("#pk-q"); f&&f.focus(); } break;
-    case "pick-p": { pickAdd(id); const L=$("#pk-list"), q=$("#pk-q"); if(L) L.innerHTML=pickList(q?q.value:""); const n=$("#pk-n"); if(n) n.textContent=ui.draft.lines.filter(l=>l.pid).reduce((s,l)=>s+(parseAmt(l.q)||0),0); break; }
+    case "pick-p": pickAdd(id); refreshPicks(); break;
     case "pick-done": ui.modal=null; render(); break;
     case "add-line": ui.draft.lines.push({d:"",q:"1",p:"",pid:null,auto:false}); render(); { const i=ui.draft.lines.length-1; const f=$("#l"+i+"d"); f&&f.focus(); } break;
     case "del-line": ui.draft.lines.splice(+el.dataset.i,1); render(); break;
@@ -1385,7 +1469,7 @@ document.addEventListener("click",e=>{
     case "set-accent": { const c=el.dataset.c; if(ACCENTS.includes(c)){ S.shop.accent=c; save(); document.querySelectorAll("[data-act=set-accent]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.c===c))); } break; }
     case "pdf-share": receiptPdf(id,true); break;
     case "pdf-dl": receiptPdf(id,false); break;
-    case "txt-receipt": { const x=S.txs.find(y=>y.id===id); const k=ui.modal&&ui.modal.kind; saveFile(`${k==="invoice"?"facture":"recu"}-${pad4(x.no)}.txt`,receiptText(x,k)); break; }
+    case "txt-receipt": { const x=S.txs.find(y=>y.id===id); const k=ui.modal&&ui.modal.kind; saveFile(docFile(x,k==="invoice"?"invoice":"receipt","txt"),receiptText(x,k)); break; }
     case "bulk-add": ui.modal={type:"bulk"}; renderModal(); break;
     case "save-bulk": saveBulk(); break;
     case "add-product": ui.modal={type:"product",id:null}; renderModal(); break;
@@ -1406,6 +1490,7 @@ document.addEventListener("click",e=>{
     case "lock-on":
       if(!S.staff.some(x=>x.role==="owner")){ $("#st-err").textContent=t("err_need_owner"); break; }
       S.shop.staffOn=true; S.shop.recovery=String(Math.floor(100000+Math.random()*900000)); ui.me=null; save(); render(); break;
+    case "signout": if(window.__logout) window.__logout(); break;
     case "lock-off": S.shop.staffOn=false; S.shop.recovery=""; save(); render(); break;
     case "lock": if(window.__member){ if(window.__logout) window.__logout(); break; } ui.me=null; ui.view="home"; ui.custId=null; render(); break;
     case "unlock": doUnlock(); break;
@@ -1462,6 +1547,7 @@ document.addEventListener("click",async e=>{
 },true);
 document.addEventListener("input",e=>{
   const el=e.target;
+  if(el.id==="pk-inline"){ ui.draft.pq=el.value; const B=$("#pk-inl"); if(B) B.innerHTML=pickList(el.value); return; }
   if(el.id==="pk-q"){ const L=$("#pk-list"); if(L) L.innerHTML=pickList(el.value); return; } if(!el.dataset||!el.dataset.bind) return;
   const r=setBind(el.dataset.bind,el.value);
   if(r==="search"||r==="hsearch"){ const pos=el.selectionStart; render(); const n=$("#"+el.id); if(n){ n.focus(); try{n.setSelectionRange(pos,pos);}catch(_){} } return; }
