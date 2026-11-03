@@ -96,7 +96,8 @@ async function load(){
   const rb=await api("/rest/v1/branches?select=*&order=created_at.asc"); branches=(rb.ok&&Array.isArray(rb.json))?rb.json:[];
   draw();
 }
-function draw(){
+function draw(){ draw0(); const sg=err+"|"+msg; if((err||msg)&&sg!==window.__sg) window.scrollTo(0,0); window.__sg=sg; }
+function draw0(){
   const cnt={pending:0,active:0,expired:0,suspended:0}; shops.forEach(s=>cnt[state(s)]++); const reqs=branches.filter(b=>b.status==="pending").length;
   const order={pending:0,expired:1,suspended:2,active:3}, pk=s=>brOf(s.id).some(b=>b.status==="pending")?-1:order[state(s)];
   const list=shops.filter(s=>(filter==="all"||state(s)===filter)&&(!q||(s.name+" "+s.phone).toLowerCase().includes(q.toLowerCase())))
