@@ -78,6 +78,11 @@ function canon(country, raw) {
 const emailOf = id => id + "@" + (CFG.emailDomain || "ecrici.app");
 
 /* ---------- words ---------- */
+const PRICES = { BJ:["FCFA",1000,700], TG:["FCFA",1000,700], CI:["FCFA",1000,700], SN:["FCFA",1000,700], BF:["FCFA",1000,700], ML:["FCFA",1000,700], NE:["FCFA",1000,700], CM:["FCFA",1000,700],
+  NG:["\u20a6",2500,2000,1], GH:["GH\u20b5",20,15,1], KE:["KSh",250,150,1], ZA:["R",30,20,1], RW:["RWF",2500,1500], TZ:["TZS",4500,3000], UG:["UGX",6500,4500] };
+const priceOf = cc => { const o = (CFG.prices && CFG.prices[cc]) || {}, d = PRICES[cc] || PRICES.BJ; return { cur: o.cur || d[0], base: Number(o.base) || d[1], extra: Number(o.extra) || d[2], pre: o.pre != null ? !!o.pre : !!d[3] }; };
+const fmtMoney = (n, cc, l) => { const p = priceOf(cc), s = String(n).replace(/\B(?=(\d{3})+(?!\d))/g, l === "fr" ? "\u202f" : ","); return p.pre ? p.cur + s : s + " " + p.cur; };
+const curCountry = () => { try { if (typeof S !== "undefined" && S && S.shop && S.shop.country && PRICES[S.shop.country] && gateKind !== "auth" && gateKind !== "loading") return S.shop.country; } catch (e) {} return form.country; };
 const G = {
   fr: {
     tag: "Votre cahier de boutique : ventes, crédits et stock, même sans internet.",
@@ -101,7 +106,7 @@ const G = {
     wa_renew: (n, p) => `Bonjour, je souhaite renouveler mon abonnement Ecrici pour la boutique ${n} (${p}).`,
     acct: "Compte", until: d => `Actif jusqu'au ${d}`, sync_ok: "Synchronisé", sync_wait: "En attente de connexion", logout_q: "Se déconnecter ? Les données de cette boutique seront retirées de ce téléphone (elles restent dans votre compte).",
     logout_unsynced: "Des changements ne sont pas encore envoyés. Connectez-vous à internet avant de vous déconnecter.", help: "Besoin d'aide ? WhatsApp",
-    price: CFG.priceText || ""
+    get price() { const c = curCountry(); return fmtMoney(priceOf(c).base, c, "fr") + ("fr" === "fr" ? " / mois" : " / month"); }
   },
   en: {
     tag: "Your shop ledger: sales, credit and stock, even without internet.",
@@ -125,7 +130,7 @@ const G = {
     wa_renew: (n, p) => `Hello, I would like to renew my Ecrici subscription for the shop ${n} (${p}).`,
     acct: "Account", until: d => `Active until ${d}`, sync_ok: "Synced", sync_wait: "Waiting for connection", logout_q: "Log out? This shop's data will be removed from this phone (it stays in your account).",
     logout_unsynced: "Some changes are not sent yet. Connect to the internet before logging out.", help: "Need help? WhatsApp",
-    price: CFG.priceText || ""
+    get price() { const c = curCountry(); return fmtMoney(priceOf(c).base, c, "fr") + ("en" === "fr" ? " / mois" : " / month"); }
   }
 };
 const PH = { BJ: "01 97 00 00 11", NG: "0803 123 4567", GH: "024 123 4567", KE: "0712 345 678", TG: "90 12 34 56", CI: "07 01 23 45 67", SN: "77 123 45 67", BF: "70 12 34 56", ML: "70 12 34 56", NE: "90 12 34 56", CM: "6 71 23 45 67", ZA: "082 123 4567", RW: "078 123 4567", TZ: "0712 345 678", UG: "0772 123 456" };
@@ -590,7 +595,7 @@ async function switchLedger(target, force) {
 }
 const ledName = () => (S && S.shop && S.shop.name) || "";
 window.__shopChip = () => (!member && active && multiOk && branches.length) ? `<button class="pill" data-lg-act="shops" aria-haspopup="dialog">${esc(g("sh_chip"))} ▾</button>` : "";
-const extraPrice = () => CFG.extraPriceText || "+700 FCFA";
+const extraPrice = () => { const c = curCountry(); return "+" + fmtMoney(priceOf(c).extra, c, lang()); };
 function shopsSection() {
   if (member || !active || !multiOk) return "";
   return `<section class="sec"><h2>${esc(g("sh_t"))}</h2><div class="card form"><p class="note" style="margin:0">${esc(g("sh_p"))} ${esc(g("sh_price", extraPrice()))}</p>

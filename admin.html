@@ -67,9 +67,11 @@ async function api(path,o){
   }
   return http(path,Object.assign({},o,{token:sess.access}));
 }
-const BASE_AMT=Number(CFG.baseAmount)||1000, EXTRA_AMT=Number(CFG.extraAmount)||700, CUR=CFG.currency||"FCFA";
+const PRICES={BJ:["FCFA",1000,700],TG:["FCFA",1000,700],CI:["FCFA",1000,700],SN:["FCFA",1000,700],BF:["FCFA",1000,700],ML:["FCFA",1000,700],NE:["FCFA",1000,700],CM:["FCFA",1000,700],
+  NG:["\u20a6",2500,2000,1],GH:["GH\u20b5",20,15,1],KE:["KSh",250,150,1],ZA:["R",30,20,1],RW:["RWF",2500,1500],TZ:["TZS",4500,3000],UG:["UGX",6500,4500]};
+const P=cc=>{const o=(CFG.prices&&CFG.prices[cc])||{},d=PRICES[cc]||PRICES.BJ;return{cur:o.cur||d[0],base:Number(o.base)||d[1],extra:Number(o.extra)||d[2],pre:o.pre!=null?!!o.pre:!!d[3]};};
 const brOf=id=>branches.filter(b=>b.owner_id===id);
-const fmtAmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g," ")+" "+CUR;
+const fmtAmt=(n,cc)=>{const p=P(cc),s=String(n).replace(/\B(?=(\d{3})+(?!\d))/g,",");return p.pre?p.cur+s:s+" "+p.cur;};
 const state=s=>{ if(s.status==="pending") return "pending"; if(s.status==="suspended") return "suspended"; return (s.paid_until&&s.paid_until>=today())?"active":"expired"; };
 const daysLeft=s=>s.paid_until?Math.round((new Date(s.paid_until+"T12:00:00Z")-new Date(today()+"T12:00:00Z"))/864e5):null;
 
@@ -126,8 +128,8 @@ function card(s){
 function shopsBlock(s){
   const bs=brOf(s.id), n=1+bs.filter(b=>b.status==="active").length;
   if(!bs.length) return "";
-  return `<div class="muted"><b>${n} shop${n>1?"s":""}</b> · ${esc(fmtAmt(BASE_AMT+EXTRA_AMT*(n-1)))} / month</div>`+bs.map(b=>`<div class="card" style="padding:10px;gap:8px"><div class="top"><div class="name" style="font-size:15px">${esc(b.name)}</div><span class="chip ${b.status==="active"?"active":b.status==="pending"?"pending":"suspended"}">${esc(b.status)}</span></div>
-    <div class="row">${b.status==="pending"?`<button class="p" data-bid="${esc(b.id)}" data-ba="on">Activate (+${esc(fmtAmt(EXTRA_AMT))})</button>`:""}${b.status==="suspended"?`<button data-bid="${esc(b.id)}" data-ba="on">Reactivate</button>`:""}${b.status==="active"?`<button class="d" data-bid="${esc(b.id)}" data-ba="off">Suspend</button>`:""}${b.status!=="active"?`<button class="d" data-bid="${esc(b.id)}" data-ba="del">Delete</button>`:""}</div></div>`).join("");
+  return `<div class="muted"><b>${n} shop${n>1?"s":""}</b> · ${esc(fmtAmt(P(s.country).base+P(s.country).extra*(n-1),s.country))} / month</div>`+bs.map(b=>`<div class="card" style="padding:10px;gap:8px"><div class="top"><div class="name" style="font-size:15px">${esc(b.name)}</div><span class="chip ${b.status==="active"?"active":b.status==="pending"?"pending":"suspended"}">${esc(b.status)}</span></div>
+    <div class="row">${b.status==="pending"?`<button class="p" data-bid="${esc(b.id)}" data-ba="on">Activate (+${esc(fmtAmt(P(s.country).extra,s.country))})</button>`:""}${b.status==="suspended"?`<button data-bid="${esc(b.id)}" data-ba="on">Reactivate</button>`:""}${b.status==="active"?`<button class="d" data-bid="${esc(b.id)}" data-ba="off">Suspend</button>`:""}${b.status!=="active"?`<button class="d" data-bid="${esc(b.id)}" data-ba="del">Delete</button>`:""}</div></div>`).join("");
 }
 async function bact(id,a){
   const b=branches.find(x=>x.id===id); if(!b) return; err=""; msg=""; msgLink="";
@@ -143,7 +145,7 @@ async function bact(id,a){
   if(!r.ok||!Array.isArray(r.json)||!r.json.length){ err=r.status===401?"Session ended. Log in again.":"Not saved."; draw(); return; }
   Object.assign(b,r.json[0]);
   const o=shops.find(x=>x.id===b.owner_id), n=1+brOf(b.owner_id).filter(x=>x.status==="active").length;
-  msg="Saved: "+b.name+" is "+b.status+". Owner now pays "+fmtAmt(BASE_AMT+EXTRA_AMT*(n-1))+" / month. ";
+  msg="Saved: "+b.name+" is "+b.status+". Owner now pays "+fmtAmt(P(o?o.country:"").base+P(o?o.country:"").extra*(n-1),o?o.country:"")+" / month. ";
   if(a==="on"&&o&&o.phone){ msgLink="https://wa.me/"+String(o.phone).replace(/\D/g,"")+"?text="+encodeURIComponent("Hello, your shop "+b.name+" is now active on Ecrici."); }
   draw();
 }
