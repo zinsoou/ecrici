@@ -94,6 +94,7 @@ const G = {
     e_email: "Le serveur refuse ce numéro (voir le guide de lancement).", e_other: "Erreur. Réessayez.", e_confirm: "Compte créé, mais le serveur demande une confirmation. Voir le guide.",
     pend_t: "Compte créé", pend_p: n => `Votre boutique « ${n} » attend l'approbation. Écrivez-nous sur WhatsApp pour l'activer.`,
     blk_t: "Abonnement terminé", blk_p: "Votre abonnement est terminé ou suspendu. Vos données restent sur ce téléphone. Contactez-nous pour le renouveler.",
+    del_btn: "Supprimer mon compte", del_t: "Supprimer mon compte", del_p: "Cette action est définitive. Votre compte, toutes vos boutiques, vos clients, produits, ventes et les connexions de vos employés seront effacés de nos serveurs et de ce téléphone. L'abonnement déjà payé n'est pas remboursé.", del_bk: "Sauvegarder mes données d'abord", del_pw: "Votre mot de passe", del_word: "Écrivez SUPPRIMER pour confirmer", del_key: "SUPPRIMER", del_go: "Supprimer définitivement", del_no: "Annuler", del_bad: "Mot de passe incorrect.", del_miss: "Écrivez SUPPRIMER et votre mot de passe.", del_fail: "Impossible de supprimer pour le moment. Vérifiez internet et réessayez.", del_ok: "Compte supprimé.",
     wa: "Écrire sur WhatsApp", check: "Vérifier maintenant", out: "Se déconnecter", backup: "Sauvegarder mes données",
     off_t: "Pas de connexion", off_p: "Impossible de vérifier votre abonnement pour l'instant. Réessayez avec internet.", retry: "Réessayer",
     err_t: "Compte introuvable", err_p: "Votre compte n'est pas encore prêt. Réessayez dans un instant.",
@@ -118,6 +119,7 @@ const G = {
     e_email: "The server refused this number (see the launch guide).", e_other: "Error. Please try again.", e_confirm: "Account created, but the server asks for confirmation. See the guide.",
     pend_t: "Account created", pend_p: n => `Your shop “${n}” is waiting for approval. Message us on WhatsApp to activate it.`,
     blk_t: "Subscription ended", blk_p: "Your subscription has ended or was suspended. Your data stays on this phone. Contact us to renew.",
+    del_btn: "Delete my account", del_t: "Delete my account", del_p: "This cannot be undone. Your account, all your shops, customers, products, sales and your employees' logins will be erased from our servers and from this phone. A subscription you already paid is not refunded.", del_bk: "Back up my data first", del_pw: "Your password", del_word: "Type DELETE to confirm", del_key: "DELETE", del_go: "Delete for good", del_no: "Cancel", del_bad: "Wrong password.", del_miss: "Type DELETE and your password.", del_fail: "Could not delete right now. Check your internet and try again.", del_ok: "Account deleted.",
     wa: "Message on WhatsApp", check: "Check now", out: "Log out", backup: "Back up my data",
     off_t: "No connection", off_p: "We can't check your subscription right now. Try again with internet.", retry: "Try again",
     err_t: "Account not found", err_p: "Your account isn't ready yet. Try again in a moment.",
@@ -552,7 +554,8 @@ window.viewSettings = function () {
     <div class="field"><input id="lg-npw2" type="password" autocomplete="new-password" placeholder="${esc(g("npw2"))}" aria-label="${esc(g("npw2"))}"></div>
     <button class="btn" data-lg-act="chpw">${esc(g("chpw_go"))}</button>
     <a class="btn" href="privacy.html" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">${esc(g("f_priv"))}</a>
-    <button class="btn danger" data-lg-act="logout">${esc(g("out"))}</button></div></section>`;
+    <button class="btn danger" data-lg-act="logout">${esc(g("out"))}</button>
+    ${member ? "" : `<button class="btn ghost" data-lg-act="del-open" style="color:var(--bad,#b3261e)">${esc(g("del_btn"))}</button>`}</div></section>`;
 };
 document.addEventListener("click", e => {
   const b = e.target.closest && e.target.closest("[data-lg-act]"); if (!b) return;
@@ -565,12 +568,49 @@ document.addEventListener("click", e => {
   else if (b.dataset.lgAct === "sh-back") { sh.view = "list"; drawShops(); }
   else if (b.dataset.lgAct === "sh-add") addShop();
   else if (b.dataset.lgAct === "logout") logout(false);
+  else if (b.dataset.lgAct === "del-open") { dl.open = true; dl.err = ""; dl.busy = false; drawDel(); }
+  else if (b.dataset.lgAct === "del-close" || (b.dataset.lgAct === "del-veil" && e.target === b)) { if (!dl.busy) { dl.open = false; drawDel(); } }
+  else if (b.dataset.lgAct === "del-bk") { try { backupNow(); } catch (x) {} }
+  else if (b.dataset.lgAct === "del-go") deleteAccount();
   else if (b.dataset.lgAct === "chpw") changePassword();
   else if (b.dataset.lgAct === "tm-invite") { const n = ((document.getElementById("tm-name") || {}).value || "").trim(); if (n) { const bs = document.getElementById("tm-branch"), body = { p_name: n }; if (bs && bs.value) body.p_branch = bs.value; teamCall("team_invite", body); } }
   else if (b.dataset.lgAct === "tm-copy") copyText(b.dataset.link);
   else if (b.dataset.lgAct === "tm-cancel") teamCall("team_cancel", { p_code: b.dataset.id });
   else if (b.dataset.lgAct === "tm-remove") { if (confirm(g("tl_rm_q"))) teamCall("team_remove", { target: b.dataset.id }); }
 }, true);
+
+/* ---------- delete my account ---------- */
+const dl = { open: false, err: "", busy: false };
+function drawDel() {
+  let el = document.getElementById("lg-del");
+  if (!dl.open) { if (el) el.remove(); return; }
+  const keep = el ? { w: (el.querySelector("#dl-word") || {}).value || "", p: (el.querySelector("#dl-pw") || {}).value || "" } : { w: "", p: "" };
+  if (!el) { el = document.createElement("div"); el.id = "lg-del"; document.body.appendChild(el); }
+  el.innerHTML = `<div class="veil" data-lg-act="del-veil"><div class="sheet" role="dialog" aria-modal="true"><div class="dlg"><h2>${esc(g("del_t"))}</h2>
+    <p class="note" style="margin:0">${esc(g("del_p"))}</p>
+    <button class="btn" data-lg-act="del-bk">${esc(g("del_bk"))}</button>
+    <div class="field"><label for="dl-pw">${esc(g("del_pw"))}</label><input id="dl-pw" type="password" autocomplete="current-password" value="${esc(keep.p)}"></div>
+    <div class="field"><label for="dl-word">${esc(g("del_word"))}</label><input id="dl-word" autocomplete="off" autocapitalize="characters" value="${esc(keep.w)}"></div>
+    ${dl.err ? `<div class="err" role="alert">${esc(dl.err)}</div>` : ""}
+    <div class="actions"><button class="btn danger" data-lg-act="del-go" ${dl.busy ? "disabled" : ""}>${esc(dl.busy ? g("wait") : g("del_go"))}</button>
+    <button class="btn" data-lg-act="del-close" ${dl.busy ? "disabled" : ""}>${esc(g("del_no"))}</button></div></div></div></div>`;
+}
+async function deleteAccount() {
+  if (dl.busy || member) return;
+  const pw = (document.getElementById("dl-pw") || {}).value || "", w = ((document.getElementById("dl-word") || {}).value || "").trim().toUpperCase();
+  if (!pw || w !== g("del_key")) { dl.err = g("del_miss"); drawDel(); return; }
+  dl.busy = true; dl.err = ""; drawDel();
+  try {
+    const a = shopRow(), who = a.phone || "";
+    const v = await http("/auth/v1/token?grant_type=password", { method: "POST", body: { email: emailOf(who), password: pw } });
+    if (!v.ok || !v.json || !v.json.access_token) { dl.busy = false; dl.err = v.status === 0 ? g("del_fail") : g("del_bad"); drawDel(); return; }
+    const r = await api("/rest/v1/rpc/delete_my_account", { method: "POST", body: {} });
+    if (!r.ok) { dl.busy = false; dl.err = g("del_fail"); drawDel(); return; }
+  } catch (e) { dl.busy = false; dl.err = g("del_fail"); drawDel(); return; }
+  [K.sess, K.acct, K.sync, K.owner, K.base, "ecrici-join"].forEach(lsDel); clearStash(); lsDel(LS_KEY);
+  try { alert(g("del_ok")); } catch (e) {}
+  location.reload();
+}
 
 /* ---------- several shops in one account ---------- */
 const sh = { open: false, view: "list", msg: "", err: "", busy: false, ov: null, ovBusy: false };

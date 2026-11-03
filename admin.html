@@ -158,7 +158,7 @@ function addTo(base,a){
 async function act(id,a){
   const s=shops.find(x=>x.id===id); if(!s) return;
   if(a==="pw"){
-    const def=String(Math.floor(100000+Math.random()*900000));
+    const L="ABCDEFGHJKLMNPQRSTUVWXYZ",pk=n=>Array.from({length:n},()=>L[Math.floor(Math.random()*L.length)]).join(""), def=pk(3)+String(Math.floor(1000+Math.random()*9000))+pk(1);
     const np=prompt("New password for "+(s.name||s.phone)+" (6 characters or more). Send it to the shop afterwards:",def);
     if(np===null) return;
     err=""; msg=""; msgLink="";
