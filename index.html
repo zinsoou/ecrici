@@ -111,6 +111,10 @@ h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;letter-spaci
 #pk-inl{max-height:150px;overflow:auto}#pk-inl[hidden],.pk-hint[hidden]{display:none}
 .row.pk1{padding:0 14px;min-height:46px;gap:10px;font-size:.95rem}
 .row.pk1:first-child{border-top:0}
+.pk-tg{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;padding:4px 0;margin:0 0 6px;font:inherit;font-size:.85rem;font-weight:700;letter-spacing:.02em;color:var(--muted);cursor:pointer;text-align:left}
+.pk-tg .pk-ar{width:9px;height:9px;margin:0 8px 3px 0;border-right:2.5px solid #1b2150;border-bottom:2.5px solid #1b2150;transform:rotate(45deg);transition:transform .15s}
+.pk-tg[aria-expanded=false] .pk-ar{transform:rotate(-45deg);margin:0 10px 0 0}
+.pk-tg[aria-expanded=false]{margin-bottom:0}
 .pk1 .nm{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pk1 .meta{font-size:.8rem;color:var(--muted);white-space:nowrap}
 .pk1 .qn{color:var(--accent,#2347d6)}
@@ -222,7 +226,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;color:inherit}
   .tabs svg{margin:0}
   .toast{bottom:28px;left:calc(50% + 116px)}
   .items{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;align-items:start}
-  .items>.lab{grid-column:1/-1}
+  .items>.lab,.items>.pk-tg{grid-column:1/-1}
   .items>#pk-inline,.items>#pk-inl,.items>.pk-hint{grid-column:1}
   .items>#lines{grid-column:2;grid-row:2 / span 3}
   .items>[data-act=add-line]{grid-column:2}
@@ -735,7 +739,7 @@ function viewSale(){
       :`<select id="f-cust" data-bind="cust">${opts}</select>
         <button class="btn small ghost" data-act="sale-newcust" style="justify-self:start">${t("new_customer")}</button>`}
     </div>
-    <div class="field${S.products.length?" items":""}"><span class="lab">${S.products.length?t("pick_lab"):t("items")}</span>${S.products.length?`<input id="pk-inline" type="search" data-bind="pq" value="${esc(d.pq||"")}" placeholder="${esc(t("pick_q"))}" autocomplete="off" aria-label="${esc(t("pick_q"))}">
+    <div class="field${S.products.length?" items":""}">${S.products.length?`<button type="button" class="pk-tg" data-act="pk-toggle" aria-expanded="${d.pkClosed?"false":"true"}"><span>${t("pick_lab")}</span><span class="pk-ar" aria-hidden="true"></span></button>`:`<span class="lab">${t("items")}</span>`}${S.products.length?`<input id="pk-inline" type="search" data-bind="pq" value="${esc(d.pq||"")}" placeholder="${esc(t("pick_q"))}" autocomplete="off" aria-label="${esc(t("pick_q"))}">
       <div class="card flush" id="pk-inl">${pickList(d.pq,true)}</div><p class="note pk-hint" style="margin:0">${t("pick_hint")}</p>`:""}<div class="lines" id="lines">${linesHtml()}</div>
       <button class="btn small ghost" data-act="add-line" style="justify-self:start">${t("add_line")}</button></div>
     <div class="total"><span>${t("total")}</span><span class="num" id="s-total"></span></div>
@@ -763,8 +767,10 @@ function refreshPicks(){ const q=ui.draft?ui.draft.pq:"", m=$("#pk-q"), a=$("#pk
   if(a) a.innerHTML=pickList(m?m.value:""); if(b) b.innerHTML=pickList(q,true); pkVis();
   const ln=$("#lines"); if(ln) ln.innerHTML=linesHtml();
   if(n) n.textContent=ui.draft.lines.filter(l=>l.pid).reduce((s,l)=>s+(parseAmt(l.q)||0),0); updateSaleTotals(); }
-function pkVis(){ const d=ui.draft, b=$("#pk-inl"), h=document.querySelector(".pk-hint"); if(!d||!b) return;
-  const has=d.lines.some(l=>l.pid), hide=has&&!d.pkOpen&&!(d.pq||"").trim(); b.hidden=hide; if(h) h.hidden=hide; }
+function pkVis(){ const d=ui.draft, b=$("#pk-inl"); if(!d||!b) return;
+  const hide=!!d.pkClosed; b.hidden=hide; const h=document.querySelector(".pk-hint"), i=$("#pk-inline"), tg=document.querySelector(".pk-tg");
+  if(h) h.hidden=hide; if(i) i.hidden=hide;
+  if(tg){ tg.setAttribute("aria-expanded",hide?"false":"true"); } }
 function pickQty(id){ return ui.draft?ui.draft.lines.filter(l=>l.pid===id).reduce((s,l)=>s+(parseAmt(l.q)||0),0):0; }
 function pickList(q,compact){
   q=(q||"").trim().toLowerCase();
@@ -1462,8 +1468,6 @@ function csvOf(){
   return "﻿"+rows.map(r=>r.map(q).join(",")).join("\r\n");
 }
 
-document.addEventListener("focusin",e=>{ if(e.target.id==="pk-inline"&&ui.draft){ ui.draft.pkOpen=true; pkVis(); } });
-document.addEventListener("click",e=>{ if(ui.draft&&ui.draft.pkOpen&&!e.target.closest("#pk-inline,#pk-inl")){ ui.draft.pkOpen=false; pkVis(); } });
 document.addEventListener("click",e=>{
   const el=e.target.closest("[data-act]"); if(!el) return;
   const a=el.dataset.act, id=el.dataset.id;
@@ -1499,7 +1503,8 @@ document.addEventListener("click",e=>{
     case "sale-newcust": ui.draft.newCust=true; render(); $("#nc-name")&&$("#nc-name").focus(); break;
     case "sale-existing": ui.draft.newCust=false; render(); break;
     case "pick-open": ui.modal={type:"pick"}; renderModal(); { const f=$("#pk-q"); f&&f.focus(); } break;
-    case "pick-p": pickAdd(id); if(ui.draft) ui.draft.pkOpen=true; refreshPicks(); break;
+    case "pick-p": pickAdd(id); refreshPicks(); break;
+    case "pk-toggle": if(ui.draft){ ui.draft.pkClosed=!ui.draft.pkClosed; pkVis(); } break;
     case "pick-done": ui.modal=null; render(); break;
     case "add-line": ui.draft.lines.push({d:"",q:"1",p:"",pid:null,auto:false}); render(); { const i=ui.draft.lines.length-1; const f=$("#l"+i+"d"); f&&f.focus(); } break;
     case "del-line": ui.draft.lines.splice(+el.dataset.i,1); render(); break;
@@ -1589,7 +1594,7 @@ document.addEventListener("click",async e=>{
 },true);
 document.addEventListener("input",e=>{
   const el=e.target;
-  if(el.id==="pk-inline"){ ui.draft.pq=el.value; ui.draft.pkOpen=true; const B=$("#pk-inl"); if(B) B.innerHTML=pickList(el.value,true); pkVis(); return; }
+  if(el.id==="pk-inline"){ ui.draft.pq=el.value; const B=$("#pk-inl"); if(B) B.innerHTML=pickList(el.value,true); pkVis(); return; }
   if(el.id==="pk-q"){ const L=$("#pk-list"); if(L) L.innerHTML=pickList(el.value); return; } if(!el.dataset||!el.dataset.bind) return;
   const r=setBind(el.dataset.bind,el.value);
   if(r==="search"||r==="hsearch"){ const pos=el.selectionStart; render(); const n=$("#"+el.id); if(n){ n.focus(); try{n.setSelectionRange(pos,pos);}catch(_){} } return; }
