@@ -354,6 +354,7 @@ const T = {
     lock_on:"Activer le verrouillage par PIN",lock_off:"Désactiver le verrouillage",member_out:"Déconnexion",signout_phone:"Se déconnecter de ce téléphone",signout_hint:"Pour retirer ce compte de ce téléphone sans lever le verrouillage. Il faudra le mot de passe pour se reconnecter.",lock:"Verrouiller",unlock:"Ouvrir",who:"Qui êtes-vous ?",wrong_pin:"PIN incorrect.",
     forgot:"PIN oublié ?",reset_access:"Désactiver le verrouillage",reset_access_hint:"Entrez le code de secours (affiché au propriétaire dans les réglages).",reset_wrong:"Code de secours incorrect.",
     recovery:"Code de secours (notez-le)",served_by:"Servi par",
+    pay_t:"Détails de paiement",pay_sub:"Affichés sur vos factures tant qu'un client doit de l'argent.",pay_n:"Numéro ou compte",pay_a:"Nom du titulaire",pay_bank:"Banque",pay_other:"Autre",pay_go:"+ Ajouter mes détails de paiement",pay_hint:"Une ligne s'ajoute après chaque enregistrement.",
     bill_to:"Facturé à",st_paid:"PAYÉE",st_part:"PAIEMENT PARTIEL",st_unpaid:"IMPAYÉE",due_rcpt:"À payer dès réception",how_pay:"Comment payer",pay_info:"Détails de paiement (affichés sur les factures)",pay_ph:"Ex : MTN MoMo 97 00 00 00 (Nom)\nMoov Money 96 00 00 00\nBanque : ...",
     invoice:"FACTURE",as_invoice:"Voir en facture",as_receipt:"Voir en reçu",invoice_note:"Facture simple, sans valeur fiscale.",due:"Reste dû",balance_now:"Solde total du client",
     msg_invoice_intro:(n)=>`Bonjour ${n}, voici votre facture :`
@@ -425,6 +426,7 @@ const T = {
     lock_on:"Turn on PIN lock",lock_off:"Turn off PIN lock",member_out:"Sign out",signout_phone:"Sign out of this phone",signout_hint:"Removes this account from this phone without turning off the lock. The password is needed to sign back in.",lock:"Lock",unlock:"Open",who:"Who are you?",wrong_pin:"Wrong PIN.",
     forgot:"Forgot PIN?",reset_access:"Turn off the lock",reset_access_hint:"Enter the recovery code (shown to the owner in Settings).",reset_wrong:"Wrong recovery code.",
     recovery:"Recovery code (write it down)",served_by:"Served by",
+    pay_t:"Payment details",pay_sub:"Shown on your invoices while a customer still owes money.",pay_n:"Number or account",pay_a:"Account name",pay_bank:"Bank",pay_other:"Other",pay_go:"+ Add my payment details",pay_hint:"A new empty line appears after each save.",
     bill_to:"Bill to",st_paid:"PAID",st_part:"PART PAID",st_unpaid:"UNPAID",due_rcpt:"Due on receipt",how_pay:"How to pay",pay_info:"Payment details (shown on invoices)",pay_ph:"E.g. MTN MoMo 97 00 00 00 (Name)\nMoov Money 96 00 00 00\nBank: ...",
     invoice:"INVOICE",as_invoice:"View as invoice",as_receipt:"View as receipt",invoice_note:"Simple invoice, no tax validity.",due:"Amount due",balance_now:"Customer's total balance",
     msg_invoice_intro:(n)=>`Hello ${n}, here is your invoice:`
@@ -557,7 +559,10 @@ const me = () => window.__member || (S&&S.staff&&S.staff.find(x=>x.id===ui.me))|
 const isOwner = () => window.__member ? false : (!S.shop.staffOn || (me()&&me().role==="owner"));
 const custById = id => S.customers.find(c=>c.id===id);
 const invStatus=x=>{ const o=x.total-x.paid; return o<=0.001?["st_paid","#15803d"]:x.paid>0.001?["st_part","#c2410c"]:["st_unpaid","#b4321f"]; };
-const payLines=()=>String(S.shop.payinfo||"").split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
+const PAYM=["MTN MoMo","Moov Money","Orange Money","Wave","Airtel Money","M-Pesa","OPay","PalmPay","Bank","Other"];
+const payRows=()=>{ const sh=S.shop; if(Array.isArray(sh.pay)) return sh.pay; return String(sh.payinfo||"").split(/\r?\n/).map(v=>v.trim()).filter(Boolean).map(v=>({m:"Other",n:v,a:""})); };
+const payLabel=m=>m==="Bank"?t("pay_bank"):m==="Other"?"":m;
+const payLines=()=>payRows().filter(r=>r&&String(r.n||"").trim()).map(r=>{ const lb=payLabel(r.m); return `${lb?lb+": ":""}${String(r.n).trim()}${String(r.a||"").trim()?` (${String(r.a).trim()})`:""}`; });
 const custPhone=id=>{ const c=id?custById(id):null; return c&&c.phone?fmtPhone(c.phone):""; };
 const custName = id => id?(custById(id)?.name||"?"):t("walk");
 
@@ -1145,9 +1150,18 @@ function staffModal(){
 }
 
 /* --- settings --- */
+function paySection(){
+  const rows=payRows().filter(r=>r&&String(r.n||"").trim()).slice(0,3), n=Math.min(3,rows.length+1);
+  const one=i=>{ const r=rows[i]||{m:"MTN MoMo",n:"",a:""};
+    return `<div style="display:grid;gap:8px;padding:10px 0;border-top:${i?"1px solid var(--line)":"0"}"><select id="pay-m-${i}" aria-label="${esc(t("pay_t"))}">${PAYM.map(m=>`<option value="${m}" ${r.m===m?"selected":""}>${esc(m==="Bank"?t("pay_bank"):m==="Other"?t("pay_other"):m)}</option>`).join("")}</select>
+      <input id="pay-n-${i}" value="${esc(r.n||"")}" placeholder="${esc(t("pay_n"))}" inputmode="text" autocomplete="off" aria-label="${esc(t("pay_n"))}">
+      <input id="pay-a-${i}" value="${esc(r.a||"")}" placeholder="${esc(t("pay_a"))}" autocomplete="off" aria-label="${esc(t("pay_a"))}"></div>`; };
+  return `<section class="sec" id="pay-box"><h2>${t("pay_t")}</h2><div class="card form"><p class="note" style="margin:0">${t("pay_sub")}</p>${Array.from({length:n},(_,i)=>one(i)).join("")}
+    <div class="actions"><button class="btn primary" data-act="save-pay">${t("save")}</button></div><p class="note" style="margin:0">${t("pay_hint")}</p></div></section>`;
+}
 function viewSettings(){
   const s=S.shop;
-  return `<section class="sec"><h2>${t("settings")}</h2><div class="card form">
+  return paySection()+`<section class="sec"><h2>${t("settings")}</h2><div class="card form">
     <div class="field"><label for="s-name">${t("shop_name")}</label><input id="s-name" value="${esc(s.name)}" autocomplete="off"></div>
     <div class="field"><label for="s-phone">${t("shop_phone")}</label><input id="s-phone" value="${esc(s.phone)}" inputmode="tel" autocomplete="off"></div>
     <div class="grid2">
@@ -1157,7 +1171,6 @@ function viewSettings(){
     <p class="note" style="margin:0">${t("country_note")}</p>
     <div class="field"><label for="s-addr">${t("shop_addr")}</label><input id="s-addr" value="${esc(s.address||"")}" autocomplete="off"></div>
     <div class="field"><label>${t("rc_color")}</label><div class="sw">${ACCENTS.map(c=>`<button type="button" data-act="set-accent" data-c="${c}" aria-pressed="${accentOf(s)===c}" style="background:${c}" aria-label="${c}"></button>`).join("")}</div></div>
-    <div class="field"><label for="s-payinfo">${t("pay_info")}</label><textarea id="s-payinfo" rows="3" placeholder="${esc(t("pay_ph"))}" style="width:100%;box-sizing:border-box">${esc(s.payinfo||"")}</textarea></div>
     <div class="field"><label for="s-footer">${t("footer")}</label><input id="s-footer" value="${esc(s.footer)}" placeholder="${esc(t("default_footer"))}" autocomplete="off"></div>
     <div class="field"><label for="s-late">${t("late_after")}</label><input id="s-late" value="${esc(s.lateDays)}" inputmode="numeric"></div>
     <button class="btn primary" data-act="save-settings">${t("save")}</button>
@@ -1344,6 +1357,7 @@ function ticketHtml(x,kind){
     <div class="who"><span>${t("bill_to")}:</span> <b>${esc(custName(x.cust))}</b>${custPhone(x.cust)?`<div class="sub" style="color:var(--muted)">${esc(custPhone(x.cust))}</div>`:""}</div>`:`<div class="who"><span>${t("customer")}:</span> <b>${esc(custName(x.cust))}</b></div>`}
     ${x.by?`<div class="who" style="padding-top:0"><span>${t("served_by")}:</span> ${esc(x.by)}</div>`:""}${rows}
     ${x.type==="sale"&&owe>0.001&&(x.due||kind==="invoice")?`<div class="note2">${t("due_on")}: <b>${esc(x.due?fmtDay(x.due):t("due_rcpt"))}</b></div>`:""}
+    ${kind==="invoice"&&x.type==="sale"&&owe>0.001&&!payLines().length&&!x.void?`<button type="button" class="btn small" data-act="go-pay" style="margin-top:10px;border-style:dashed;width:100%">${t("pay_go")}</button>`:""}
     ${kind==="invoice"&&x.type==="sale"&&owe>0.001&&payLines().length?`<div style="margin-top:10px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px"><b style="font-size:.85rem">${t("how_pay")}</b>${payLines().map(l=>`<div style="font-size:.92rem;padding-top:3px;overflow-wrap:anywhere">${esc(l)}</div>`).join("")}</div>`:""}
     ${x.note?`<div class="note2">${esc(x.note)}</div>`:""}
     ${x.cust?`<div class="bal"><span>${kind==="invoice"?t("balance_now"):t("balance_after")}</span><b class="num">${money(Math.max(0,balanceOf(x.cust,x.no)))}</b></div>`:""}
@@ -1608,10 +1622,13 @@ document.addEventListener("click",e=>{
     case "save-settings": {
       const s=S.shop, oldC=s.country;
       s.name=$("#s-name").value.trim()||"Ma Boutique"; s.phone=$("#s-phone").value.trim(); s.address=($("#s-addr").value||"").trim();
-      s.country=$("#s-country").value; s.lang=$("#s-lang").value; s.footer=$("#s-footer").value.trim(); s.payinfo=($("#s-payinfo")?$("#s-payinfo").value:"").trim().slice(0,400);
+      s.country=$("#s-country").value; s.lang=$("#s-lang").value; s.footer=$("#s-footer").value.trim(); 
       s.lateDays=Math.max(1,parseInt($("#s-late").value,10)||14);
       if(oldC!==s.country&&!$("#s-lang").dataset.touched) {}
       save(); render(); toast(t("saved_ok")); break; }
+    case "save-pay": { const out=[]; for(let i=0;i<3;i++){ const n=($("#pay-n-"+i)||{}).value||""; if(n.trim()) out.push({m:($("#pay-m-"+i)||{}).value||"Other",n:n.trim().slice(0,60),a:(($("#pay-a-"+i)||{}).value||"").trim().slice(0,60)}); }
+      S.shop.pay=out; S.shop.payinfo=""; save(); render(); toast(t("saved_ok")); break; }
+    case "go-pay": ui.modal=null; $("#layer").innerHTML=""; ui.view="set"; render(); setTimeout(()=>{ const b=$("#pay-box"); if(b) b.scrollIntoView({block:"start"}); },50); break;
     case "backup-now": backupNow(); break;
     case "theme": setTheme(el.dataset.m); break;
     case "export-csv": saveFile(`ecrici-${todayKey()}.csv`,csvOf()); break;
