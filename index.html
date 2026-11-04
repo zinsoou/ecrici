@@ -133,6 +133,25 @@ h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;letter-spaci
 #pk-inl{max-height:150px;overflow:auto}#pk-inl[hidden],.pk-hint[hidden]{display:none}
 .row.pk1{padding:0 14px;min-height:46px;gap:10px;font-size:.95rem}
 .row.pk1:first-child{border-top:0}
+#tour{position:fixed;inset:0;z-index:9000;background:rgba(10,14,30,.6);display:flex;align-items:flex-end;justify-content:center;animation:tfade .2s ease}
+.tour-card{width:100%;max-width:460px;background:var(--card);border-radius:28px 28px 0 0;overflow:hidden;box-shadow:0 -10px 40px rgba(0,0,0,.25);animation:tup .28s cubic-bezier(.2,.8,.2,1);padding-bottom:max(18px,env(safe-area-inset-bottom))}
+.tour-art{position:relative;height:190px;background:linear-gradient(145deg,var(--tc),color-mix(in srgb,var(--tc) 70%,#000));display:grid;place-items:center;overflow:hidden;transition:background .25s}
+.tour-art i{position:absolute;border-radius:50%;background:rgba(255,255,255,.12)}
+.tour-art .tc1{width:220px;height:220px;left:-70px;top:-90px}.tour-art .tc2{width:150px;height:150px;right:-40px;bottom:-60px}
+.tour-ic{position:relative;width:96px;height:96px;border-radius:30px;background:rgba(255,255,255,.2);backdrop-filter:blur(2px);display:grid;place-items:center;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+.tour-skip{position:absolute;top:14px;right:14px;border:0;background:rgba(255,255,255,.22);color:#fff;font:inherit;font-size:.85rem;font-weight:600;padding:7px 14px;border-radius:999px;cursor:pointer}
+.tour-body{padding:22px 24px 6px;min-height:150px;animation:tstep .22s ease}
+.tour-body h2{margin:0 0 8px;font-size:1.35rem;line-height:1.2;color:var(--ink)}
+.tour-body p{margin:0;font-size:1rem;line-height:1.55;color:var(--muted)}
+.tour-dots{display:flex;justify-content:center;gap:6px;padding:12px 0 6px}
+.tour-dots span{width:7px;height:7px;border-radius:99px;background:var(--line);transition:all .2s}
+.tour-dots span.on{width:22px;background:#2447d6}
+.tour-btns{display:flex;gap:10px;padding:8px 20px 0}
+.tour-btns .btn{flex:1;min-height:50px}
+.tour-btns .btn[hidden]{display:block;visibility:hidden}
+@keyframes tfade{from{opacity:0}to{opacity:1}}@keyframes tup{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}@keyframes tstep{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+@media(min-width:600px){#tour{align-items:center}.tour-card{border-radius:28px;padding-bottom:20px}}
+@media(prefers-reduced-motion:reduce){#tour,.tour-card,.tour-body{animation:none}}
 .pk-tg{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;padding:4px 0;margin:0 0 6px;font:inherit;font-size:.85rem;font-weight:700;letter-spacing:.02em;color:var(--muted);cursor:pointer;text-align:left}
 .pk-tg .pk-ar{width:9px;height:9px;margin:0 8px 3px 0;border-right:2.5px solid #1b2150;border-bottom:2.5px solid #1b2150;transform:rotate(45deg);transition:transform .15s}
 .pk-tg[aria-expanded=false] .pk-ar{transform:rotate(-45deg);margin:0 10px 0 0}
@@ -292,6 +311,8 @@ const T = {
     today:"Aujourd'hui",sold:"Ventes du jour",collected:"Encaissé",credit_given:"Crédit donné",to_collect:"À recevoir",
     late_title:"Clients à relancer",late_none:"Personne n'est en retard. Bien joué.",remind:"Relancer",
     days:"j",owes:"doit",settled:"à jour",since:"depuis",
+    tour:[["Bienvenue sur Ecrici","Le cahier de votre boutique, sur votre téléphone. Une visite d'une minute pour tout comprendre."],["Ajoutez vos produits et services","Dans Articles, notez le nom, le prix et le stock. Les services (réparation, coiffure…) n'ont pas de stock."],["Vendez en quelques secondes","Choisissez le client, touchez les produits, puis Payé en totalité, À crédit ou Paiement partiel."],["Reçus et factures","Chaque vente crée un reçu ou une facture PDF au nom du client, à envoyer sur WhatsApp. Ajoutez votre numéro MoMo ou banque dans Réglages : il s'affiche sur les factures."],["Sachez qui vous doit","Les ventes à crédit sont suivies client par client. Un rappel WhatsApp poli en un geste."],["Voyez votre bénéfice","Les rapports montrent le jour et le mois : ventes, dépenses et bénéfice. Le stock bas est signalé."],["Marche sans internet","Continuez à vendre sans réseau : tout se synchronise avec votre compte au retour d'internet. Sauvegardez quand vous voulez dans Réglages."],["Plusieurs boutiques, une équipe","Ajoutez des boutiques avec des livres séparés et donnez à chaque employé sa propre connexion (Réglages et Boutiques)."],["Vous êtes prêt !","Essayez avec des exemples pour voir comment ça marche, ou commencez directement avec votre boutique."]],
+    tour_next:"Suivant",tour_back:"Retour",tour_skip:"Passer",tour_try:"Essayer avec des exemples",tour_own:"Commencer avec ma boutique",tour_open:"Revoir la visite guidée",
     examples_banner:"Ces données sont des exemples pour que vous voyiez comment ça marche.",remove_examples:"Effacer les exemples",
     new_sale:"Nouvelle vente",customer:"Client",walkin:"Client de passage",new_customer:"+ Nouveau client",
     existing_customer:"Choisir un client existant",
@@ -364,6 +385,8 @@ const T = {
     today:"Today",sold:"Sales today",collected:"Collected",credit_given:"Credit given",to_collect:"To collect",
     late_title:"Customers to remind",late_none:"Nobody is overdue. Well done.",remind:"Remind",
     days:"d",owes:"owes",settled:"settled",since:"since",
+    tour:[["Welcome to Ecrici","Your shop notebook on your phone. Take a one-minute tour to see how it works."],["Add your products and services","In Items, add a name, a price and the stock. Services like repairs or haircuts have no stock."],["Make a sale in seconds","Pick the customer, tap the products, then choose Paid in full, On credit or Part payment."],["Receipts and invoices","Every sale makes a PDF receipt or invoice named after the customer, ready for WhatsApp. Add your MoMo or bank details in Settings and they show on invoices."],["Know who owes you","Credit sales are tracked customer by customer. Send a polite WhatsApp reminder in one tap."],["See your profit","Reports show today and this month: sales, expenses and profit. Low stock is flagged."],["Works without internet","Keep selling when the network is down. Everything syncs to your account when you are back online. Back up any time in Settings."],["Several shops, one team","Add shops with separate books and give each employee their own login (Settings and Shops)."],["You are ready!","Try it with example data to see how it works, or start straight away with your own shop."]],
+    tour_next:"Next",tour_back:"Back",tour_skip:"Skip",tour_try:"Try with examples",tour_own:"Start with my shop",tour_open:"Replay the tour",
     examples_banner:"This is example data so you can see how it works.",remove_examples:"Clear examples",
     new_sale:"New sale",customer:"Customer",walkin:"Walk-in customer",new_customer:"+ New customer",
     existing_customer:"Pick an existing customer",
@@ -703,7 +726,39 @@ function render(){
     .map(([k,l])=>`<button data-act="tab" data-v="${k}" ${(v==="bc"?"cust":v)===k?'aria-current="page"':""}>${icons[k]}${t(l)}</button>`).join("");
   renderModal(); updateStatus();
   if(v==="sale"){ updateSaleTotals(); pkVis(); }
+  try{ maybeTour(); }catch(e){}
 }
+
+/* ---------- welcome tour ---------- */
+const TOUR_IC=['<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z"/><path d="M9 8h7M9 12h7M9 16h4"/>','<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>','<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>','<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/>','<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.2c2.9.2 5 2.5 5 5.3"/>','<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>','<path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1.2"/>','<path d="M3 9l1.5-5h15L21 9v1a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9z"/><path d="M5 12v8h14v-8M10 20v-5h4v5"/>','<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>'];
+const TOUR_BG=["#2447d6","#2447d6","#2447d6","#0f766e","#c2410c","#15803d","#2447d6","#6d28d9","#15803d"];
+function tourClose(done){ if(done!==false){ S.shop.tourDone=true; save(); } ui.tour=null; const el=document.getElementById("tour"); if(el) el.remove(); }
+function drawTour(){
+  let el=document.getElementById("tour");
+  if(!ui.tour){ if(el) el.remove(); return; }
+  const st=t("tour"), i=Math.max(0,Math.min(st.length-1,ui.tour.i)), last=i===st.length-1, c=TOUR_BG[i];
+  if(!el){ el=document.createElement("div"); el.id="tour"; document.body.appendChild(el); }
+  el.innerHTML=`<div class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-h">
+    <div class="tour-art" style="--tc:${c}"><i class="tc1"></i><i class="tc2"></i><div class="tour-ic"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TOUR_IC[i]}</svg></div>
+      ${last?"":`<button class="tour-skip" data-act="tour-skip">${t("tour_skip")}</button>`}</div>
+    <div class="tour-body" key="${i}"><h2 id="tour-h">${esc(st[i][0])}</h2><p>${esc(st[i][1])}</p></div>
+    <div class="tour-dots" aria-hidden="true">${st.map((_,k)=>`<span class="${k===i?"on":""}"></span>`).join("")}</div>
+    <div class="tour-btns">${last?`<button class="btn" data-act="tour-try">${t("tour_try")}</button><button class="btn primary" data-act="tour-own">${t("tour_own")}</button>`
+      :`<button class="btn ghost" data-act="tour-back" ${i?"":"hidden"}>${t("tour_back")}</button><button class="btn primary" data-act="tour-next">${t("tour_next")}</button>`}</div></div>`;
+  const b=el.querySelector(".tour-btns .primary"); if(b) try{ b.focus({preventScroll:true}); }catch(e){}
+}
+function maybeTour(){
+  if(ui.tour!==undefined||!S||!S.shop||S.shop.tourDone||!isOwner()||S.txs.some(x=>!x.example)) return;
+  if(typeof window.__authed==="function"&&!window.__authed()) return;
+  ui.tour={i:0}; drawTour();
+}
+(function(){ let x0=null;
+  document.addEventListener("touchstart",e=>{ x0=ui.tour&&e.target.closest("#tour")?e.touches[0].clientX:null; },{passive:true});
+  document.addEventListener("touchend",e=>{ if(x0===null||!ui.tour) return; const dx=e.changedTouches[0].clientX-x0; x0=null;
+    if(Math.abs(dx)>60){ const n=t("tour").length; ui.tour.i=Math.max(0,Math.min(n-1,ui.tour.i+(dx<0?1:-1))); drawTour(); } },{passive:true});
+  document.addEventListener("keydown",e=>{ if(!ui.tour) return; const n=t("tour").length;
+    if(e.key==="Escape") tourClose(); else if(e.key==="ArrowRight"){ ui.tour.i=Math.min(n-1,ui.tour.i+1); drawTour(); } else if(e.key==="ArrowLeft"){ ui.tour.i=Math.max(0,ui.tour.i-1); drawTour(); } });
+})();
 
 let deferredInstall=null;
 function canInstall(){
@@ -734,9 +789,8 @@ function viewHome(){
     if(since>=30||(since>=1&&days>=7)) h+=`<div class="banner"><span>${t("backup_banner",since)}</span><button class="btn small primary" data-act="backup-now">${t("backup_now")}</button></div>`;
   }
   if(isOwner()&&canInstall()) h+=`<div class="banner"><span>${t("inst_txt")}</span><span style="display:flex;gap:6px">${deferredInstall?`<button class="btn small primary" data-act="install-app">${t("inst_btn")}</button>`:""}<button class="btn small" data-act="install-off">${t("inst_later")}</button></span></div>`;
-  const startOn=isOwner()&&!S.shop.hintOff&&!S.txs.some(x=>!x.example);
+  const startOn=false;
   if(!startOn&&!S.customers.length&&!S.txs.length&&!S.products.length) h+=`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`;
-  if(startOn) h+=`<section class="sec"><h2>${t("start_t")}<button class="btn small ghost" data-act="hint-off">${t("start_hide")}</button></h2><div class="card form"><button class="btn" data-act="goto" data-to="stock">${t("start_1")}</button><button class="btn" data-act="goto" data-to="sale">${t("start_2")}</button><button class="btn" data-act="goto" data-to="cust">${t("start_3")}</button>${!S.customers.length&&!S.txs.length&&!S.products.length?`<button class="btn small ghost" data-act="load-examples" style="justify-self:start">${t("load_examples")}</button>`:""}</div></section>`;
   h+=`<section class="sec"><h2>${t("today")}<span>${new Date().toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{weekday:"long",day:"numeric",month:"long"})}</span></h2>
     <div class="sum">
       <div class="card"><div class="lbl">${t("sold")}</div><div class="val num">${money(sold)}</div></div>
@@ -1182,7 +1236,7 @@ function viewSettings(){
     ${[["auto","th_auto"],["light","th_light"],["dark","th_dark"]].map(([k,l])=>`<button class="pill" data-act="theme" data-m="${k}" aria-pressed="${getTheme()===k}">${t(l)}</button>`).join("")}</div></div></section>
   ${staffSection()}<section class="sec"><h2>${t("backup")}</h2><div class="card form"><p class="note" style="margin:0">${t("backup_note")}</p>
     <p class="note" style="margin:0"><b>${t("last_backup")}:</b> ${S.shop.lastBackup?fmtDate(S.shop.lastBackup):t("never")}</p>
-    <div class="actions"><button class="btn" data-act="load-examples">${t("load_examples")}</button><button class="btn primary" data-act="backup-now">${t("backup_now")}</button><button class="btn" data-act="export-csv">${t("export_csv")}</button></div>
+    <div class="actions"><button class="btn" data-act="tour-open">${t("tour_open")}</button><button class="btn" data-act="load-examples">${t("load_examples")}</button><button class="btn primary" data-act="backup-now">${t("backup_now")}</button><button class="btn" data-act="export-csv">${t("export_csv")}</button></div>
     <div class="field"><label for="f-import">${t("import")}</label><input type="file" id="f-import" accept=".json,application/json"></div></div></section>
   <section class="sec"><h2>${t("danger")}</h2><div class="card form">
     ${ui.confirmReset?`<div class="actions"><button class="btn danger" data-act="reset-yes">${t("reset_confirm")}</button><button class="btn" data-act="reset-no">${t("cancel")}</button></div>`
@@ -1632,6 +1686,12 @@ document.addEventListener("click",e=>{
     case "save-pay": { const out=[]; for(let i=0;i<3;i++){ const n=($("#pay-n-"+i)||{}).value||""; if(n.trim()) out.push({m:($("#pay-m-"+i)||{}).value||"Other",n:n.trim().slice(0,60),a:(($("#pay-a-"+i)||{}).value||"").trim().slice(0,60)}); }
       S.shop.pay=out; S.shop.payinfo=""; save(); render(); toast(t("saved_ok")); break; }
     case "go-pay": ui.modal=null; $("#layer").innerHTML=""; ui.view="set"; render(); setTimeout(()=>{ const b=$("#pay-box"); if(b) b.scrollIntoView({block:"start"}); },50); break;
+    case "tour-next": if(ui.tour){ ui.tour.i++; drawTour(); } break;
+    case "tour-back": if(ui.tour){ ui.tour.i=Math.max(0,ui.tour.i-1); drawTour(); } break;
+    case "tour-skip": tourClose(); break;
+    case "tour-try": tourClose(); loadExamples(); break;
+    case "tour-own": tourClose(); ui.view="stock"; render(); break;
+    case "tour-open": ui.tour={i:0}; drawTour(); break;
     case "backup-now": backupNow(); break;
     case "theme": setTheme(el.dataset.m); break;
     case "export-csv": saveFile(`ecrici-${todayKey()}.csv`,csvOf()); break;

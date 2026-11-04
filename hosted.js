@@ -235,6 +235,7 @@ function drawGate() {
   gate.innerHTML = `<div class="lg-wrap">${h}${gateKind === "loading" ? "" : (gateKind === "auth" ? about() : "") + foot()}</div>`;
   gate.hidden = false;
 }
+window.__authed = () => gateKind === "none";
 function showGate(kind) { gateKind = kind; drawGate(); }
 function hideGate() { gate.hidden = true; gate.innerHTML = ""; gateKind = "none"; }
 
