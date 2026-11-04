@@ -101,11 +101,11 @@ function draw(){ draw0(); const sg=err+"|"+msg; if((err||msg)&&sg!==window.__sg)
 function draw0(){
   const cnt={pending:0,active:0,expired:0,suspended:0}; shops.forEach(s=>cnt[state(s)]++); const reqs=branches.filter(b=>b.status==="pending").length;
   const order={pending:0,expired:1,suspended:2,active:3}, pk=s=>brOf(s.id).some(b=>b.status==="pending")?-1:order[state(s)];
-  const list=shops.filter(s=>(filter==="all"||state(s)===filter)&&(!q||(s.name+" "+s.phone).toLowerCase().includes(q.toLowerCase())))
+  const list=shops.filter(s=>(filter==="all"||state(s)===filter)&&(!q||(s.name+" "+s.phone+" "+(s.referred_by||"")).toLowerCase().includes(q.toLowerCase())))
     .sort((a,b)=>pk(a)-pk(b)||String(b.created_at).localeCompare(String(a.created_at)));
   app.innerHTML=`<div class="top"><h1>Ecrici Admin</h1><button id="out">Log out</button></div>
-    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>${refBox()}${reqs?`<div class="muted"><b>${reqs}</b> extra shop request${reqs>1?"s":""} waiting for activation</div>`:""}
-    <input id="q" placeholder="Search name or phone" value="${esc(q)}">
+    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>${refBox()}${refSummary()}${reqs?`<div class="muted"><b>${reqs}</b> extra shop request${reqs>1?"s":""} waiting for activation</div>`:""}
+    <input id="q" placeholder="Search name, phone or referrer" value="${esc(q)}">
     <div class="row">${["all","pending","active","expired","suspended"].map(k=>`<button data-f="${k}" class="${filter===k?"p":""}">${k}</button>`).join("")}</div>
     <div class="err" id="er">${esc(err)}</div>${msg?`<div class="muted">${esc(msg)}${msgLink?` <a href="${esc(msgLink)}" target="_blank" rel="noopener">Send on WhatsApp</a>`:""}</div>`:""}
     ${list.map(card).join("")||`<p class="muted">No shops here yet.</p>`}`;
@@ -114,6 +114,14 @@ function draw0(){
   app.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{ filter=b.dataset.f; draw(); });
   app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(b.dataset.id,b.dataset.a));
   app.querySelectorAll("[data-ba]").forEach(b=>b.onclick=()=>bact(b.dataset.bid,b.dataset.ba));
+}
+function refSummary(){
+  const g={}; shops.filter(s=>s.referred_by).forEach(s=>{ const k=s.referred_by.trim().toLowerCase(); (g[k]=g[k]||{name:s.referred_by.trim(),list:[]}).list.push(s); });
+  const rows=Object.values(g).map(r=>{ const paid=r.list.filter(s=>s.ref_status==="due"||s.ref_status==="paid"), owe=r.list.filter(s=>s.ref_status==="due");
+    return {name:r.name,n:r.list.length,paid:paid.length,owe:owe.map(s=>fmtAmt(rew(s.country),s.country)).join(" + ")}; }).sort((a,b)=>b.paid-a.paid||b.n-a.n);
+  if(!rows.length) return "";
+  const tot=rows.reduce((a,r)=>a+r.n,0);
+  return `<details class="card"><summary class="name">Referrals: ${tot} shop${tot>1?"s":""} from ${rows.length} referrer${rows.length>1?"s":""}</summary>${rows.map(r=>`<div class="muted"><b>${esc(r.name)}</b>: ${r.n} signed up, ${r.paid} paid${r.owe?` · to pay ${esc(r.owe)}`:""}</div>`).join("")}</details>`;
 }
 function refBox(){
   const due=shops.filter(s=>s.ref_status==="due"); if(!due.length) return "";
