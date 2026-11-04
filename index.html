@@ -558,7 +558,9 @@ function ageDays(iso){ return iso?Math.floor((Date.now()-new Date(iso).getTime()
 const me = () => window.__member || (S&&S.staff&&S.staff.find(x=>x.id===ui.me))||null;
 const isOwner = () => window.__member ? false : (!S.shop.staffOn || (me()&&me().role==="owner"));
 const custById = id => S.customers.find(c=>c.id===id);
-const invStatus=x=>{ const o=x.total-x.paid; return o<=0.001?["st_paid","#15803d"]:x.paid>0.001?["st_part","#c2410c"]:["st_unpaid","#b4321f"]; };
+/* an invoice is a live document: payments the customer made later count (oldest sale paid first) */
+const oweNow=x=>{ if(x.type!=="sale") return 0; if(!x.void&&x.cust){ const u=unpaidSales(x.cust).find(v=>v.x===x); return u?u.owe:0; } return x.total-x.paid; };
+const invStatus=x=>{ const o=oweNow(x), p=x.total-o; return o<=0.001?["st_paid","#15803d"]:p>0.001?["st_part","#c2410c"]:["st_unpaid","#b4321f"]; };
 const PAYM=["MTN MoMo","Moov Money","Orange Money","Wave","Airtel Money","M-Pesa","OPay","PalmPay","Bank","Other"];
 const payRows=()=>{ const sh=S.shop; if(Array.isArray(sh.pay)) return sh.pay; return String(sh.payinfo||"").split(/\r?\n/).map(v=>v.trim()).filter(Boolean).map(v=>({m:"Other",n:v,a:""})); };
 const payLabel=m=>m==="Bank"?t("pay_bank"):m==="Other"?"":m;
@@ -1200,9 +1202,10 @@ function receiptLines(x,kind){
   out.push("");
   if(x.type==="sale"){
     x.lines.forEach(l=>out.push(kind==="invoice"&&Number(l.q)!==1?`${l.q} × ${l.d||t("goods")} @ ${money(l.p)}  ${money(l.q*l.p)}`:`${l.q} × ${l.d||t("goods")}  ${money(l.q*l.p)}`));
-    out.push("-----",`${t("total")}: ${money(x.total)}`,`${t("paid")}: ${money(x.paid)}`);
-    if(x.total-x.paid>0.001) out.push(`${kind==="invoice"?t("due"):t("balance_left")}: ${money(x.total-x.paid)}`);
-    if(x.total-x.paid>0.001&&(x.due||kind==="invoice")) out.push(`${t("due_on")}: ${x.due?fmtDay(x.due):t("due_rcpt")}`);
+    const ow=kind==="invoice"?oweNow(x):x.total-x.paid;
+    out.push("-----",`${t("total")}: ${money(x.total)}`,`${t("paid")}: ${money(x.total-ow)}`);
+    if(ow>0.001) out.push(`${kind==="invoice"?t("due"):t("balance_left")}: ${money(ow)}`);
+    if(ow>0.001&&(x.due||kind==="invoice")) out.push(`${t("due_on")}: ${x.due?fmtDay(x.due):t("due_rcpt")}`);
     if(kind==="invoice"&&payLines().length) out.push("",t("pay_t")+":",...payLines());
   }else{
     out.push(`${t("payment")} (${t(x.method||"cash")}): ${money(x.amount)}`);
@@ -1262,7 +1265,7 @@ function pdfWrap(str,font,size,maxW){ const out=[]; let cur="";
     if(cur&&pdfW(cur+" "+w,font,size)>maxW){ out.push(cur); cur=w; } else cur=cur?cur+" "+w:w; }
   if(cur||!out.length) out.push(cur); return out; }
 function ticketPdf(x,kind){
-  kind=kind||"receipt"; const sh=S.shop, W=320, M=22, IW=W-2*M, owe=x.type==="sale"?x.total-x.paid:0;
+  kind=kind||"receipt"; const sh=S.shop, W=320, M=22, IW=W-2*M, owe=x.type==="sale"?(kind==="invoice"?oweNow(x):x.total-x.paid):0;
   const hex=accentOf(sh).replace("#",""), A=[0,2,4].map(k=>parseInt(hex.substr(k,2),16)/255);
   const rg=a=>a.map(v=>v.toFixed(3)).join(" "), h2=h=>[0,2,4].map(k=>parseInt(h.substr(k,2),16)/255);
   const INK=h2("16203f"), MUT=h2("5d6784"), LINE=h2("dde2ee"), RED=h2("b4321f"), WHITE=[1,1,1];
@@ -1300,7 +1303,7 @@ function ticketPdf(x,kind){
       txt(am,W-M,y+17,"F3",9,INK,"r"); wl.forEach((s,i)=>txt(s,M,y+17+i*13,"F1",10,INK)); y+=wl.length*13+10;
       if(kind==="invoice"&&Number(l.q)!==1){ txt("@ "+money(l.p),M,y+7,"F1",8,MUT); y+=11; } hline(y,M,W-M,LINE,0.6); });
     y+=8; hline(y,M,W-M,A,1.6); y+=18; txt(t("total"),M,y,"F2",11.5,INK); txt(money(x.total),W-M,y,"F4",12,INK,"r");
-    y+=17; txt(t("paid"),M,y,"F1",10,INK); txt(money(x.paid),W-M,y,"F3",9.5,INK,"r"); y+=6;
+    y+=17; txt(t("paid"),M,y,"F1",10,INK); txt(money(x.total-owe),W-M,y,"F3",9.5,INK,"r"); y+=6;
     if(owe>0.001){ y+=8; const bh=30; ops.push(`${rg(RED)} RG 0.9 w ${M+6} @${y} m ${W-M-6} @${y} l ${W-M} @${y} ${W-M} @${y+6} ${W-M} @${y+6} c ${W-M} @${y+bh-6} l ${W-M} @${y+bh} ${W-M-6} @${y+bh} ${W-M-6} @${y+bh} c ${M+6} @${y+bh} l ${M} @${y+bh} ${M} @${y+bh-6} ${M} @${y+bh-6} c ${M} @${y+6} l ${M} @${y} ${M+6} @${y} ${M+6} @${y} c S`);
       txt(kind==="invoice"?t("due"):t("balance_left"),M+12,y+19,"F2",10,RED); txt(money(owe),W-M-12,y+19,"F4",10,RED,"r"); y+=bh; }
   }else{
@@ -1341,12 +1344,12 @@ const accentOf=sh=>ACCENTS.includes(sh.accent)?sh.accent:ACCENTS[0];
 const initialsOf=n=>{ const w=String(n||"").trim().split(/\s+/).filter(Boolean); return ((w[0]||"?")[0]+((w[1]||"")[0]||"")).toUpperCase(); };
 const fmtPhone=v=>{ v=String(v||"").trim(); return /^\d{10,15}$/.test(v)?"+"+v:v; };
 function ticketHtml(x,kind){
-  kind=kind||"receipt"; const sh=S.shop; let rows="", owe=x.type==="sale"?x.total-x.paid:0;
+  kind=kind||"receipt"; const sh=S.shop; let rows="", owe=x.type==="sale"?(kind==="invoice"?oweNow(x):x.total-x.paid):0;
   if(x.type==="sale"){
     rows=`<table><thead><tr><th>${t("item")}</th><th class="r">${t("total")}</th></tr></thead><tbody>`+
       x.lines.map(l=>`<tr><td>${esc(l.q)} × ${esc(l.d||t("goods"))}${kind==="invoice"&&Number(l.q)!==1?`<div class="sub" style="font-size:.8rem;color:var(--muted)">@ ${money(l.p)}</div>`:""}</td><td class="r num">${money(l.q*l.p)}</td></tr>`).join("")+`</tbody></table>
       <div class="tot grand"><span>${t("total")}</span><span class="num">${money(x.total)}</span></div>
-      <div class="tot"><span>${t("paid")}</span><span class="num">${money(x.paid)}</span></div>
+      <div class="tot"><span>${t("paid")}</span><span class="num">${money(x.total-owe)}</span></div>
       ${owe>0.001?`<div class="owe"><span>${kind==="invoice"?t("due"):t("balance_left")}</span><span class="num">${money(owe)}</span></div>`:""}`;
   }else{
     rows=`<div class="tot grand"><span>${t("payment")} · ${t(x.method||"cash")}</span><span class="num">${money(x.amount)}</span></div>`;
