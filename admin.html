@@ -72,6 +72,7 @@ const PRICES={BJ:["FCFA",1000,700],TG:["FCFA",1000,700],CI:["FCFA",1000,700],SN:
 const P=cc=>{const o=(CFG.prices&&CFG.prices[cc])||{},d=PRICES[cc]||PRICES.BJ;return{cur:o.cur||d[0],base:Number(o.base)||d[1],extra:Number(o.extra)||d[2],pre:o.pre!=null?!!o.pre:!!d[3]};};
 const brOf=id=>branches.filter(b=>b.owner_id===id);
 const fmtAmt=(n,cc)=>{const p=P(cc),s=String(n).replace(/\B(?=(\d{3})+(?!\d))/g,",");return p.pre?p.cur+s:s+" "+p.cur;};
+const rew=cc=>Math.round(P(cc).base/2);
 const state=s=>{ if(s.status==="pending") return "pending"; if(s.status==="suspended") return "suspended"; return (s.paid_until&&s.paid_until>=today())?"active":"expired"; };
 const daysLeft=s=>s.paid_until?Math.round((new Date(s.paid_until+"T12:00:00Z")-new Date(today()+"T12:00:00Z"))/864e5):null;
 
@@ -103,7 +104,7 @@ function draw0(){
   const list=shops.filter(s=>(filter==="all"||state(s)===filter)&&(!q||(s.name+" "+s.phone).toLowerCase().includes(q.toLowerCase())))
     .sort((a,b)=>pk(a)-pk(b)||String(b.created_at).localeCompare(String(a.created_at)));
   app.innerHTML=`<div class="top"><h1>Ecrici Admin</h1><button id="out">Log out</button></div>
-    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>${reqs?`<div class="muted"><b>${reqs}</b> extra shop request${reqs>1?"s":""} waiting for activation</div>`:""}
+    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>${refBox()}${reqs?`<div class="muted"><b>${reqs}</b> extra shop request${reqs>1?"s":""} waiting for activation</div>`:""}
     <input id="q" placeholder="Search name or phone" value="${esc(q)}">
     <div class="row">${["all","pending","active","expired","suspended"].map(k=>`<button data-f="${k}" class="${filter===k?"p":""}">${k}</button>`).join("")}</div>
     <div class="err" id="er">${esc(err)}</div>${msg?`<div class="muted">${esc(msg)}${msgLink?` <a href="${esc(msgLink)}" target="_blank" rel="noopener">Send on WhatsApp</a>`:""}</div>`:""}
@@ -114,17 +115,28 @@ function draw0(){
   app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(b.dataset.id,b.dataset.a));
   app.querySelectorAll("[data-ba]").forEach(b=>b.onclick=()=>bact(b.dataset.bid,b.dataset.ba));
 }
+function refBox(){
+  const due=shops.filter(s=>s.ref_status==="due"); if(!due.length) return "";
+  const tot={}; due.forEach(s=>{ const c=P(s.country).cur; tot[c]=(tot[c]||0)+rew(s.country); });
+  return `<div class="card"><div class="name">Rewards to pay (${due.length})</div>${due.map(s=>`<div class="muted">${esc(s.referred_by)} · ${esc(fmtAmt(rew(s.country),s.country))} · for ${esc(s.name||s.phone)} <button class="p" data-id="${esc(s.id)}" data-a="refpaid">Mark paid</button></div>`).join("")}</div>`;
+}
 function card(s){
   const st=state(s), dl=daysLeft(s), wa=s.phone?`https://wa.me/${String(s.phone).replace(/\D/g,"")}`:"";
   const info=s.paid_until?`Paid until ${s.paid_until}${dl!=null?` (${dl>=0?dl+" days left":Math.abs(dl)+" days ago"})`:""}`:"Not paid yet";
   return `<div class="card" data-shop="${esc(s.id)}"><div class="top"><div><div class="name">${esc(s.name||"(no name)")}</div><div class="muted">+${esc(s.phone)} · ${esc(s.country)}</div></div><span class="chip ${st}">${st}</span></div>
-    <div class="muted">${esc(info)}</div>${shopsBlock(s)}
+    <div class="muted">${esc(info)}</div>${refLine(s)}${shopsBlock(s)}
     <div class="row">${st==="pending"?`<button class="p" data-id="${esc(s.id)}" data-a="trial">Approve · 7 days</button>`:""}
       <button data-id="${esc(s.id)}" data-a="m1">+1 month</button><button data-id="${esc(s.id)}" data-a="m3">+3 months</button><button data-id="${esc(s.id)}" data-a="m12">+12 months</button></div>
     <div class="row">${wa?`<a class="b" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`:""}
       <button data-id="${esc(s.id)}" data-a="pw">Reset password</button>
       ${s.status==="suspended"?`<button data-id="${esc(s.id)}" data-a="react">Reactivate</button>`:`<button class="d" data-id="${esc(s.id)}" data-a="susp">Suspend</button>`}
       ${s.status==="suspended"?`<button class="d" data-id="${esc(s.id)}" data-a="del">Delete forever</button>`:""}</div></div>`;
+}
+function refLine(s){
+  if(!s.referred_by) return "";
+  const amt=fmtAmt(rew(s.country),s.country);
+  const st=s.ref_status==="paid"?`Reward paid (${esc(amt)})`:s.ref_status==="due"?`<b>Reward to pay: ${esc(amt)}</b> <button class="p" data-id="${esc(s.id)}" data-a="refpaid">Mark paid</button>`:"Reward starts after the first payment";
+  return `<div class="muted">Referred by <b>${esc(s.referred_by)}</b> · ${st}</div>`;
 }
 function shopsBlock(s){
   const bs=brOf(s.id), n=1+bs.filter(b=>b.status==="active").length;
@@ -182,7 +194,8 @@ async function act(id,a){
   let body;
   if(a==="susp"){ if(!confirm("Suspend "+(s.name||s.phone)+"?")) return; body={status:"suspended"}; }
   else if(a==="react"){ body={status:"active"}; }
-  else { const base=(s.status==="active"&&s.paid_until&&s.paid_until>today())?s.paid_until:today(); body={status:"active",paid_until:addTo(base,a)}; }
+  else if(a==="refpaid"){ body={ref_status:"paid"}; }
+  else { const base=(s.status==="active"&&s.paid_until&&s.paid_until>today())?s.paid_until:today(); body={status:"active",paid_until:addTo(base,a)}; if(s.referred_by&&!s.ref_status&&a!=="trial") body.ref_status="due"; }
   err=""; msg=""; msgLink="";
   const r=await api("/rest/v1/shops?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{Prefer:"return=representation"},body});
   if(!r.ok||!Array.isArray(r.json)||!r.json.length){ err=r.status===401?"Session ended. Log in again.":"Not saved. This account may not be an admin (see the guide)."; draw(); return; }

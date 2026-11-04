@@ -107,7 +107,7 @@ const G = {
     ab_li: ["Ventes et reçus PDF au nom du client", "Crédits et dettes des clients avec rappels WhatsApp", "Stock de produits et services", "Bilan du jour et du mois : ventes, dépenses, bénéfice", "Plusieurs boutiques et employés avec leur propre accès", "Marche sur téléphone, tablette et ordinateur"],
     faq_h: "Questions fréquentes",
     faq: [["Ecrici marche-t-il sans internet ?", "Oui. Vous continuez à vendre sans réseau. Tout est enregistré sur le téléphone puis synchronisé avec votre compte dès que vous avez internet."], ["Puis-je envoyer les reçus sur WhatsApp ?", "Oui, chaque vente produit un reçu ou une facture PDF que vous envoyez en un geste."], ["Combien coûte Ecrici ?", "À partir de 1 000 FCFA par mois, avec un essai gratuit de 7 jours. Chaque boutique en plus coûte un peu plus."], ["Puis-je gérer plusieurs boutiques et des employés ?", "Oui. Chaque boutique a ses propres livres et chaque employé a sa propre connexion."], ["Puis-je supprimer mon compte ?", "Oui, à tout moment. Dans l'application : Réglages, Compte, « Supprimer mon compte ». Votre compte et toutes vos données sont effacés de nos serveurs. Faites une sauvegarde avant."]],
-    inst: "Installer l'application", f_plan: "Abonnement :", f_help: "Besoin d'aide ? WhatsApp", f_priv: "Confidentialité et conditions", ios_t: "Sur iPhone : ouvrez ce site dans Safari, touchez ••• (en bas à droite) ou le bouton Partager (carré avec flèche), touchez Partager, puis faites défiler et touchez « Sur l'écran d'accueil ».",  hint_name: "Écrivez en MAJUSCULES, ex : BOUTIQUE DE VICTOR", hint_phone: "Chiffres seulement, sans le +. Ex :",  forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
+    inst: "Installer l'application", f_plan: "Abonnement :", f_help: "Besoin d'aide ? WhatsApp", f_priv: "Confidentialité et conditions", ios_t: "Sur iPhone : ouvrez ce site dans Safari, touchez ••• (en bas à droite) ou le bouton Partager (carré avec flèche), touchez Partager, puis faites défiler et touchez « Sur l'écran d'accueil ».",  rf_t: "Parrainez un ami", rf_p: g => `Présentez Ecrici à un commerçant. Quand il fait son premier paiement, vous recevez ${g} (la moitié du premier mois). Il écrit votre numéro dans « Recommandé par » ou ouvre votre lien.`, rf_copy: "Copier mon lien", rf_wa: "Envoyer sur WhatsApp", rf_msg: (l) => `Bonjour 😊 J'utilise Ecrici pour gérer mes ventes, mes crédits et mon stock. Essayez-le gratuitement pendant 7 jours : ${l}`, ref_l: "Recommandé par (facultatif)", ref_h: "Nom ou numéro de la personne qui vous a présenté Ecrici.", hint_name: "Écrivez en MAJUSCULES, ex : BOUTIQUE DE VICTOR", hint_phone: "Chiffres seulement, sans le +. Ex :",  forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
     wa_new: (n, p) => `Bonjour, je viens de créer mon compte Ecrici pour la boutique ${n} (${p}). Merci de l'activer.`,
     wa_renew: (n, p) => `Bonjour, je souhaite renouveler mon abonnement Ecrici pour la boutique ${n} (${p}).`,
     acct: "Compte", until: d => `Actif jusqu'au ${d}`, sync_ok: "Synchronisé", sync_wait: "En attente de connexion", logout_q: "Se déconnecter ? Les données de cette boutique seront retirées de ce téléphone (elles restent dans votre compte).",
@@ -136,7 +136,7 @@ const G = {
     ab_li: ["Sales and PDF receipts named after the customer", "Customer credit and debts with WhatsApp reminders", "Stock of products and services", "Daily and monthly report: sales, expenses, profit", "Several shops and employees, each with their own login", "Works on phone, tablet and computer"],
     faq_h: "Frequently asked questions",
     faq: [["Does Ecrici work without internet?", "Yes. You keep selling when the network is down. Everything saves on the phone and syncs to your account when you are back online."], ["Can I send receipts on WhatsApp?", "Yes. Every sale makes a PDF receipt or invoice you can send in one tap."], ["How much does Ecrici cost?", "It starts from a low monthly price per shop, with a 7-day free trial. Extra shops cost a little more. The price for your country is shown at the bottom of this page."], ["Can I manage several shops and employees?", "Yes. Each shop has its own books and each employee has their own login."], ["Can I delete my account?", "Yes, at any time. In the app: Settings, Account, \"Delete my account\". Your account and all your data are erased from our servers. Make a backup first."]],
-    inst: "Install the app", f_plan: "Plan:", f_help: "Need help? WhatsApp", f_priv: "Privacy and terms", ios_t: "On iPhone: open this site in Safari, tap ••• (bottom right) or the Share button (square with an arrow), tap Share, then scroll and tap \"Add to Home Screen\".",  hint_name: "Write in CAPITAL letters, e.g. VICTOR'S DRYCLEANER", hint_phone: "Digits only, no + sign. Example:",  forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
+    rf_t: "Refer a friend", rf_p: g => `Introduce Ecrici to a shop owner. When they make their first payment, you get ${g} (half of the first month). They write your number under "Referred by" or open your link.`, rf_copy: "Copy my link", rf_wa: "Send on WhatsApp", rf_msg: (l) => `Hello 😊 I use Ecrici to manage my sales, credit and stock. Try it free for 7 days: ${l}`, ref_l: "Referred by (optional)", ref_h: "Name or number of the person who introduced you to Ecrici.", inst: "Install the app", f_plan: "Plan:", f_help: "Need help? WhatsApp", f_priv: "Privacy and terms", ios_t: "On iPhone: open this site in Safari, tap ••• (bottom right) or the Share button (square with an arrow), tap Share, then scroll and tap \"Add to Home Screen\".",  hint_name: "Write in CAPITAL letters, e.g. VICTOR'S DRYCLEANER", hint_phone: "Digits only, no + sign. Example:",  forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
     wa_new: (n, p) => `Hello, I just created my Ecrici account for the shop ${n} (${p}). Please activate it.`,
     wa_renew: (n, p) => `Hello, I would like to renew my Ecrici subscription for the shop ${n} (${p}).`,
     acct: "Account", until: d => `Active until ${d}`, sync_ok: "Synced", sync_wait: "Waiting for connection", logout_q: "Log out? This shop's data will be removed from this phone (it stays in your account).",
@@ -170,11 +170,14 @@ document.body.appendChild(gate);
 if (hideStyle) hideStyle.remove();
 document.documentElement.setAttribute("translate", "no"); { const m = document.createElement("meta"); m.name = "google"; m.content = "notranslate"; document.head.appendChild(m); }
 
-let gateKind = "loading", mode = "login", form = { country: "BJ", phone: "", name: "", code: "" }, busyAuth = false, authErrText = "";
+let gateKind = "loading", mode = "login", form = { country: "BJ", phone: "", name: "", code: "", ref: "" }, busyAuth = false, authErrText = "";
 try {
   const jc = new URLSearchParams(location.search).get("join");
   if (jc) { lsSet("ecrici-join", String(jc).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 16)); history.replaceState(null, "", location.pathname); }
   form.code = lsGet("ecrici-join") || ""; if (form.code) mode = "join";
+  const rf = new URLSearchParams(location.search).get("ref");
+  if (rf) { lsSet("ecrici-ref", String(rf).replace(/[<>"]/g, "").trim().slice(0, 60)); history.replaceState(null, "", location.pathname); }
+  form.ref = lsGet("ecrici-ref") || ""; if (form.ref && !form.code) mode = "signup";
 } catch (e) {}
 const COUNTRY_OPTS = () => Object.entries(COUNTRIES).map(([k, v]) => `<option value="${k}" ${form.country === k ? "selected" : ""}>${esc(v.name)} (+${v.cc})</option>`).join("");
 const shopRow = () => jget(K.acct) || {};
@@ -203,6 +206,7 @@ function drawGate() {
     h = head() + `<div class="card form"><h2>${esc(jn ? g("join_t") : su ? g("signup") : g("login"))}</h2>
       ${jn ? `<p class="lg-tag" style="margin:0">${esc(g("join_hint"))}</p>` : ""}
       ${su ? `<div class="field"><label for="lg-name">${esc(g("shop"))}</label><input id="lg-name" value="${esc(form.name)}" autocomplete="organization" autocapitalize="characters" placeholder="${esc(lang() === "fr" ? "BOUTIQUE DE VICTOR" : "VICTOR'S DRYCLEANER")}" style="text-transform:uppercase"></div>` : ""}
+      ${su ? `<div class="field"><label for="lg-ref">${esc(g("ref_l"))}</label><input id="lg-ref" value="${esc(form.ref)}" autocomplete="off" maxlength="60"><small class="lg-hint" style="opacity:.7;font-size:.8em">${esc(g("ref_h"))}</small></div>` : ""}
       <div class="field"><label for="lg-country">${esc(g("country"))}</label><select id="lg-country">${COUNTRY_OPTS()}</select></div>
       <div class="field"><label for="lg-phone">${esc(g("phone"))}</label><input id="lg-phone" value="${esc(form.phone)}" inputmode="tel" autocomplete="tel" placeholder="${esc(PH[form.country] || "")}"><small class="lg-hint" style="opacity:.7;font-size:.8em">${esc(g("hint_phone"))} ${esc(PH[form.country] || "")}</small></div>
       <div class="field"><label for="lg-pw">${esc(su || jn ? g("pw") : g("pw_login"))}</label><input id="lg-pw" type="password" autocomplete="${su || jn ? "new-password" : "current-password"}"></div>
@@ -258,8 +262,8 @@ gate.addEventListener("change", e => { if (e.target.id === "lg-country") { grab(
 gate.addEventListener("keydown", e => { if (e.key === "Enter" && gateKind === "auth" && e.target.tagName === "INPUT" && e.target.type !== "checkbox") submitAuth(); });
 function grab() {
   const v = id => { const el = gate.querySelector(id); return el ? el.value : null; };
-  const c = v("#lg-country"), p = v("#lg-phone"), n = v("#lg-name"), cd = v("#lg-code");
-  if (c) form.country = c; if (p !== null) form.phone = p; if (n !== null) form.name = n; if (cd !== null) form.code = cd.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const c = v("#lg-country"), p = v("#lg-phone"), n = v("#lg-name"), cd = v("#lg-code"), rf = v("#lg-ref");
+  if (c) form.country = c; if (p !== null) form.phone = p; if (n !== null) form.name = n; if (rf !== null) form.ref = rf; if (cd !== null) form.code = cd.toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
 /* ---------- sign up / log in ---------- */
@@ -287,7 +291,7 @@ async function submitAuth() {
   busyAuth = true; drawGate();
   try {
     let r;
-    if (su) r = await http("/auth/v1/signup", { method: "POST", body: { email: emailOf(id), password: pw, data: { name: form.name.trim().toUpperCase(), phone: id, country: form.country } } });
+    if (su) r = await http("/auth/v1/signup", { method: "POST", body: { email: emailOf(id), password: pw, data: { name: form.name.trim().toUpperCase(), phone: id, country: form.country, ref: form.ref.trim().slice(0, 60) } } });
     else if (jn) {
       r = await http("/auth/v1/signup", { method: "POST", body: { email: emailOf(id), password: pw, data: { join: form.code, phone: id, country: form.country } } });
       if (!r.ok && /exists|already/i.test(String((r.json || {}).error_code || "") + String((r.json || {}).msg || ""))) r = await http("/auth/v1/token?grant_type=password", { method: "POST", body: { email: emailOf(id), password: pw } });
@@ -303,6 +307,7 @@ async function submitAuth() {
         if (!jr.ok && !/already in a team/i.test(m)) { authErrText = /already has a shop/i.test(m) ? g("e_hasshop") : g("e_invite"); busyAuth = false; drawGate(); return; }
       }
       if (su) { try { if (!S.shop.name || S.shop.name === "Ma Boutique") S.shop.name = form.name.trim().toUpperCase(); S.shop.country = form.country; S.shop.phone = id; } catch (e) {} }
+      if (su) { try { lsSet("ecrici-ref", ""); form.ref = ""; } catch (e) {} }
       busyAuth = false; await enter(); return;
     }
   } catch (e) { authErrText = e.offline ? g("offline") : g("e_other"); }
@@ -553,6 +558,17 @@ function teamSection() {
     ${team.members.length ? `<div class="card flush" style="background:var(--paper)">${rows}</div>` : `<div class="note" style="margin:0">${esc(g("tl_none"))}</div>`}</div></section>`;
 }
 
+function referSection() {
+  if (member || !active) return "";
+  const a = shopRow(), ph = String(a.phone || "").replace(/\D/g, ""); if (!ph) return "";
+  const cc = curCountry(), link = location.origin + "/?ref=" + ph, amt = fmtMoney(Math.round(priceOf(cc).base / 2), cc, lang());
+  const wa = "https://wa.me/?text=" + encodeURIComponent(g("rf_msg", link));
+  return `<section class="sec"><h2>${esc(g("rf_t"))}</h2><div class="card form"><p class="note" style="margin:0">${esc(g("rf_p", amt))}</p>
+    <div class="note" style="margin:0;word-break:break-all">${esc(link)}</div>
+    <button class="btn" data-lg-act="tm-copy" data-link="${esc(link)}">${esc(g("rf_copy"))}</button>
+    <a class="btn primary" href="${wa}" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">${esc(g("rf_wa"))}</a></div></section>`;
+}
+
 /* ---------- Settings: account block ---------- */
 const baseSettings = window.viewSettings;
 window.viewSettings = function () {
@@ -560,7 +576,7 @@ window.viewSettings = function () {
   const until = a.paid_until ? new Date(a.paid_until + "T12:00:00").toLocaleDateString(l === "fr" ? "fr-FR" : "en-GB", { day: "numeric", month: "long", year: "numeric" }) : "";
   const dirty = S.updated > lastSynced;
   const w = waLink("");
-  return baseSettings() + shopsSection() + teamSection() + `<section class="sec"><h2>${esc(g("acct"))}</h2><div class="card form">
+  return baseSettings() + shopsSection() + teamSection() + referSection() + `<section class="sec"><h2>${esc(g("acct"))}</h2><div class="card form">
     <div class="note" style="margin:0">${esc(a.phone ? "+" + a.phone : "")}${until ? " · " + esc(g("until", until)) : ""}<br>${esc(dirty ? g("sync_wait") : g("sync_ok"))}</div>
     ${w ? `<a class="btn" href="${w}" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">${esc(g("help"))}</a>` : ""}
     <div class="field"><label for="lg-npw">${esc(g("chpw"))}</label><input id="lg-npw" type="password" autocomplete="new-password" placeholder="${esc(g("npw"))}"></div>
