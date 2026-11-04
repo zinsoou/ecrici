@@ -15,6 +15,7 @@ const lsDel = k => { try { localStorage.removeItem(k); } catch (e) {} };
 const jget = k => { try { return JSON.parse(lsGet(k)); } catch (e) { return null; } };
 const todayUTC = () => new Date().toISOString().slice(0, 10);
 const daysFrom = iso => Math.round((new Date(iso + "T12:00:00Z") - new Date(todayUTC() + "T12:00:00Z")) / 86400000);
+try { if (!localStorage.getItem("ecrici-lang-init")) { localStorage.setItem("ecrici-lang-init", "1"); if (/^en/i.test(navigator.language || "") && S && S.shop && S.shop.lang === "fr" && !(S.txs || []).length && S.shop.name === "Ma Boutique") S.shop.lang = "en"; } } catch (e) {}
 const lang = () => ((S && S.shop && S.shop.lang) === "en" ? "en" : "fr");
 
 /* ---------- network ---------- */
@@ -87,9 +88,9 @@ const G = {
   fr: {
     tag: "Votre cahier de boutique : ventes, crédits et stock, même sans internet.",
     login: "Se connecter", signup: "Créer mon compte", have: "J'ai déjà un compte", nohave: "Nouvelle boutique ? Créer un compte",
-    shop: "Nom de la boutique", country: "Pays", phone: "Numéro de téléphone", pw: "Mot de passe (6 caractères minimum)", show: "Afficher le mot de passe",
+    shop: "Nom de la boutique", country: "Pays", phone: "Numéro de téléphone", pw: "Mot de passe (8 caractères minimum)", pw_login: "Mot de passe", show: "Afficher le mot de passe",
     wait: "Un instant…", offline: "Pas de connexion internet. Connectez-vous une première fois avec internet.",
-    e_creds: "Numéro ou mot de passe incorrect.", e_exists: "Ce numéro a déjà un compte. Connectez-vous.", e_weak: "Mot de passe trop court (6 caractères minimum).",
+    e_creds: "Numéro ou mot de passe incorrect.", e_exists: "Ce numéro a déjà un compte. Connectez-vous.", e_weak: "Mot de passe trop court (8 caractères minimum).",
     e_rate: "Trop d'essais. Réessayez dans quelques minutes.", e_phone: "Numéro de téléphone invalide.", e_name: "Écrivez le nom de la boutique.",
     e_email: "Le serveur refuse ce numéro (voir le guide de lancement).", e_other: "Erreur. Réessayez.", e_confirm: "Compte créé, mais le serveur demande une confirmation. Voir le guide.",
     pend_t: "Compte créé", pend_p: n => `Votre boutique « ${n} » attend l'approbation. Écrivez-nous sur WhatsApp pour l'activer.`,
@@ -98,10 +99,14 @@ const G = {
     wa: "Écrire sur WhatsApp", check: "Vérifier maintenant", out: "Se déconnecter", backup: "Sauvegarder mes données",
     off_t: "Pas de connexion", off_p: "Impossible de vérifier votre abonnement pour l'instant. Réessayez avec internet.", retry: "Réessayer",
     err_t: "Compte introuvable", err_p: "Votre compte n'est pas encore prêt. Réessayez dans un instant.",
-    chpw: "Changer le mot de passe", npw: "Nouveau mot de passe", npw2: "Répétez le mot de passe", chpw_go: "Enregistrer le mot de passe", chpw_ok: "Mot de passe changé", chpw_mismatch: "Les deux mots de passe sont différents.", chpw_weak: "6 caractères minimum.", chpw_fail: "Impossible pour le moment. Réessayez avec internet.", chpw_login: "Pour votre sécurité, déconnectez-vous puis reconnectez-vous avant de changer le mot de passe.",
+    chpw: "Changer le mot de passe", npw: "Nouveau mot de passe", npw2: "Répétez le mot de passe", chpw_go: "Enregistrer le mot de passe", chpw_ok: "Mot de passe changé", chpw_mismatch: "Les deux mots de passe sont différents.", chpw_weak: "8 caractères minimum.", chpw_fail: "Impossible pour le moment. Réessayez avec internet.", chpw_login: "Pour votre sécurité, déconnectez-vous puis reconnectez-vous avant de changer le mot de passe.",
     join_t: "Rejoindre une boutique", code: "Code d'invitation", join_go: "Rejoindre", have_join: "J'ai un code d'invitation", join_hint: "Le propriétaire de la boutique vous a invité. Créez votre connexion.", e_invite: "Invitation invalide ou expirée. Demandez un nouveau lien au propriétaire.", e_hasshop: "Ce numéro a déjà sa propre boutique. Utilisez un autre numéro.", nolink_t: "Connexion non liée à une boutique", nolink_p: "Cet accès n'est lié à aucune boutique, ou le propriétaire l'a retiré. Demandez un nouveau lien d'invitation.", emp_blk_t: "Abonnement terminé", emp_blk_p: "L'abonnement de la boutique est terminé. Demandez au propriétaire de le renouveler.",
     tl_t: "Employés avec leur propre connexion", tl_p: "Invitez un employé : il crée sa propre connexion sur son téléphone, sans votre mot de passe. Vous pouvez le retirer à tout moment.", tl_name: "Nom de l'employé", tl_go: "Créer l'invitation", tl_pend: "Invitations en attente (valables 48 h)", tl_team: "Employés", tl_none: "Aucun employé pour l'instant.", tl_wa: "Envoyer par WhatsApp", tl_copy: "Copier le lien", tl_cancel: "Annuler", tl_remove: "Retirer", tl_rm_q: "Retirer cet employé ? Sa connexion sera supprimée.", tl_err: "Impossible pour le moment. Réessayez.", tl_full: "Maximum 10 employés et invitations.", tl_plan: "L'abonnement doit être actif pour inviter.", tl_msg: (shop, name, link) => `Bonjour ${name}, je vous invite à rejoindre ${shop} sur Ecrici. Ouvrez ce lien et créez votre connexion : ${link}`, copied: "Lien copié",
     sh_t: "Mes boutiques", sh_chip: "Boutiques", sh_p: "Gérez plusieurs boutiques avec un seul compte. Chaque boutique a ses propres clients, produits et stock.", sh_price: p => `Chaque boutique en plus : ${p} par mois.`, sh_manage: "Voir mes boutiques", sh_add: "Ajouter une boutique", sh_name: "Nom de la nouvelle boutique", sh_go: "Demander l'ajout", sh_close: "Fermer", sh_back: "Retour", sh_open: "Ouvrir", sh_cur: "Boutique ouverte", sh_pend: "En attente d'activation", sh_susp: "Suspendue", sh_all: "Vue d'ensemble de toutes les boutiques", sh_sent: "Demande envoyée. Écrivez-nous sur WhatsApp pour activer la boutique.", sh_wa: (n, s, p) => `Bonjour, je souhaite ajouter la boutique « ${n} » à mon compte Ecrici (${s}, +${p}).`, sh_err: "Impossible pour le moment. Réessayez.", sh_plan: "L'abonnement doit être actif pour ajouter une boutique.", sh_max: "Nombre maximum de boutiques atteint.", sh_pending_max: "Deux demandes sont déjà en attente. Attendez leur activation.", ov_t: "Toutes les boutiques", ov_today: "Ventes du jour", ov_month: "Ventes du mois", ov_owed: "À recevoir (crédits)", ov_all_today: "Total ventes du jour", ov_skip: n => `${n} boutique(s) pas encore synchronisée(s).`, tl_branch: "Boutique de l'employé",
+    ab_h: "Ecrici, le cahier de votre boutique", ab_p: "Ecrici est une application simple pour les petits commerces : notez vos ventes, suivez les crédits de vos clients, gérez votre stock et envoyez des reçus PDF sur WhatsApp. Elle fonctionne même sans internet.",
+    ab_li: ["Ventes et reçus PDF au nom du client", "Crédits et dettes des clients avec rappels WhatsApp", "Stock de produits et services", "Bilan du jour et du mois : ventes, dépenses, bénéfice", "Plusieurs boutiques et employés avec leur propre accès", "Marche sur téléphone, tablette et ordinateur"],
+    faq_h: "Questions fréquentes",
+    faq: [["Ecrici marche-t-il sans internet ?", "Oui. Vous continuez à vendre sans réseau. Tout est enregistré sur le téléphone puis synchronisé avec votre compte dès que vous avez internet."], ["Puis-je envoyer les reçus sur WhatsApp ?", "Oui, chaque vente produit un reçu ou une facture PDF que vous envoyez en un geste."], ["Combien coûte Ecrici ?", "À partir de 1 000 FCFA par mois, avec un essai gratuit de 7 jours. Chaque boutique en plus coûte un peu plus."], ["Puis-je gérer plusieurs boutiques et des employés ?", "Oui. Chaque boutique a ses propres livres et chaque employé a sa propre connexion."]],
     inst: "Installer l'application", f_plan: "Abonnement :", f_help: "Besoin d'aide ? WhatsApp", f_priv: "Confidentialité et conditions", ios_t: "Sur iPhone : ouvrez ce site dans Safari, touchez ••• (en bas à droite) ou le bouton Partager (carré avec flèche), touchez Partager, puis faites défiler et touchez « Sur l'écran d'accueil ».",  hint_name: "Écrivez en MAJUSCULES, ex : BOUTIQUE DE VICTOR", hint_phone: "Chiffres seulement, sans le +. Ex :",  forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
     wa_new: (n, p) => `Bonjour, je viens de créer mon compte Ecrici pour la boutique ${n} (${p}). Merci de l'activer.`,
     wa_renew: (n, p) => `Bonjour, je souhaite renouveler mon abonnement Ecrici pour la boutique ${n} (${p}).`,
@@ -112,9 +117,9 @@ const G = {
   en: {
     tag: "Your shop ledger: sales, credit and stock, even without internet.",
     login: "Log in", signup: "Create my account", have: "I already have an account", nohave: "New shop? Create an account",
-    shop: "Shop name", country: "Country", phone: "Phone number", pw: "Password (6 characters minimum)", show: "Show password",
+    shop: "Shop name", country: "Country", phone: "Phone number", pw: "Password (8 characters minimum)", pw_login: "Password", show: "Show password",
     wait: "One moment…", offline: "No internet connection. Log in the first time with internet.",
-    e_creds: "Wrong number or password.", e_exists: "This number already has an account. Log in.", e_weak: "Password too short (6 characters minimum).",
+    e_creds: "Wrong number or password.", e_exists: "This number already has an account. Log in.", e_weak: "Password too short (8 characters minimum).",
     e_rate: "Too many tries. Please wait a few minutes.", e_phone: "Invalid phone number.", e_name: "Enter the shop name.",
     e_email: "The server refused this number (see the launch guide).", e_other: "Error. Please try again.", e_confirm: "Account created, but the server asks for confirmation. See the guide.",
     pend_t: "Account created", pend_p: n => `Your shop “${n}” is waiting for approval. Message us on WhatsApp to activate it.`,
@@ -123,10 +128,14 @@ const G = {
     wa: "Message on WhatsApp", check: "Check now", out: "Log out", backup: "Back up my data",
     off_t: "No connection", off_p: "We can't check your subscription right now. Try again with internet.", retry: "Try again",
     err_t: "Account not found", err_p: "Your account isn't ready yet. Try again in a moment.",
-    chpw: "Change password", npw: "New password", npw2: "Repeat the password", chpw_go: "Save password", chpw_ok: "Password changed", chpw_mismatch: "The two passwords are different.", chpw_weak: "6 characters minimum.", chpw_fail: "Not possible right now. Try again with internet.", chpw_login: "For your security, log out and log in again before changing the password.",
+    chpw: "Change password", npw: "New password", npw2: "Repeat the password", chpw_go: "Save password", chpw_ok: "Password changed", chpw_mismatch: "The two passwords are different.", chpw_weak: "8 characters minimum.", chpw_fail: "Not possible right now. Try again with internet.", chpw_login: "For your security, log out and log in again before changing the password.",
     join_t: "Join a shop", code: "Invitation code", join_go: "Join", have_join: "I have an invitation code", join_hint: "The shop owner invited you. Create your login.", e_invite: "Invitation invalid or expired. Ask the owner for a new link.", e_hasshop: "This number already has its own shop. Use another number.", nolink_t: "Login not linked to a shop", nolink_p: "This login is not linked to any shop, or the owner removed it. Ask for a new invitation link.", emp_blk_t: "Plan ended", emp_blk_p: "The shop's plan has ended. Ask the owner to renew it.",
     tl_t: "Employees with their own login", tl_p: "Invite an employee: they create their own login on their phone, without your password. You can remove them at any time.", tl_name: "Employee name", tl_go: "Create invitation", tl_pend: "Pending invitations (valid 48 h)", tl_team: "Employees", tl_none: "No employees yet.", tl_wa: "Send on WhatsApp", tl_copy: "Copy link", tl_cancel: "Cancel", tl_remove: "Remove", tl_rm_q: "Remove this employee? Their login will be deleted.", tl_err: "Not possible right now. Try again.", tl_full: "Maximum 10 employees and invitations.", tl_plan: "The plan must be active to invite.", tl_msg: (shop, name, link) => `Hello ${name}, I'm inviting you to join ${shop} on Ecrici. Open this link and create your login: ${link}`, copied: "Link copied",
     sh_t: "My shops", sh_chip: "Shops", sh_p: "Manage several shops with one account. Each shop has its own customers, products and stock.", sh_price: p => `Each extra shop: ${p} per month.`, sh_manage: "See my shops", sh_add: "Add a shop", sh_name: "New shop name", sh_go: "Request this shop", sh_close: "Close", sh_back: "Back", sh_open: "Open", sh_cur: "Open now", sh_pend: "Waiting for activation", sh_susp: "Suspended", sh_all: "Overview of all shops", sh_sent: "Request sent. Message us on WhatsApp to activate the shop.", sh_wa: (n, s, p) => `Hello, I would like to add the shop "${n}" to my Ecrici account (${s}, +${p}).`, sh_err: "Not possible right now. Try again.", sh_plan: "The plan must be active to add a shop.", sh_max: "Maximum number of shops reached.", sh_pending_max: "Two requests are already waiting. Wait until they are activated.", ov_t: "All shops", ov_today: "Sales today", ov_month: "Sales this month", ov_owed: "To collect (credit)", ov_all_today: "Total sales today", ov_skip: n => `${n} shop(s) not synced yet.`, tl_branch: "Employee's shop",
+    ab_h: "Ecrici, your shop ledger", ab_p: "Ecrici is a simple app for small shops: record sales, track customer credit, manage stock and send PDF receipts on WhatsApp. It works even without internet.",
+    ab_li: ["Sales and PDF receipts named after the customer", "Customer credit and debts with WhatsApp reminders", "Stock of products and services", "Daily and monthly report: sales, expenses, profit", "Several shops and employees, each with their own login", "Works on phone, tablet and computer"],
+    faq_h: "Frequently asked questions",
+    faq: [["Does Ecrici work without internet?", "Yes. You keep selling when the network is down. Everything saves on the phone and syncs to your account when you are back online."], ["Can I send receipts on WhatsApp?", "Yes. Every sale makes a PDF receipt or invoice you can send in one tap."], ["How much does Ecrici cost?", "It starts from a low monthly price per shop, with a 7-day free trial. Extra shops cost a little more. The price for your country is shown at the bottom of this page."], ["Can I manage several shops and employees?", "Yes. Each shop has its own books and each employee has their own login."]],
     inst: "Install the app", f_plan: "Plan:", f_help: "Need help? WhatsApp", f_priv: "Privacy and terms", ios_t: "On iPhone: open this site in Safari, tap ••• (bottom right) or the Share button (square with an arrow), tap Share, then scroll and tap \"Add to Home Screen\".",  hint_name: "Write in CAPITAL letters, e.g. VICTOR'S DRYCLEANER", hint_phone: "Digits only, no + sign. Example:",  forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
     wa_new: (n, p) => `Hello, I just created my Ecrici account for the shop ${n} (${p}). Please activate it.`,
     wa_renew: (n, p) => `Hello, I would like to renew my Ecrici subscription for the shop ${n} (${p}).`,
@@ -142,6 +151,7 @@ const g = (k, ...a) => { const v = G[lang()][k]; return typeof v === "function" 
 const css = document.createElement("style");
 css.textContent = `#lg-gate{position:fixed;inset:0;z-index:9999;overflow:auto;background:var(--paper);color:var(--ink);font-family:var(--font-body);padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
 #lg-gate .lg-wrap{max-width:420px;margin:0 auto;display:grid;gap:14px}
+#lg-gate .lg-about{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink)}#lg-gate .lg-about h2{font-size:18px;margin:0 0 6px}#lg-gate .lg-about h3{font-size:16px;margin:16px 0 4px;font-family:var(--font-display)}#lg-gate .lg-about h4{font-size:14px;margin:10px 0 2px}#lg-gate .lg-about p,#lg-gate .lg-about li{font-size:14px;line-height:1.5;color:var(--muted);margin:0}#lg-gate .lg-about ul{margin:8px 0 0;padding-left:18px;display:grid;gap:3px}
 #lg-gate h1{font-family:var(--font-display);font-size:30px;margin:10px 0 0;letter-spacing:-.5px}
 #lg-gate h2{font-family:var(--font-display);font-size:20px;margin:0}
 #lg-gate .lg-tag{color:var(--muted);margin:0;font-size:15px}
@@ -175,6 +185,7 @@ const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.
 let iosHelp = false;
 function canInst() { try { return typeof deferredInstall !== "undefined" && !!deferredInstall && !matchMedia("(display-mode: standalone)").matches; } catch (e) { return false; } }
 window.addEventListener("beforeinstallprompt", () => setTimeout(() => { if (gateKind === "auth") { grab(); drawGate(); } }, 50));
+const about = () => `<section class="lg-about"><h2>${esc(g("ab_h"))}</h2><p>${esc(g("ab_p"))}</p><ul>${g("ab_li").map(x => `<li>${esc(x)}</li>`).join("")}</ul><h3>${esc(g("faq_h"))}</h3>${g("faq").map(([q, a]) => `<h4>${esc(q)}</h4><p>${esc(a)}</p>`).join("")}</section>`;
 const foot = () => {
   const w = waLink(""), y = new Date().getFullYear();
   return `<div class="lg-foot">${g("price") ? `<div>${esc(g("f_plan"))} <b>${esc(g("price"))}</b></div>` : ""}
@@ -193,7 +204,7 @@ function drawGate() {
       ${su ? `<div class="field"><label for="lg-name">${esc(g("shop"))}</label><input id="lg-name" value="${esc(form.name)}" autocomplete="organization" autocapitalize="characters" placeholder="${esc(lang() === "fr" ? "BOUTIQUE DE VICTOR" : "VICTOR'S DRYCLEANER")}" style="text-transform:uppercase"></div>` : ""}
       <div class="field"><label for="lg-country">${esc(g("country"))}</label><select id="lg-country">${COUNTRY_OPTS()}</select></div>
       <div class="field"><label for="lg-phone">${esc(g("phone"))}</label><input id="lg-phone" value="${esc(form.phone)}" inputmode="tel" autocomplete="tel" placeholder="${esc(PH[form.country] || "")}"><small class="lg-hint" style="opacity:.7;font-size:.8em">${esc(g("hint_phone"))} ${esc(PH[form.country] || "")}</small></div>
-      <div class="field"><label for="lg-pw">${esc(g("pw"))}</label><input id="lg-pw" type="password" autocomplete="${su || jn ? "new-password" : "current-password"}"></div>
+      <div class="field"><label for="lg-pw">${esc(su || jn ? g("pw") : g("pw_login"))}</label><input id="lg-pw" type="password" autocomplete="${su || jn ? "new-password" : "current-password"}"></div>
       ${jn ? `<div class="field"><label for="lg-code">${esc(g("code"))}</label><input id="lg-code" value="${esc(form.code)}" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase"></div>` : ""}
       <label class="lg-chk"><input type="checkbox" data-lg="showpw"> ${esc(g("show"))}</label>
       <div class="lg-err" id="lg-err" role="alert">${esc(authErrText)}</div>
@@ -220,7 +231,7 @@ function drawGate() {
       <button class="btn primary" data-lg="check">${esc(g("retry"))}</button>
       <button class="btn small ghost" data-lg="logout" style="justify-self:start">${esc(g("out"))}</button></div>`;
   }
-  gate.innerHTML = `<div class="lg-wrap">${h}${gateKind === "loading" ? "" : foot()}</div>`;
+  gate.innerHTML = `<div class="lg-wrap">${h}${gateKind === "loading" ? "" : (gateKind === "auth" ? about() : "") + foot()}</div>`;
   gate.hidden = false;
 }
 function showGate(kind) { gateKind = kind; drawGate(); }
@@ -268,7 +279,7 @@ async function submitAuth() {
   authErrText = "";
   if (id.length < 10 || id.length > 15) authErrText = g("e_phone");
   else if (su && !form.name.trim().toUpperCase()) authErrText = g("e_name");
-  else if (pw.length < 6) authErrText = g("e_weak");
+  else if (pw.length < (su || jn ? 8 : 1)) authErrText = g("e_weak");
   else if (jn && form.code.length < 6) authErrText = g("e_invite");
   if (authErrText) { drawGate(); return; }
   busyAuth = true; drawGate();
@@ -491,7 +502,7 @@ async function forceLogout() {
 }
 async function changePassword() {
   const a = document.getElementById("lg-npw"), c = document.getElementById("lg-npw2"); if (!a || !c) return;
-  if (a.value.length < 6) { toast(g("chpw_weak")); return; }
+  if (a.value.length < 8) { toast(g("chpw_weak")); return; }
   if (a.value !== c.value) { toast(g("chpw_mismatch")); return; }
   try {
     const r = await api("/auth/v1/user", { method: "PUT", body: { password: a.value } });

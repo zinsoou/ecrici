@@ -159,10 +159,10 @@ async function act(id,a){
   const s=shops.find(x=>x.id===id); if(!s) return;
   if(a==="pw"){
     const L="ABCDEFGHJKLMNPQRSTUVWXYZ",pk=n=>Array.from({length:n},()=>L[Math.floor(Math.random()*L.length)]).join(""), def=pk(3)+String(Math.floor(1000+Math.random()*9000))+pk(1);
-    const np=prompt("New password for "+(s.name||s.phone)+" (6 characters or more). Send it to the shop afterwards:",def);
+    const np=prompt("New password for "+(s.name||s.phone)+" (8 characters or more). Send it to the shop afterwards:",def);
     if(np===null) return;
     err=""; msg=""; msgLink="";
-    if(np.length<6){ err="Password must be at least 6 characters."; draw(); return; }
+    if(np.length<8){ err="Password must be at least 8 characters."; draw(); return; }
     const r=await api("/rest/v1/rpc/admin_set_password",{method:"POST",body:{target:id,new_password:np}});
     if(!r.ok){ err=r.status===401?"Session ended. Log in again.":((r.json&&r.json.message)||"Not saved")+(r.status===404?" (run upgrade-password-reset.sql in Supabase first)":""); draw(); return; }
     msg="Password changed for "+(s.name||s.phone)+". New password: "+np+" ";
