@@ -354,7 +354,7 @@ const T = {
     lock_on:"Activer le verrouillage par PIN",lock_off:"Désactiver le verrouillage",member_out:"Déconnexion",signout_phone:"Se déconnecter de ce téléphone",signout_hint:"Pour retirer ce compte de ce téléphone sans lever le verrouillage. Il faudra le mot de passe pour se reconnecter.",lock:"Verrouiller",unlock:"Ouvrir",who:"Qui êtes-vous ?",wrong_pin:"PIN incorrect.",
     forgot:"PIN oublié ?",reset_access:"Désactiver le verrouillage",reset_access_hint:"Entrez le code de secours (affiché au propriétaire dans les réglages).",reset_wrong:"Code de secours incorrect.",
     recovery:"Code de secours (notez-le)",served_by:"Servi par",
-    pay_t:"Détails de paiement",pay_sub:"Affichés sur vos factures tant qu'un client doit de l'argent.",pay_n:"Numéro ou compte",pay_a:"Nom du titulaire",pay_bank:"Banque",pay_other:"Autre",pay_go:"+ Ajouter mes détails de paiement",pay_hint:"Une ligne s'ajoute après chaque enregistrement.",
+    pay_t:"Détails de paiement",pay_sub:"Affichés sur toutes vos factures.",pay_n:"Numéro ou compte",pay_a:"Nom du titulaire",pay_bank:"Banque",pay_other:"Autre",pay_go:"+ Ajouter mes détails de paiement",pay_hint:"Une ligne s'ajoute après chaque enregistrement.",
     bill_to:"Facturé à",st_paid:"PAYÉE",st_part:"PAIEMENT PARTIEL",st_unpaid:"IMPAYÉE",due_rcpt:"À payer dès réception",how_pay:"Comment payer",pay_info:"Détails de paiement (affichés sur les factures)",pay_ph:"Ex : MTN MoMo 97 00 00 00 (Nom)\nMoov Money 96 00 00 00\nBanque : ...",
     invoice:"FACTURE",as_invoice:"Voir en facture",as_receipt:"Voir en reçu",invoice_note:"Facture simple, sans valeur fiscale.",due:"Reste dû",balance_now:"Solde total du client",
     msg_invoice_intro:(n)=>`Bonjour ${n}, voici votre facture :`
@@ -426,7 +426,7 @@ const T = {
     lock_on:"Turn on PIN lock",lock_off:"Turn off PIN lock",member_out:"Sign out",signout_phone:"Sign out of this phone",signout_hint:"Removes this account from this phone without turning off the lock. The password is needed to sign back in.",lock:"Lock",unlock:"Open",who:"Who are you?",wrong_pin:"Wrong PIN.",
     forgot:"Forgot PIN?",reset_access:"Turn off the lock",reset_access_hint:"Enter the recovery code (shown to the owner in Settings).",reset_wrong:"Wrong recovery code.",
     recovery:"Recovery code (write it down)",served_by:"Served by",
-    pay_t:"Payment details",pay_sub:"Shown on your invoices while a customer still owes money.",pay_n:"Number or account",pay_a:"Account name",pay_bank:"Bank",pay_other:"Other",pay_go:"+ Add my payment details",pay_hint:"A new empty line appears after each save.",
+    pay_t:"Payment details",pay_sub:"Shown on all your invoices.",pay_n:"Number or account",pay_a:"Account name",pay_bank:"Bank",pay_other:"Other",pay_go:"+ Add my payment details",pay_hint:"A new empty line appears after each save.",
     bill_to:"Bill to",st_paid:"PAID",st_part:"PART PAID",st_unpaid:"UNPAID",due_rcpt:"Due on receipt",how_pay:"How to pay",pay_info:"Payment details (shown on invoices)",pay_ph:"E.g. MTN MoMo 97 00 00 00 (Name)\nMoov Money 96 00 00 00\nBank: ...",
     invoice:"INVOICE",as_invoice:"View as invoice",as_receipt:"View as receipt",invoice_note:"Simple invoice, no tax validity.",due:"Amount due",balance_now:"Customer's total balance",
     msg_invoice_intro:(n)=>`Hello ${n}, here is your invoice:`
@@ -1202,7 +1202,7 @@ function receiptLines(x,kind){
     out.push("-----",`${t("total")}: ${money(x.total)}`,`${t("paid")}: ${money(x.paid)}`);
     if(x.total-x.paid>0.001) out.push(`${kind==="invoice"?t("due"):t("balance_left")}: ${money(x.total-x.paid)}`);
     if(x.total-x.paid>0.001&&(x.due||kind==="invoice")) out.push(`${t("due_on")}: ${x.due?fmtDay(x.due):t("due_rcpt")}`);
-    if(kind==="invoice"&&x.total-x.paid>0.001&&payLines().length) out.push("",t("how_pay")+":",...payLines());
+    if(kind==="invoice"&&payLines().length) out.push("",t("pay_t")+":",...payLines());
   }else{
     out.push(`${t("payment")} (${t(x.method||"cash")}): ${money(x.amount)}`);
   }
@@ -1306,7 +1306,7 @@ function ticketPdf(x,kind){
     y+=6; hline(y,M,W-M,A,1.6); y+=20; const lb=`${t("payment")} · ${t(x.method||"cash")}`; txt(lb,M,y,"F2",11,INK); txt(money(x.amount),W-M,y,"F4",12,INK,"r"); y+=6;
   }
   if(x.type==="sale"&&owe>0.001&&(x.due||kind==="invoice")){ y+=14; const l3=t("due_on")+": "; txt(l3,M,y,"F1",9,MUT); txt(x.due?fmtDay(x.due):t("due_rcpt"),M+pdfW(l3,"F1",9),y,"F2",9,INK); }
-  if(kind==="invoice"&&x.type==="sale"&&owe>0.001&&payLines().length){ y+=18; txt(t("how_pay").toUpperCase(),M,y,"F2",8,MUT); y+=4;
+  if(kind==="invoice"&&x.type==="sale"&&payLines().length){ y+=18; txt(t("pay_t").toUpperCase(),M,y,"F2",8,MUT); y+=4;
     payLines().forEach(l=>pdfWrap(l,"F1",9.5,IW).forEach(s=>{ y+=13; txt(s,M,y,"F1",9.5,INK); })); y+=2; }
   if(x.note){ pdfWrap(x.note,"F1",9,IW).forEach(s=>{ y+=13; txt(s,M,y,"F1",9,MUT); }); }
   if(x.cust){ y+=20; const bl=pdfWrap(kind==="invoice"?t("balance_now"):t("balance_after"),"F1",8.5,IW-90); bl.forEach((s,i)=>txt(s,M,y+i*11,"F1",8.5,MUT));
@@ -1357,8 +1357,8 @@ function ticketHtml(x,kind){
     <div class="who"><span>${t("bill_to")}:</span> <b>${esc(custName(x.cust))}</b>${custPhone(x.cust)?`<div class="sub" style="color:var(--muted)">${esc(custPhone(x.cust))}</div>`:""}</div>`:`<div class="who"><span>${t("customer")}:</span> <b>${esc(custName(x.cust))}</b></div>`}
     ${x.by?`<div class="who" style="padding-top:0"><span>${t("served_by")}:</span> ${esc(x.by)}</div>`:""}${rows}
     ${x.type==="sale"&&owe>0.001&&(x.due||kind==="invoice")?`<div class="note2">${t("due_on")}: <b>${esc(x.due?fmtDay(x.due):t("due_rcpt"))}</b></div>`:""}
-    ${kind==="invoice"&&x.type==="sale"&&owe>0.001&&!payLines().length&&!x.void?`<button type="button" class="btn small" data-act="go-pay" style="margin-top:10px;border-style:dashed;width:100%">${t("pay_go")}</button>`:""}
-    ${kind==="invoice"&&x.type==="sale"&&owe>0.001&&payLines().length?`<div style="margin-top:10px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px"><b style="font-size:.85rem">${t("how_pay")}</b>${payLines().map(l=>`<div style="font-size:.92rem;padding-top:3px;overflow-wrap:anywhere">${esc(l)}</div>`).join("")}</div>`:""}
+    ${kind==="invoice"&&x.type==="sale"&&!payLines().length&&!x.void?`<button type="button" class="btn small" data-act="go-pay" style="margin-top:10px;border-style:dashed;width:100%">${t("pay_go")}</button>`:""}
+    ${kind==="invoice"&&x.type==="sale"&&payLines().length?`<div style="margin-top:10px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px"><b style="font-size:.85rem">${t("pay_t")}</b>${payLines().map(l=>`<div style="font-size:.92rem;padding-top:3px;overflow-wrap:anywhere">${esc(l)}</div>`).join("")}</div>`:""}
     ${x.note?`<div class="note2">${esc(x.note)}</div>`:""}
     ${x.cust?`<div class="bal"><span>${kind==="invoice"?t("balance_now"):t("balance_after")}</span><b class="num">${money(Math.max(0,balanceOf(x.cust,x.no)))}</b></div>`:""}
     <div class="thanks">${esc(kind==="invoice"?t("invoice_note"):(sh.footer||t("default_footer")))}</div></div>`;
