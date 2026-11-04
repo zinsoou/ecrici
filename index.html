@@ -297,7 +297,7 @@ const T = {
     existing_customer:"Choisir un client existant",
     name:"Nom",phone:"Téléphone",item:"Article",qty:"Qté",price:"Prix",add_line:"+ Ajouter un article",total:"Total",
     paid_now:"Payé maintenant",pay_full:"Tout payé",pay_credit:"À crédit",pay_part:"Paiement partiel",amount:"Montant",
-    balance_left:"Reste à payer",save_sale:"Enregistrer et créer le reçu",note:"Note (facultatif)",
+    balance_left:"Reste à payer",save_sale:"Enregistrer et créer le reçu",save_invoice:"Enregistrer et créer la facture",note:"Note (facultatif)",
     err_total:"Ajoutez au moins un article avec un prix.",err_cust:"Choisissez ou créez un client pour une vente à crédit.",err_name:"Le nom du client est obligatoire.",
     err_amount:"Entrez un montant supérieur à zéro.",err_over:"Ce montant dépasse ce que le client doit.",
     customers:"Clients",search:"Rechercher",add_customer:"Ajouter un client",no_customers:"Aucun client pour l'instant.",
@@ -369,7 +369,7 @@ const T = {
     existing_customer:"Pick an existing customer",
     name:"Name",phone:"Phone",item:"Item",qty:"Qty",price:"Price",add_line:"+ Add item",total:"Total",
     paid_now:"Paid now",pay_full:"Paid in full",pay_credit:"On credit",pay_part:"Part payment",amount:"Amount",
-    balance_left:"Balance left",save_sale:"Save and create receipt",note:"Note (optional)",
+    balance_left:"Balance left",save_sale:"Save and create receipt",save_invoice:"Save and create invoice",note:"Note (optional)",
     err_total:"Add at least one item with a price.",err_cust:"Choose or create a customer for a credit sale.",err_name:"Customer name is required.",
     err_amount:"Enter an amount above zero.",err_over:"That is more than the customer owes.",
     customers:"Customers",search:"Search",add_customer:"Add customer",no_customers:"No customers yet.",
@@ -788,6 +788,7 @@ function viewSale(){
     <div class="field"><label for="f-note">${t("note")}</label><input id="f-note" data-bind="note" value="${esc(d.note)}" autocomplete="off"></div>
     <div class="err" id="s-err" role="alert">${esc(d.err)}</div>
     <button class="btn primary" data-act="save-sale">${t("save_sale")}</button>
+    <button class="btn" data-act="save-sale" data-k="invoice">${t("save_invoice")}</button>
   </div></section>`;
 }
 function linesHtml(){ const d=ui.draft; return d.lines.map((l,i)=>`<div class="line">
@@ -1383,7 +1384,6 @@ function renderModal(){
       <button class="btn" data-act="copy-receipt" data-id="${x.id}">${t("copy")}</button>
       <button class="btn" data-act="pdf-share" data-id="${x.id}">${t("pdf_send")}</button>
       <button class="btn" data-act="pdf-dl" data-id="${x.id}">${t("pdf_dl")}</button>
-      ${x.type==="sale"?`<button class="btn" data-act="toggle-doc" data-id="${x.id}">${kind==="invoice"?t("as_receipt"):t("as_invoice")}</button>`:""}
       ${(!x.void&&canCancel(x))?`<button class="btn danger" data-act="ask-cancel" data-id="${x.id}">${t("cancel_entry")}</button>`:""}</div>
       <p class="note" style="margin:0">${t("wa_note")}</p>
       <button class="btn" data-act="close-modal">${t("close")}</button></div>`;
@@ -1483,7 +1483,7 @@ function setBind(path,val){
     const h=$("#h"+i); if(h) h.textContent=lineHint(l);
   }
 }
-function saveSale(){
+function saveSale(kind){
   const d=ui.draft; d.err="";
   const lines=d.lines.map(l=>({d:l.d.trim(),q:parseAmt(l.q)||0,p:parseAmt(l.p),pid:l.pid||null,c:(()=>{const pr=l.pid&&S.products.find(z=>z.id===l.pid);return pr&&pr.cost>0?pr.cost:0;})()})).filter(l=>l.q>0&&l.p>0);
   const total=lines.reduce((s,l)=>s+l.q*l.p,0);
@@ -1501,7 +1501,7 @@ function saveSale(){
   const x={id:uid(),no:++S.counter,type:"sale",cust:custId,date:new Date().toISOString(),lines,total,paid,due:(total-paid>0.001&&/^\d{4}-\d{2}-\d{2}$/.test(d.due||""))?d.due:"",note:d.note.trim(),by:me()?me().name:""};
   for(const pid in need){ const pr=S.products.find(y=>y.id===pid); if(pr&&!pr.svc) pr.qty=Math.round((pr.qty-need[pid])*1000)/1000; }
   S.txs.push(x); save();
-  ui.draft=null; ui.modal={type:"receipt",id:x.id}; ui.view="home"; render(); toast(t("created"));
+  ui.draft=null; ui.modal={type:"receipt",id:x.id,kind:kind==="invoice"?"invoice":"receipt"}; ui.view="home"; render(); toast(t("created"));
 }
 function savePayment(id){
   const amt=parseAmt($("#p-amt").value), err=$("#p-err");
@@ -1561,7 +1561,7 @@ document.addEventListener("click",e=>{
     case "add-line": ui.draft.lines.push({d:"",q:"1",p:"",pid:null,auto:false}); render(); { const i=ui.draft.lines.length-1; const f=$("#l"+i+"d"); f&&f.focus(); } break;
     case "del-line": ui.draft.lines.splice(+el.dataset.i,1); render(); break;
     case "mode": ui.draft.mode=el.dataset.m; render(); break;
-    case "save-sale": saveSale(); break;
+    case "save-sale": saveSale(el.dataset.k); break;
     case "open-receipt": ui.modal={type:"receipt",id}; renderModal(); break;
     case "copy-receipt": { const k=ui.modal&&ui.modal.kind; copyText(receiptText(S.txs.find(x=>x.id===id),k)); break; }
     case "set-doc": ui.modal.kind=el.dataset.k==="invoice"?"invoice":"receipt"; renderModal(); break;
