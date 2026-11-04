@@ -15,7 +15,7 @@ const lsDel = k => { try { localStorage.removeItem(k); } catch (e) {} };
 const jget = k => { try { return JSON.parse(lsGet(k)); } catch (e) { return null; } };
 const todayUTC = () => new Date().toISOString().slice(0, 10);
 const daysFrom = iso => Math.round((new Date(iso + "T12:00:00Z") - new Date(todayUTC() + "T12:00:00Z")) / 86400000);
-try { if (!localStorage.getItem("ecrici-lang-init")) { localStorage.setItem("ecrici-lang-init", "1"); if (/^en/i.test(navigator.language || "") && S && S.shop && S.shop.lang === "fr" && !(S.txs || []).length && S.shop.name === "Ma Boutique") S.shop.lang = "en"; } } catch (e) {}
+const langInit = () => { try { if (!localStorage.getItem("ecrici-lang-init")) { localStorage.setItem("ecrici-lang-init", "1"); if (/^en/i.test(navigator.language || "") && S && S.shop && S.shop.lang === "fr" && S.shop.name === "Ma Boutique") S.shop.lang = "en"; } } catch (e) {} };
 const lang = () => ((S && S.shop && S.shop.lang) === "en" ? "en" : "fr");
 
 /* ---------- network ---------- */
@@ -112,7 +112,7 @@ const G = {
     wa_renew: (n, p) => `Bonjour, je souhaite renouveler mon abonnement Ecrici pour la boutique ${n} (${p}).`,
     acct: "Compte", until: d => `Actif jusqu'au ${d}`, sync_ok: "Synchronisé", sync_wait: "En attente de connexion", logout_q: "Se déconnecter ? Les données de cette boutique seront retirées de ce téléphone (elles restent dans votre compte).",
     logout_unsynced: "Des changements ne sont pas encore envoyés. Connectez-vous à internet avant de vous déconnecter.", help: "Besoin d'aide ? WhatsApp",
-    get price() { const c = curCountry(); return fmtMoney(priceOf(c).base, c, "fr") + ("fr" === "fr" ? " / mois" : " / month"); }
+    get price() { const c = curCountry(); return fmtMoney(priceOf(c).base, c, "fr") + " / mois"; }
   },
   en: {
     tag: "Your shop ledger: sales, credit and stock, even without internet.",
@@ -141,7 +141,7 @@ const G = {
     wa_renew: (n, p) => `Hello, I would like to renew my Ecrici subscription for the shop ${n} (${p}).`,
     acct: "Account", until: d => `Active until ${d}`, sync_ok: "Synced", sync_wait: "Waiting for connection", logout_q: "Log out? This shop's data will be removed from this phone (it stays in your account).",
     logout_unsynced: "Some changes are not sent yet. Connect to the internet before logging out.", help: "Need help? WhatsApp",
-    get price() { const c = curCountry(); return fmtMoney(priceOf(c).base, c, "fr") + ("en" === "fr" ? " / mois" : " / month"); }
+    get price() { const c = curCountry(); return fmtMoney(priceOf(c).base, c, "en") + " / month"; }
   }
 };
 const PH = { BJ: "01 97 00 00 11", NG: "0803 123 4567", GH: "024 123 4567", KE: "0712 345 678", TG: "90 12 34 56", CI: "07 01 23 45 67", SN: "77 123 45 67", BF: "70 12 34 56", ML: "70 12 34 56", NE: "90 12 34 56", CM: "6 71 23 45 67", ZA: "082 123 4567", RW: "078 123 4567", TZ: "0712 345 678", UG: "0772 123 456" };
@@ -151,7 +151,7 @@ const g = (k, ...a) => { const v = G[lang()][k]; return typeof v === "function" 
 const css = document.createElement("style");
 css.textContent = `#lg-gate{position:fixed;inset:0;z-index:9999;overflow:auto;background:var(--paper);color:var(--ink);font-family:var(--font-body);padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
 #lg-gate .lg-wrap{max-width:420px;margin:0 auto;display:grid;gap:14px}
-#lg-gate .lg-about{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink)}#lg-gate .lg-about h2{font-size:18px;margin:0 0 6px}#lg-gate .lg-about h3{font-size:16px;margin:16px 0 4px;font-family:var(--font-display)}#lg-gate .lg-about h4{font-size:14px;margin:10px 0 2px}#lg-gate .lg-about p,#lg-gate .lg-about li{font-size:14px;line-height:1.5;color:var(--muted);margin:0}#lg-gate .lg-about ul{margin:8px 0 0;padding-left:18px;display:grid;gap:3px}
+#lg-gate .lg-about{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink)}#lg-gate .lg-about h2{font-size:18px;margin:0 0 6px}#lg-gate .lg-about h3{font-size:16px;margin:16px 0 4px;font-family:var(--font-display)}#lg-gate .lg-about details{border-top:1px solid var(--line)}#lg-gate .lg-about details:last-of-type{border-bottom:1px solid var(--line)}#lg-gate .lg-about summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 2px;font-size:14.5px;font-weight:600;color:var(--ink)}#lg-gate .lg-about summary::-webkit-details-marker{display:none}#lg-gate .lg-about summary::after{content:"";flex:none;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s;margin-right:4px}#lg-gate .lg-about details[open] summary::after{transform:rotate(-135deg)}#lg-gate .lg-about details p{padding:0 2px 12px}#lg-gate .lg-about p,#lg-gate .lg-about li{font-size:14px;line-height:1.5;color:var(--muted);margin:0}#lg-gate .lg-about ul{margin:8px 0 0;padding-left:18px;display:grid;gap:3px}
 #lg-gate h1{font-family:var(--font-display);font-size:30px;margin:10px 0 0;letter-spacing:-.5px}
 #lg-gate h2{font-family:var(--font-display);font-size:20px;margin:0}
 #lg-gate .lg-tag{color:var(--muted);margin:0;font-size:15px}
@@ -185,7 +185,7 @@ const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.
 let iosHelp = false;
 function canInst() { try { return typeof deferredInstall !== "undefined" && !!deferredInstall && !matchMedia("(display-mode: standalone)").matches; } catch (e) { return false; } }
 window.addEventListener("beforeinstallprompt", () => setTimeout(() => { if (gateKind === "auth") { grab(); drawGate(); } }, 50));
-const about = () => `<section class="lg-about"><h2>${esc(g("ab_h"))}</h2><p>${esc(g("ab_p"))}</p><ul>${g("ab_li").map(x => `<li>${esc(x)}</li>`).join("")}</ul><h3>${esc(g("faq_h"))}</h3>${g("faq").map(([q, a]) => `<h4>${esc(q)}</h4><p>${esc(a)}</p>`).join("")}</section>`;
+const about = () => `<section class="lg-about"><h2>${esc(g("ab_h"))}</h2><p>${esc(g("ab_p"))}</p><ul>${g("ab_li").map(x => `<li>${esc(x)}</li>`).join("")}</ul><h3>${esc(g("faq_h"))}</h3>${g("faq").map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}</section>`;
 const foot = () => {
   const w = waLink(""), y = new Date().getFullYear();
   return `<div class="lg-foot">${g("price") ? `<div>${esc(g("f_plan"))} <b>${esc(g("price"))}</b></div>` : ""}
@@ -193,6 +193,7 @@ const foot = () => {
     <div>© ${y} Ecrici</div></div>`;
 };
 function drawGate() {
+  langInit();
   const a = shopRow();
   let h = "";
   if (gateKind === "loading") {
