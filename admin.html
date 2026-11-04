@@ -72,7 +72,7 @@ const PRICES={BJ:["FCFA",1000,700],TG:["FCFA",1000,700],CI:["FCFA",1000,700],SN:
 const P=cc=>{const o=(CFG.prices&&CFG.prices[cc])||{},d=PRICES[cc]||PRICES.BJ;return{cur:o.cur||d[0],base:Number(o.base)||d[1],extra:Number(o.extra)||d[2],pre:o.pre!=null?!!o.pre:!!d[3]};};
 const brOf=id=>branches.filter(b=>b.owner_id===id);
 const fmtAmt=(n,cc)=>{const p=P(cc),s=String(n).replace(/\B(?=(\d{3})+(?!\d))/g,",");return p.pre?p.cur+s:s+" "+p.cur;};
-const rew=cc=>Math.round(P(cc).base/2);
+const rew=cc=>Math.round(P(cc).base*0.6);
 const state=s=>{ if(s.status==="pending") return "pending"; if(s.status==="suspended") return "suspended"; return (s.paid_until&&s.paid_until>=today())?"active":"expired"; };
 const daysLeft=s=>s.paid_until?Math.round((new Date(s.paid_until+"T12:00:00Z")-new Date(today()+"T12:00:00Z"))/864e5):null;
 
