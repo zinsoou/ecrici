@@ -468,7 +468,33 @@ const todayKey = () => dkey(new Date());
 const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $ = s => document.querySelector(s);
 const L = () => S.shop.lang==="en"?"en":"fr";
-const t = (k,...a) => { const v=T[L()][k]; return typeof v==="function"?v(...a):(v==null?k:v); };
+const BIZ={
+ rent:{fr:{tab_cust:"Locataires",customers:"Locataires",customer:"Locataire",add_customer:"Ajouter un locataire",new_customer:"+ Nouveau locataire",no_customers:"Aucun locataire pour l'instant.",tab_stock:"Logements",stock:"Logements",add_product:"Ajouter un logement",tab_sale:"Loyer",new_sale:"Nouveau loyer",item:"Désignation",qty:"Mois",product_name:"Nom du logement",unit_price:"Loyer par mois"},
+       en:{tab_cust:"Tenants",customers:"Tenants",customer:"Tenant",add_customer:"Add tenant",new_customer:"+ New tenant",no_customers:"No tenants yet.",tab_stock:"Units",stock:"Units",add_product:"Add unit",tab_sale:"Rent",new_sale:"New rent",item:"Description",qty:"Months",product_name:"Unit name",unit_price:"Rent per month"}},
+ hotel:{fr:{tab_cust:"Clients",tab_stock:"Chambres",stock:"Chambres",add_product:"Ajouter une chambre",tab_sale:"Séjour",new_sale:"Nouveau séjour",item:"Chambre / service",qty:"Nuits",product_name:"Nom de la chambre",unit_price:"Prix par nuit"},
+        en:{customers:"Guests",tab_cust:"Guests",customer:"Guest",add_customer:"Add guest",new_customer:"+ New guest",no_customers:"No guests yet.",tab_stock:"Rooms",stock:"Rooms",add_product:"Add room",tab_sale:"Stay",new_sale:"New stay",item:"Room / service",qty:"Nights",product_name:"Room name",unit_price:"Price per night"}}};
+Object.assign(BIZ,{
+ food:{fr:{tab_stock:"Menu",stock:"Menu",add_product:"Ajouter un plat ou une boisson",item:"Plat / boisson",product_name:"Nom du plat ou de la boisson"},
+       en:{tab_stock:"Menu",stock:"Menu",add_product:"Add a dish or drink",item:"Dish / drink",product_name:"Dish or drink name"}},
+ beauty:{fr:{tab_stock:"Services",stock:"Services",add_product:"Ajouter un service",item:"Service",product_name:"Nom du service"},
+       en:{tab_stock:"Services",stock:"Services",add_product:"Add a service",item:"Service",product_name:"Service name"}},
+ health:{fr:{tab_cust:"Patients",customers:"Patients",customer:"Patient",add_customer:"Ajouter un patient",new_customer:"+ Nouveau patient",no_customers:"Aucun patient pour l'instant.",tab_stock:"Produits et soins",stock:"Produits et soins",add_product:"Ajouter un produit ou un soin",item:"Produit / soin",product_name:"Nom du soin ou de l'acte"},
+       en:{tab_cust:"Patients",customers:"Patients",customer:"Patient",add_customer:"Add patient",new_customer:"+ New patient",no_customers:"No patients yet.",tab_stock:"Products & care",stock:"Products & care",add_product:"Add a product or treatment",item:"Product / treatment",product_name:"Treatment or service name"}},
+ school:{fr:{tab_cust:"Élèves",customers:"Élèves",customer:"Élève",add_customer:"Ajouter un élève",new_customer:"+ Nouvel élève",no_customers:"Aucun élève pour l'instant.",tab_stock:"Frais",stock:"Frais",add_product:"Ajouter des frais",tab_sale:"Frais",new_sale:"Nouveau paiement de frais",item:"Frais",product_name:"Nom des frais (ex. scolarité)",unit_price:"Montant"},
+       en:{tab_cust:"Students",customers:"Students",customer:"Student",add_customer:"Add student",new_customer:"+ New student",no_customers:"No students yet.",tab_stock:"Fees",stock:"Fees",add_product:"Add a fee",tab_sale:"Fees",new_sale:"New fee",item:"Fee",product_name:"Fee name (e.g. tuition)",unit_price:"Amount"}},
+ repair:{fr:{tab_stock:"Travaux",stock:"Travaux",add_product:"Ajouter un travail",item:"Travail / pièce",product_name:"Nom du travail"},
+       en:{tab_stock:"Jobs",stock:"Jobs",add_product:"Add a job",item:"Job / part",product_name:"Job name"}},
+ services:{fr:{tab_stock:"Services",stock:"Services",add_product:"Ajouter un service",item:"Service",product_name:"Nom du service"},
+       en:{tab_stock:"Services",stock:"Services",add_product:"Add a service",item:"Service",product_name:"Service name"}}
+});
+const TOUR_GEN={fr:[["Bienvenue sur Ecrici","Le cahier de votre activité, sur votre téléphone. Une visite d'une minute pour tout comprendre."],["Ajoutez ce que vous vendez","Dans le deuxième onglet, notez le nom et le prix de vos services, chambres, frais ou produits."],["Enregistrez en quelques secondes","Choisissez le client, touchez ce qui a été fourni, puis Payé en totalité, À crédit ou Paiement partiel."],["Reçus et factures","Chaque enregistrement crée un reçu ou une facture PDF au nom du client, à envoyer sur WhatsApp. Ajoutez votre numéro MoMo ou banque dans Réglages : il s'affiche sur les factures."],["Sachez qui vous doit","Les montants impayés sont suivis client par client. Un rappel WhatsApp poli en un geste."],["Voyez vos résultats","Les rapports montrent le jour et le mois : montants encaissés et dépenses."],["Marche sans internet","Continuez sans réseau : tout se synchronise avec votre compte au retour d'internet. Sauvegardez quand vous voulez dans Réglages."],["Plusieurs adresses, une équipe","Ajoutez des activités avec des livres séparés et donnez à chaque employé sa propre connexion (Réglages)."],["Vous êtes prêt !","Commencez directement avec votre activité."]],
+ en:[["Welcome to Ecrici","The notebook for your business on your phone. Take a one-minute tour to see how it works."],["Add what you sell","In the second tab, add the name and price of your services, rooms, fees or products."],["Record it in seconds","Pick the customer, tap what was provided, then choose Paid in full, On credit or Part payment."],["Receipts and invoices","Every entry makes a PDF receipt or invoice named after the customer, ready for WhatsApp. Add your MoMo or bank details in Settings and they show on invoices."],["Know who owes you","Unpaid amounts are tracked customer by customer. Send a polite WhatsApp reminder in one tap."],["See your results","Reports show today and this month: money received and expenses."],["Works without internet","Keep going when the network is down. Everything syncs to your account when you are back online. Back up any time in Settings."],["Several locations, one team","Add more businesses with separate books and give each employee their own login (Settings)."],["You are ready!","Start straight away with your own business."]]};
+const biz = () => (S&&S.shop&&BIZ[S.shop.biz])?S.shop.biz:"shop";
+const NOSTOCK=["rent","hotel","beauty","school","services"];
+const nostock = () => NOSTOCK.includes(biz());
+const BIZ_LIST=["shop","food","beauty","health","school","repair","services","rent","hotel"];
+const BIZ_NAME={shop:["Boutique / commerce","Shop / trade"],food:["Restaurant / bar / alimentation","Restaurant / bar / food"],beauty:["Salon / coiffure / beauté","Salon / barber / beauty"],health:["Santé / pharmacie / clinique","Health / clinic"],school:["École / formation","School / training"],repair:["Atelier / garage / couture","Workshop / garage / tailoring"],services:["Autres services","Other services"],rent:["Location (loyers)","Rentals (rent)"],hotel:["Hôtel / auberge","Hotel / guesthouse"]};
+const t = (k,...a) => { const o=BIZ[biz()]; if(o&&o[L()]&&o[L()][k]!=null) return o[L()][k]; const v=T[L()][k]; return typeof v==="function"?v(...a):(v==null?k:v); };
 const C = () => COUNTRIES[S.shop.country]||COUNTRIES.BJ;
 
 function money(n){
@@ -736,14 +762,14 @@ function tourClose(done){ if(done!==false){ S.shop.tourDone=true; save(); } ui.t
 function drawTour(){
   let el=document.getElementById("tour");
   if(!ui.tour){ if(el) el.remove(); return; }
-  const st=t("tour"), i=Math.max(0,Math.min(st.length-1,ui.tour.i)), last=i===st.length-1, c=TOUR_BG[i];
+  const st=biz()==="shop"?t("tour"):TOUR_GEN[L()], i=Math.max(0,Math.min(st.length-1,ui.tour.i)), last=i===st.length-1, c=TOUR_BG[i];
   if(!el){ el=document.createElement("div"); el.id="tour"; document.body.appendChild(el); }
   el.innerHTML=`<div class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-h">
     <div class="tour-art" style="--tc:${c}"><i class="tc1"></i><i class="tc2"></i><div class="tour-ic"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TOUR_IC[i]}</svg></div>
       ${last?"":`<button class="tour-skip" data-act="tour-skip">${t("tour_skip")}</button>`}</div>
     <div class="tour-body" key="${i}"><h2 id="tour-h">${esc(st[i][0])}</h2><p>${esc(st[i][1])}</p></div>
     <div class="tour-dots" aria-hidden="true">${st.map((_,k)=>`<span class="${k===i?"on":""}"></span>`).join("")}</div>
-    <div class="tour-btns">${last?`<button class="btn" data-act="tour-try">${t("tour_try")}</button><button class="btn primary" data-act="tour-own">${t("tour_own")}</button>`
+    <div class="tour-btns">${last?`${biz()==="shop"?`<button class="btn" data-act="tour-try">${t("tour_try")}</button>`:""}<button class="btn primary" data-act="tour-own">${biz()==="shop"?t("tour_own"):lx("Commencer","Get started")}</button>`
       :`<button class="btn ghost" data-act="tour-back" ${i?"":"hidden"}>${t("tour_back")}</button><button class="btn primary" data-act="tour-next">${t("tour_next")}</button>`}</div></div>`;
   const b=el.querySelector(".tour-btns .primary"); if(b) try{ b.focus({preventScroll:true}); }catch(e){}
 }
@@ -755,8 +781,8 @@ function maybeTour(){
 (function(){ let x0=null;
   document.addEventListener("touchstart",e=>{ x0=ui.tour&&e.target.closest("#tour")?e.touches[0].clientX:null; },{passive:true});
   document.addEventListener("touchend",e=>{ if(x0===null||!ui.tour) return; const dx=e.changedTouches[0].clientX-x0; x0=null;
-    if(Math.abs(dx)>60){ const n=t("tour").length; ui.tour.i=Math.max(0,Math.min(n-1,ui.tour.i+(dx<0?1:-1))); drawTour(); } },{passive:true});
-  document.addEventListener("keydown",e=>{ if(!ui.tour) return; const n=t("tour").length;
+    if(Math.abs(dx)>60){ const n=(biz()==="shop"?t("tour"):TOUR_GEN[L()]).length; ui.tour.i=Math.max(0,Math.min(n-1,ui.tour.i+(dx<0?1:-1))); drawTour(); } },{passive:true});
+  document.addEventListener("keydown",e=>{ if(!ui.tour) return; const n=(biz()==="shop"?t("tour"):TOUR_GEN[L()]).length;
     if(e.key==="Escape") tourClose(); else if(e.key==="ArrowRight"){ ui.tour.i=Math.min(n-1,ui.tour.i+1); drawTour(); } else if(e.key==="ArrowLeft"){ ui.tour.i=Math.max(0,ui.tour.i-1); drawTour(); } });
 })();
 
@@ -790,7 +816,7 @@ function viewHome(){
   }
   if(isOwner()&&canInstall()) h+=`<div class="banner"><span>${t("inst_txt")}</span><span style="display:flex;gap:6px">${deferredInstall?`<button class="btn small primary" data-act="install-app">${t("inst_btn")}</button>`:""}<button class="btn small" data-act="install-off">${t("inst_later")}</button></span></div>`;
   const startOn=false;
-  if(!startOn&&!S.customers.length&&!S.txs.length&&!S.products.length) h+=`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`;
+  if(biz()==="shop"&&!startOn&&!S.customers.length&&!S.txs.length&&!S.products.length) h+=`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`;
   h+=`<section class="sec"><h2>${t("today")}<span>${new Date().toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{weekday:"long",day:"numeric",month:"long"})}</span></h2>
     <div class="sum">
       <div class="card"><div class="lbl">${t("sold")}</div><div class="val num">${money(sold)}</div></div>
@@ -888,18 +914,28 @@ function updateSaleTotals(){
 }
 
 /* --- customers --- */
+const lx=(f,e)=>L()==="fr"?f:e;
+function monthKey(d){ d=d||new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
+function monthName(k){ const [y,m]=k.split("-").map(Number); const n=new Date(y,m-1,1).toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{month:"long",year:"numeric"}); return n.charAt(0).toUpperCase()+n.slice(1); }
+function rentDue(k){ return S.customers.filter(c=>(+c.rent||0)>0&&!S.txs.some(x=>x.type==="sale"&&!x.void&&x.cust===c.id&&x.rentMonth===k)); }
+function rentRun(k){
+  const list=rentDue(k); if(!list.length) return 0;
+  list.forEach(c=>{ const lines=[{d:`${lx("Loyer","Rent")}${c.unit?" · "+c.unit:""} · ${monthName(k)}`,q:1,p:+c.rent,pid:null,c:0}];
+    S.txs.push({id:uid(),no:++S.counter,type:"sale",cust:c.id,date:new Date().toISOString(),lines,total:+c.rent,paid:0,due:"",note:"",rentMonth:k,by:me()?me().name:""}); });
+  save(); return list.length;
+}
 function viewCustomers(){
   const q=ui.search.trim().toLowerCase();
   const list=S.customers.map(c=>({c,b:balanceOf(c.id)}))
     .filter(x=>!q||x.c.name.toLowerCase().includes(q)||String(x.c.phone).includes(q))
     .sort((a,b)=>b.b-a.b||a.c.name.localeCompare(b.c.name));
-  let h=`<section class="sec"><h2 style="flex-wrap:wrap">${t("customers")}<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small" data-act="bc-open">${t("bc_btn")}</button><button class="btn small primary" data-act="add-cust">${t("add_customer")}</button></div></h2>
+  let h=`<section class="sec"><h2 style="flex-wrap:wrap">${t("customers")}<div style="display:flex;gap:6px;flex-wrap:wrap">${biz()==="rent"&&isOwner()?`<button class="btn small" data-act="rent-open">${lx("Loyers du mois","Charge this month's rent")}</button>`:""}<button class="btn small" data-act="bc-open">${t("bc_btn")}</button><button class="btn small primary" data-act="add-cust">${t("add_customer")}</button></div></h2>
     <input id="f-search" data-bind="search" value="${esc(ui.search)}" placeholder="${t("search")}" aria-label="${t("search")}" autocomplete="off">
     <div class="card flush">`;
   if(!list.length) h+=`<div class="empty">${t("no_customers")}</div>`;
   h+=list.map(({c,b})=>{ const age=b>0?ageDays(oldestUnpaid(c.id)):0, od=b>0?overdueInfo(c.id):null;
     return `<button class="row" data-act="open-cust" data-id="${c.id}"><div class="main"><div class="name">${esc(c.name)}</div>
-      <div class="sub">${esc(c.phone||"")}${od?` <span class="badge late">${t("overdue_d",od.days)}</span>`:(b>0&&age>=S.shop.lateDays?` <span class="badge late">${age} ${t("days")}</span>`:"")}</div></div>
+      <div class="sub">${esc(c.phone||"")}${biz()==="rent"&&(c.unit||+c.rent)?` · ${esc(c.unit||"")}${+c.rent?` ${money(+c.rent)}${lx("/mois","/month")}`:""}`:""}${od?` <span class="badge late">${t("overdue_d",od.days)}</span>`:(b>0&&age>=S.shop.lateDays?` <span class="badge late">${age} ${t("days")}</span>`:"")}</div></div>
       <div class="amt">${b>0.001?`<span class="num" style="color:var(--owed)">${money(b)}</span>`:`<span class="badge paid">${t("settled")}</span>`}</div></button>`; }).join("");
   return h+`</div></section>`;
 }
@@ -1076,9 +1112,9 @@ function viewReports(){
   h+=`<div class="sum">
     <div class="card"><div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${t("rep_sales")}</div><div class="val num" style="font-size:1.15rem;margin-top:4px;overflow-wrap:anywhere">${money(st.sales)}</div>
       ${delta!==null&&off<0?`<div class="note ${delta>=0?"up":"down"}">${delta>=0?"+":""}${delta}% ${t("rep_vs")}</div>`:""}</div>
-    <div class="card"><div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${t("rep_profit")}</div>
+    ${nostock()?"":`<div class="card"><div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${t("rep_profit")}</div>
       <div class="val num" style="font-size:1.15rem;margin-top:4px;overflow-wrap:anywhere;color:${st.profitBase>0?(st.profit>=0?"var(--paid)":"var(--owed)"):"var(--muted)"}">${st.profitBase>0?money(st.profit):"—"}</div>
-      <div class="note">${st.profitBase>0?t("rep_profit_note",Math.round(st.profitBase/Math.max(1,st.sales)*100)):t("rep_no_profit")}</div></div></div>`;
+      <div class="note">${st.profitBase>0?t("rep_profit_note",Math.round(st.profitBase/Math.max(1,st.sales)*100)):t("rep_no_profit")}</div></div>`}</div>`;
   const bk=buckets(per,a);
   if(bk.length){
     const vals=bk.map(x=>salesBetween(x.s,x.e)), mx=Math.max(...vals,0);
@@ -1124,11 +1160,11 @@ function productModal(m){
   const p=m.id?S.products.find(x=>x.id===m.id):null, own=isOwner(), ro=own?"":"readonly";
   return `<div class="dlg form"><h2>${p?esc(p.name):t("add_product")}</h2>
     <div class="field"><label for="pr-name">${t("product_name")}</label><input id="pr-name" value="${esc(p?p.name:"")}" ${ro} autocomplete="off"></div>
-    <label class="chk"><input type="checkbox" id="pr-svc" ${p&&p.svc?"checked":""} ${own?"":"disabled"} onchange="document.getElementById('pr-stk').hidden=document.getElementById('pr-stk2').hidden=this.checked"> ${t("is_service")}</label>
+    <label class="chk" ${nostock()?"hidden":""}><input type="checkbox" id="pr-svc" ${(p?p.svc:nostock())?"checked":""} ${own?"":"disabled"} onchange="document.getElementById('pr-stk').hidden=document.getElementById('pr-stk2').hidden=this.checked"> ${t("is_service")}</label>
     <div class="grid2"><div class="field"><label for="pr-price">${t("unit_price")}</label><input id="pr-price" value="${esc(p?p.price:"")}" inputmode="decimal" ${ro}></div>
-    <div class="field" id="pr-stk" ${p&&p.svc?"hidden":""}><label for="pr-qty">${t("in_stock")}</label><input id="pr-qty" value="${esc(p?p.qty:"0")}" inputmode="decimal" ${ro}></div></div>
+    <div class="field" id="pr-stk" ${(p?p.svc:nostock())?"hidden":""}><label for="pr-qty">${t("in_stock")}</label><input id="pr-qty" value="${esc(p?p.qty:"0")}" inputmode="decimal" ${ro}></div></div>
     ${own?`<div class="field"><label for="pr-cost">${t("cost_price")}</label><input id="pr-cost" value="${esc(p?(p.cost||""):"")}" inputmode="decimal"></div>`:""}
-    <div id="pr-stk2" ${p&&p.svc?"hidden":""}><div class="field"><label for="pr-low">${t("low_alert")}</label><input id="pr-low" value="${esc(p?p.low:"5")}" inputmode="numeric" ${ro}></div>
+    <div id="pr-stk2" ${(p?p.svc:nostock())?"hidden":""}><div class="field"><label for="pr-low">${t("low_alert")}</label><input id="pr-low" value="${esc(p?p.low:"5")}" inputmode="numeric" ${ro}></div>
     ${p?`<div class="field"><label for="pr-add">${t("add_received")}</label><input id="pr-add" inputmode="decimal" placeholder="0"></div>`:""}</div>
     <div class="err" id="pr-err" role="alert"></div>
     <div class="actions"><button class="btn primary" data-act="save-product">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button>
@@ -1144,7 +1180,7 @@ function saveBulk(){
     const name=parts[0], price=parseAmt(parts[1]);
     if(!name||!(price>0)){ bad.push(ln); continue; }
     if(names.has(name.toLowerCase())){ dup++; continue; }
-    const q=(parts[2]||"").toLowerCase(), svc=/^(service|svc|s)$/.test(q);
+    const q=(parts[2]||"").toLowerCase(), svc=nostock()||/^(service|svc|s)$/.test(q);
     const qty=svc?0:Math.max(0,parseAmt(parts[2])), cost=svc&&parts[3]===undefined?0:parseAmt(parts[3]);
     S.products.push({id:uid(),name,price,qty,low:svc?0:5,cost,svc}); names.add(name.toLowerCase()); added++;
   }
@@ -1226,6 +1262,7 @@ function viewSettings(){
       <div class="field"><label for="s-lang">${t("language")}</label><select id="s-lang"><option value="fr" ${s.lang==="fr"?"selected":""}>Français</option><option value="en" ${s.lang==="en"?"selected":""}>English</option></select></div>
     </div>
     <p class="note" style="margin:0">${t("country_note")}</p>
+    <div class="field"><label for="s-biz">${lx("Type d'activité","Type of business")}</label><select id="s-biz">${BIZ_LIST.map(k=>[k,lx(BIZ_NAME[k][0],BIZ_NAME[k][1])]).map(([k,l])=>`<option value="${k}" ${biz()===k?"selected":""}>${l}</option>`).join("")}</select></div>
     <div class="field"><label for="s-addr">${t("shop_addr")}</label><input id="s-addr" value="${esc(s.address||"")}" autocomplete="off"></div>
     <div class="field"><label>${t("rc_color")}</label><div class="sw">${ACCENTS.map(c=>`<button type="button" data-act="set-accent" data-c="${c}" aria-pressed="${accentOf(s)===c}" style="background:${c}" aria-label="${c}"></button>`).join("")}</div></div>
     <div class="field"><label for="s-footer">${t("footer")}</label><input id="s-footer" value="${esc(s.footer)}" placeholder="${esc(t("default_footer"))}" autocomplete="off"></div>
@@ -1236,7 +1273,7 @@ function viewSettings(){
     ${[["auto","th_auto"],["light","th_light"],["dark","th_dark"]].map(([k,l])=>`<button class="pill" data-act="theme" data-m="${k}" aria-pressed="${getTheme()===k}">${t(l)}</button>`).join("")}</div></div></section>
   ${staffSection()}<section class="sec"><h2>${t("backup")}</h2><div class="card form"><p class="note" style="margin:0">${t("backup_note")}</p>
     <p class="note" style="margin:0"><b>${t("last_backup")}:</b> ${S.shop.lastBackup?fmtDate(S.shop.lastBackup):t("never")}</p>
-    <div class="actions"><button class="btn" data-act="tour-open">${t("tour_open")}</button><button class="btn" data-act="load-examples">${t("load_examples")}</button><button class="btn primary" data-act="backup-now">${t("backup_now")}</button><button class="btn" data-act="export-csv">${t("export_csv")}</button></div>
+    <div class="actions"><button class="btn" data-act="tour-open">${t("tour_open")}</button>${biz()==="shop"?`<button class="btn" data-act="load-examples">${t("load_examples")}</button>`:""}<button class="btn primary" data-act="backup-now">${t("backup_now")}</button><button class="btn" data-act="export-csv">${t("export_csv")}</button></div>
     <div class="field"><label for="f-import">${t("import")}</label><input type="file" id="f-import" accept=".json,application/json"></div></div></section>
   <section class="sec"><h2>${t("danger")}</h2><div class="card form">
     ${ui.confirmReset?`<div class="actions"><button class="btn danger" data-act="reset-yes">${t("reset_confirm")}</button><button class="btn" data-act="reset-no">${t("cancel")}</button></div>`
@@ -1484,8 +1521,15 @@ function renderModal(){
       <div class="field"><label for="c-name">${t("name")}</label><input id="c-name" autocomplete="off"></div>
       <div class="field"><label for="c-phone">${t("phone")}</label><input id="c-phone" inputmode="tel" placeholder="${esc(C().ph)}" autocomplete="off"></div>
       <p class="note" style="margin:0">${t("phone_hint")}</p>
+      ${biz()==="rent"?`<div class="grid2"><div class="field"><label for="c-unit">${lx("Logement","Unit")}</label><input id="c-unit" autocomplete="off" placeholder="${lx("Ex. Chambre 3","e.g. Flat 3B")}"></div><div class="field"><label for="c-rent">${lx("Loyer par mois","Rent per month")}</label><input id="c-rent" inputmode="decimal" autocomplete="off"></div></div>`:""}
       <div class="err" id="c-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-cust">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="rentrun"){
+    const k=monthKey(), list=rentDue(k), tot=list.reduce((a,c)=>a+(+c.rent),0), all=S.customers.filter(c=>+c.rent>0).length;
+    inner=`<div class="dlg"><h2>${lx("Loyers de","Rent for")} ${esc(monthName(k))}</h2>
+      ${list.length?`<p class="note" style="margin:0">${lx(`${list.length} locataire(s) · total ${money(tot)}. Un loyer impayé sera ajouté à chacun.`,`${list.length} tenant(s) · total ${money(tot)}. An unpaid rent bill will be added for each.`)}${all>list.length?` ${lx("Déjà facturés ce mois : "+(all-list.length)+".","Already charged this month: "+(all-list.length)+".")}`:""}</p>
+      <div class="actions"><button class="btn primary" data-act="rent-go">${lx("Facturer les loyers","Charge rent")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div>`
+      :`<p class="note" style="margin:0">${all?lx("Tous les loyers de ce mois sont déjà facturés.","This month's rent is already charged for everyone."):lx("Ajoutez le loyer de chaque locataire (bouton Modifier) pour facturer en un clic.","Add each tenant's rent (Edit button) to charge everyone in one tap.")}</p><div class="actions"><button class="btn" data-act="close-modal">${t("cancel")}</button></div>`}</div>`;
   }else if(m.type==="delcust"){
     const c=custById(m.id);
     inner=`<div class="dlg"><h2>${L()==="fr"?"Supprimer ce client ?":"Delete this customer?"}</h2><p class="note" style="margin:0">${esc(c?c.name:"")} — ${L()==="fr"?"Ses reçus restent dans l'historique.":"Their receipts stay in the history."}</p>
@@ -1509,6 +1553,7 @@ function renderModal(){
       <div class="field"><label for="ec-name">${t("name")}</label><input id="ec-name" value="${esc(c.name)}" autocomplete="off"></div>
       <div class="field"><label for="ec-phone">${t("phone")}</label><input id="ec-phone" value="${esc(c.phone||"")}" inputmode="tel" autocomplete="off"></div>
       <p class="note" style="margin:0">${t("phone_hint")}</p>
+      ${biz()==="rent"?`<div class="grid2"><div class="field"><label for="ec-unit">${lx("Logement","Unit")}</label><input id="ec-unit" value="${esc(c.unit||"")}" autocomplete="off"></div><div class="field"><label for="ec-rent">${lx("Loyer par mois","Rent per month")}</label><input id="ec-rent" value="${esc(c.rent||"")}" inputmode="decimal" autocomplete="off"></div></div>`:""}
       <div class="err" id="ec-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-ecust" data-id="${c.id}">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
   }else if(m.type==="cancel"){ inner=cancelModal(m);
@@ -1600,8 +1645,10 @@ document.addEventListener("click",e=>{
     case "add-cust": ui.modal={type:"newcust"}; renderModal(); break;
     case "save-cust": {
       const n=$("#c-name").value.trim(); if(!n){ $("#c-err").textContent=t("err_name"); break; }
-      S.customers.push({id:uid(),name:n,phone:$("#c-phone").value.trim(),created:new Date().toISOString()});
+      const nc={id:uid(),name:n,phone:$("#c-phone").value.trim(),created:new Date().toISOString()}; if($("#c-rent")){ nc.unit=$("#c-unit").value.trim(); nc.rent=parseAmt($("#c-rent").value)||0; } S.customers.push(nc);
       save(); ui.modal=null; render(); toast(t("cust_saved")); break; }
+    case "rent-open": ui.modal={type:"rentrun"}; renderModal(); break;
+    case "rent-go": { const n=rentRun(monthKey()); ui.modal=null; render(); toast(lx(n+" loyer(s) ajouté(s)",n+" rent bill(s) added")); break; }
     case "del-cust": ui.modal={type:"delcust",id}; renderModal(); break;
     case "del-cust-yes": S.customers=S.customers.filter(c=>c.id!==id); S.txs.forEach(x=>{ if(x.cust===id) x.cust=null; });
       save(); ui.modal=null; ui.custId=null; render(); break;
@@ -1669,7 +1716,7 @@ document.addEventListener("click",e=>{
       const list=bcAudience(b.aud); const pr=$("#bc-progress"); if(pr) pr.textContent=t("bc_progress",list.filter(c=>b.sent[c.id]).length,list.filter(c=>intlPhone(c.phone)).length); break; }
     case "edit-cust": ui.modal={type:"editcust",id}; renderModal(); break;
     case "save-ecust": { const c=custById(id), n=$("#ec-name").value.trim(); if(!n){ $("#ec-err").textContent=t("err_name"); break; }
-      c.name=n; c.phone=$("#ec-phone").value.trim(); save(); ui.modal=null; render(); toast(t("saved_ok")); break; }
+      c.name=n; c.phone=$("#ec-phone").value.trim(); if($("#ec-rent")){ c.unit=$("#ec-unit").value.trim(); c.rent=parseAmt($("#ec-rent").value)||0; } save(); ui.modal=null; render(); toast(t("saved_ok")); break; }
     case "ask-cancel": ui.modal={type:"cancel",id}; renderModal(); break;
     case "do-cancel": voidTx(id); break;
     case "rep-period": ui.repPeriod=el.dataset.p; ui.repOff=0; render(); break;
@@ -1681,6 +1728,7 @@ document.addEventListener("click",e=>{
       s.name=$("#s-name").value.trim()||"Ma Boutique"; s.phone=$("#s-phone").value.trim(); s.address=($("#s-addr").value||"").trim();
       s.country=$("#s-country").value; s.lang=$("#s-lang").value; s.footer=$("#s-footer").value.trim(); 
       s.lateDays=Math.max(1,parseInt($("#s-late").value,10)||14);
+      s.biz=$("#s-biz").value; try{ localStorage.setItem("ecrici-biz",s.biz); }catch(e){}
       if(oldC!==s.country&&!$("#s-lang").dataset.touched) {}
       save(); render(); toast(t("saved_ok")); break; }
     case "save-pay": { const out=[]; for(let i=0;i<3;i++){ const n=($("#pay-n-"+i)||{}).value||""; if(n.trim()) out.push({m:($("#pay-m-"+i)||{}).value||"Other",n:n.trim().slice(0,60),a:(($("#pay-a-"+i)||{}).value||"").trim().slice(0,60)}); }
