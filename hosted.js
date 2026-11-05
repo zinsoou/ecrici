@@ -15,6 +15,8 @@ const lsDel = k => { try { localStorage.removeItem(k); } catch (e) {} };
 const jget = k => { try { return JSON.parse(lsGet(k)); } catch (e) { return null; } };
 const todayUTC = () => new Date().toISOString().slice(0, 10);
 const daysFrom = iso => Math.round((new Date(iso + "T12:00:00Z") - new Date(todayUTC() + "T12:00:00Z")) / 86400000);
+let langTouched = false;
+const cLang = c => { try { return (COUNTRIES[c] && COUNTRIES[c].lang) === "en" ? "en" : "fr"; } catch (e) { return "fr"; } };
 const langInit = () => { try { if (!localStorage.getItem("ecrici-lang-init")) { localStorage.setItem("ecrici-lang-init", "1"); if (/^en/i.test(navigator.language || "") && S && S.shop && S.shop.lang === "fr" && S.shop.name === "Ma Boutique") S.shop.lang = "en"; } } catch (e) {} };
 const lang = () => ((S && S.shop && S.shop.lang) === "en" ? "en" : "fr");
 
@@ -249,7 +251,7 @@ function hideGate() { gate.hidden = true; gate.innerHTML = ""; gateKind = "none"
 gate.addEventListener("click", async e => {
   const b = e.target.closest("[data-lg]"); if (!b) return;
   const act = b.dataset.lg;
-  if (act === "lang") { S.shop.lang = lang() === "fr" ? "en" : "fr"; try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (x) {} drawGate(); }
+  if (act === "lang") { langTouched = true; S.shop.lang = lang() === "fr" ? "en" : "fr"; try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (x) {} drawGate(); }
   else if (act === "mode") { grab(); mode = mode === "login" ? "signup" : "login"; authErrText = ""; drawGate(); }
   else if (act === "tojoin") { grab(); mode = "join"; authErrText = ""; gateKind = "auth"; drawGate(); }
   else if (act === "forcelogout") forceLogout();
@@ -262,7 +264,7 @@ gate.addEventListener("click", async e => {
   else if (act === "backup") { try { await backupNow(); } catch (x) {} }
   else if (act === "logout") logout(true);
 });
-gate.addEventListener("change", e => { if (e.target.id === "lg-country") { grab(); drawGate(); } });
+gate.addEventListener("change", e => { if (e.target.id === "lg-country") { grab(); if (mode === "signup" && !langTouched) S.shop.lang = cLang(form.country); drawGate(); } });
 gate.addEventListener("keydown", e => { if (e.key === "Enter" && gateKind === "auth" && e.target.tagName === "INPUT" && e.target.type !== "checkbox") submitAuth(); });
 function grab() {
   const v = id => { const el = gate.querySelector(id); return el ? el.value : null; };
@@ -310,7 +312,7 @@ async function submitAuth() {
         const m = String((jr.json && (jr.json.message || jr.json.msg)) || "");
         if (!jr.ok && !/already in a team/i.test(m)) { authErrText = /already has a shop/i.test(m) ? g("e_hasshop") : g("e_invite"); busyAuth = false; drawGate(); return; }
       }
-      if (su) { try { if (!S.shop.name || S.shop.name === "Ma Boutique") S.shop.name = form.name.trim().toUpperCase(); S.shop.country = form.country; S.shop.phone = id; try { lsSet("ecrici-biz", form.biz || "shop"); } catch (e) {} if (form.biz && form.biz !== "shop") { S.shop.biz = form.biz; S.customers = S.customers.filter(c => !c.example); S.txs = S.txs.filter(x => !x.example); S.products = S.products.filter(x => !x.example); if (!S.txs.length) S.counter = 0; } } catch (e) {} }
+      if (su) { try { if (!S.shop.name || S.shop.name === "Ma Boutique") S.shop.name = form.name.trim().toUpperCase(); S.shop.country = form.country; if (!langTouched) S.shop.lang = cLang(form.country); S.shop.phone = id; try { lsSet("ecrici-biz", form.biz || "shop"); } catch (e) {} S.shop.biz = form.biz || "shop"; if (form.biz && form.biz !== "shop") { S.shop.biz = form.biz; S.customers = S.customers.filter(c => !c.example); S.txs = S.txs.filter(x => !x.example); S.products = S.products.filter(x => !x.example); if (!S.txs.length) S.counter = 0; } } catch (e) {} }
       if (su) { try { lsSet("ecrici-ref", ""); form.ref = ""; } catch (e) {} }
       busyAuth = false; await enter(); return;
     }
@@ -383,7 +385,7 @@ function replaceLocal(d) {
   ui.view = "home"; ui.modal = null; ui.draft = null; render();
 }
 function freshBlank(shop) {
-  S = blank(); S.shop.name = shop.name || S.shop.name; S.shop.phone = shop.phone || ""; S.shop.country = shop.country || "BJ"; S.shop.lang = lang(); try { const bz = localStorage.getItem("ecrici-biz"); if (bz && bz !== "shop") S.shop.biz = bz; } catch (e) {}
+  const keepLang = lang(); S = blank(); S.shop.name = shop.name || S.shop.name; S.shop.phone = shop.phone || ""; S.shop.country = shop.country || "BJ"; S.shop.lang = keepLang; try { const bz = localStorage.getItem("ecrici-biz"); if (bz) S.shop.biz = bz; } catch (e) {}
   try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {}
   lastSynced = 0; ui.view = "home"; ui.modal = null; render();
 }

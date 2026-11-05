@@ -807,6 +807,7 @@ function viewHome(){
   const late=debtors.map(x=>({...x,age:ageDays(oldestUnpaid(x.c.id)),od:overdueInfo(x.c.id)})).filter(x=>x.age>=S.shop.lateDays||x.od).sort((a,b)=>b.b-a.b);
   const hasEx=S.customers.some(c=>c.example)||S.txs.some(x=>x.example)||S.products.some(p=>p.example);
   let h="";
+  if(!S.shop.biz&&isOwner()&&(S.txs.length||S.customers.length||S.products.length)&&!hasEx) h+=`<div class="banner"><span>${lx("Quel type d'activité avez-vous ? Choisissez-le dans Réglages pour adapter les mots (clients, chambres, loyers…).","What kind of business do you run? Choose it in Settings so the words fit (customers, rooms, rent…).")}</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small primary" data-act="biz-go">${lx("Choisir","Choose")}</button><button class="btn small" data-act="biz-no">${lx("Non merci","No thanks")}</button></span></div>`;
   if(hasEx&&isOwner()) h+=`<div class="banner"><span>${t("examples_banner")}</span><button class="btn small" data-act="clear-examples">${t("remove_examples")}</button></div>`;
   if(isOwner()){
     const real=S.txs.filter(x=>!x.example), lb=S.shop.lastBackup;
@@ -873,11 +874,14 @@ function viewSale(){
     <button class="btn" data-act="save-sale" data-k="invoice">${t("save_invoice")}</button>
   </div></section>`;
 }
+const detOn=()=>["shop","repair","health"].includes(biz());
+function lnEx(l){ return [l.sn?`${lx("N° série / IMEI","Serial / IMEI")}: ${l.sn}`:"",l.w?`${lx("Garantie","Warranty")}: ${l.w}`:""].filter(Boolean).join(" · "); }
 function linesHtml(){ const d=ui.draft; return d.lines.map((l,i)=>`<div class="line">
         <input data-bind="line.${i}.d" id="l${i}d" value="${esc(l.d)}" placeholder="${t("item_other")}" autocomplete="off" aria-label="${t("item")}">
         <input data-bind="line.${i}.q" id="l${i}q" value="${esc(l.q)}" inputmode="decimal" aria-label="${t("qty")}">
         <input data-bind="line.${i}.p" id="l${i}p" value="${esc(l.p)}" inputmode="decimal" placeholder="${t("price")}" aria-label="${t("price")}">
-        <button class="x" data-act="del-line" data-i="${i}" aria-label="×" ${d.lines.length===1?"disabled":""}>×</button><div class="hint" id="h${i}">${esc(lineHint(l))}</div></div>`).join(""); }
+        <button class="x" data-act="del-line" data-i="${i}" aria-label="×" ${d.lines.length===1?"disabled":""}>×</button><div class="hint" id="h${i}">${esc(lineHint(l))}</div>
+        ${!detOn()?"":(l.sn||l.w||l.open)?`<div class="ldet" style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px"><input data-bind="line.${i}.sn" id="l${i}sn" value="${esc(l.sn||"")}" placeholder="${lx("N° série / IMEI","Serial / IMEI")}" autocomplete="off" aria-label="${lx("N° série / IMEI","Serial / IMEI")}"><input data-bind="line.${i}.w" id="l${i}w" value="${esc(l.w||"")}" placeholder="${lx("Garantie (ex. 6 mois)","Warranty (e.g. 6 months)")}" autocomplete="off" aria-label="${lx("Garantie","Warranty")}"></div>`:`<button type="button" class="btn small ghost" data-act="line-det" data-i="${i}" style="grid-column:1/-1;justify-self:start">${lx("+ N° de série / garantie","+ Serial / warranty")}</button>`}</div>`).join(""); }
 function refreshPicks(){ const q=ui.draft?ui.draft.pq:"", m=$("#pk-q"), a=$("#pk-list"), b=$("#pk-inl"), n=$("#pk-n");
   if(a) a.innerHTML=pickList(m?m.value:""); if(b) b.innerHTML=pickList(q,true); pkVis();
   const ln=$("#lines"); if(ln) ln.innerHTML=linesHtml();
@@ -1292,7 +1296,7 @@ function receiptLines(x,kind){
   if(x.by) out.push(`${t("served_by")}: ${x.by}`);
   out.push("");
   if(x.type==="sale"){
-    x.lines.forEach(l=>out.push(kind==="invoice"&&Number(l.q)!==1?`${l.q} × ${l.d||t("goods")} @ ${money(l.p)}  ${money(l.q*l.p)}`:`${l.q} × ${l.d||t("goods")}  ${money(l.q*l.p)}`));
+    x.lines.forEach(l=>{ out.push(kind==="invoice"&&Number(l.q)!==1?`${l.q} × ${l.d||t("goods")} @ ${money(l.p)}  ${money(l.q*l.p)}`:`${l.q} × ${l.d||t("goods")}  ${money(l.q*l.p)}`); if(lnEx(l)) out.push("   "+lnEx(l)); });
     const ow=kind==="invoice"?oweNow(x):x.total-x.paid;
     out.push("-----",`${t("total")}: ${money(x.total)}`,`${t("paid")}: ${money(x.total-ow)}`);
     if(ow>0.001) out.push(`${kind==="invoice"?t("due"):t("balance_left")}: ${money(ow)}`);
@@ -1392,6 +1396,7 @@ function ticketPdf(x,kind){
     const AW=88;
     x.lines.forEach(l=>{ const wl=pdfWrap(`${l.q} × ${l.d||t("goods")}`,"F1",10,IW-AW); const am=money(l.q*l.p);
       txt(am,W-M,y+17,"F3",9,INK,"r"); wl.forEach((s,i)=>txt(s,M,y+17+i*13,"F1",10,INK)); y+=wl.length*13+10;
+      if(lnEx(l)){ pdfWrap(lnEx(l),"F1",8,IW-AW).forEach(s=>{ txt(s,M,y+7,"F1",8,MUT); y+=11; }); }
       if(kind==="invoice"&&Number(l.q)!==1){ txt("@ "+money(l.p),M,y+7,"F1",8,MUT); y+=11; } hline(y,M,W-M,LINE,0.6); });
     y+=8; hline(y,M,W-M,A,1.6); y+=18; txt(t("total"),M,y,"F2",11.5,INK); txt(money(x.total),W-M,y,"F4",12,INK,"r");
     y+=17; txt(t("paid"),M,y,"F1",10,INK); txt(money(x.total-owe),W-M,y,"F3",9.5,INK,"r"); y+=6;
@@ -1438,7 +1443,7 @@ function ticketHtml(x,kind){
   kind=kind||"receipt"; const sh=S.shop; let rows="", owe=x.type==="sale"?(kind==="invoice"?oweNow(x):x.total-x.paid):0;
   if(x.type==="sale"){
     rows=`<table><thead><tr><th>${t("item")}</th><th class="r">${t("total")}</th></tr></thead><tbody>`+
-      x.lines.map(l=>`<tr><td>${esc(l.q)} × ${esc(l.d||t("goods"))}${kind==="invoice"&&Number(l.q)!==1?`<div class="sub" style="font-size:.8rem;color:var(--muted)">@ ${money(l.p)}</div>`:""}</td><td class="r num">${money(l.q*l.p)}</td></tr>`).join("")+`</tbody></table>
+      x.lines.map(l=>`<tr><td>${esc(l.q)} × ${esc(l.d||t("goods"))}${kind==="invoice"&&Number(l.q)!==1?`<div class="sub" style="font-size:.8rem;color:var(--muted)">@ ${money(l.p)}</div>`:""}${lnEx(l)?`<div class="sub" style="font-size:.8rem;color:var(--muted)">${esc(lnEx(l))}</div>`:""}</td><td class="r num">${money(l.q*l.p)}</td></tr>`).join("")+`</tbody></table>
       <div class="tot grand"><span>${t("total")}</span><span class="num">${money(x.total)}</span></div>
       <div class="tot"><span>${t("paid")}</span><span class="num">${money(x.total-owe)}</span></div>
       ${owe>0.001?`<div class="owe"><span>${kind==="invoice"?t("due"):t("balance_left")}</span><span class="num">${money(owe)}</span></div>`:""}`;
@@ -1587,7 +1592,7 @@ function setBind(path,val){
 }
 function saveSale(kind){
   const d=ui.draft; d.err="";
-  const lines=d.lines.map(l=>({d:l.d.trim(),q:parseAmt(l.q)||0,p:parseAmt(l.p),pid:l.pid||null,c:(()=>{const pr=l.pid&&S.products.find(z=>z.id===l.pid);return pr&&pr.cost>0?pr.cost:0;})()})).filter(l=>l.q>0&&l.p>0);
+  const lines=d.lines.map(l=>({...((l.sn||"").trim()?{sn:l.sn.trim()}:{}),...((l.w||"").trim()?{w:l.w.trim()}:{}),d:l.d.trim(),q:parseAmt(l.q)||0,p:parseAmt(l.p),pid:l.pid||null,c:(()=>{const pr=l.pid&&S.products.find(z=>z.id===l.pid);return pr&&pr.cost>0?pr.cost:0;})()})).filter(l=>l.q>0&&l.p>0);
   const total=lines.reduce((s,l)=>s+l.q*l.p,0);
   if(!lines.length||total<=0){ d.err=t("err_total"); $("#s-err").textContent=d.err; return; }
   const need={}; lines.forEach(l=>{ if(l.pid) need[l.pid]=(need[l.pid]||0)+l.q; });
@@ -1618,7 +1623,7 @@ function csvOf(){
   const q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
   const rows=[["no","date","type","customer","items","total","paid","payment_amount","method","note","cancelled"]];
   [...S.txs].sort((a,b)=>a.no-b.no).forEach(x=>rows.push([x.no,x.date,x.type,custName(x.cust),
-    x.type==="sale"?x.lines.map(l=>`${l.q} x ${l.d} @ ${l.p}`).join("; "):"",x.total??"",x.paid??"",x.amount??"",x.method||"",x.note||"",x.void?"yes":""]));
+    x.type==="sale"?x.lines.map(l=>`${l.q} x ${l.d} @ ${l.p}${lnEx(l)?" ["+lnEx(l)+"]":""}`).join("; "):"",x.total??"",x.paid??"",x.amount??"",x.method||"",x.note||"",x.void?"yes":""]));
   return "﻿"+rows.map(r=>r.map(q).join(",")).join("\r\n");
 }
 
@@ -1663,6 +1668,9 @@ document.addEventListener("click",e=>{
     case "pk-toggle": if(ui.draft){ ui.draft.pkClosed=!ui.draft.pkClosed; pkVis(); } break;
     case "pick-done": ui.modal=null; render(); break;
     case "add-line": ui.draft.lines.push({d:"",q:"1",p:"",pid:null,auto:false}); render(); { const i=ui.draft.lines.length-1; const f=$("#l"+i+"d"); f&&f.focus(); } break;
+    case "biz-go": ui.view="set"; render(); setTimeout(()=>{ const e=$("#s-biz"); if(e){ e.scrollIntoView({block:"center"}); e.focus(); } },50); break;
+    case "biz-no": S.shop.biz="shop"; try{ localStorage.setItem("ecrici-biz","shop"); }catch(e){} save(); render(); break;
+    case "line-det": ui.draft.lines[+el.dataset.i].open=true; render(); break;
     case "del-line": ui.draft.lines.splice(+el.dataset.i,1); render(); break;
     case "mode": ui.draft.mode=el.dataset.m; render(); break;
     case "save-sale": saveSale(el.dataset.k); break;
