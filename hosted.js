@@ -107,7 +107,7 @@ const G = {
     ab_li: ["Ventes et reçus PDF au nom du client", "Crédits et dettes des clients avec rappels WhatsApp", "Stock de produits et services", "Bilan du jour et du mois : ventes, dépenses, bénéfice", "Plusieurs boutiques et employés avec leur propre accès", "Marche sur téléphone, tablette et ordinateur"],
     faq_h: "Questions fréquentes",
     faq: [["Ecrici marche-t-il sans internet ?", "Oui. Vous continuez à vendre sans réseau. Tout est enregistré sur le téléphone puis synchronisé avec votre compte dès que vous avez internet."], ["Puis-je envoyer les reçus sur WhatsApp ?", "Oui, chaque vente produit un reçu ou une facture PDF que vous envoyez en un geste."], ["Combien coûte Ecrici ?", "À partir de 1 000 FCFA par mois, avec un essai gratuit de 7 jours. Chaque boutique en plus coûte un peu plus."], ["Puis-je gérer plusieurs boutiques et des employés ?", "Oui. Chaque boutique a ses propres livres et chaque employé a sa propre connexion."], ["Puis-je supprimer mon compte ?", "Oui, à tout moment. Dans l'application : Réglages, Compte, « Supprimer mon compte ». Votre compte et toutes vos données sont effacés de nos serveurs. Faites une sauvegarde avant."]],
-    inst: "Installer l'application", f_plan: "Abonnement :", f_help: "Besoin d'aide ? WhatsApp", f_priv: "Confidentialité et conditions", ios_t: "Sur iPhone : ouvrez ce site dans Safari, touchez ••• (en bas à droite) ou le bouton Partager (carré avec flèche), touchez Partager, puis faites défiler et touchez « Sur l'écran d'accueil ».",  rf_t: "Parrainez un ami", rf_p: g => `Présentez Ecrici à un commerçant. Quand il fait son premier paiement, vous recevez ${g}. Il écrit votre numéro dans « Recommandé par » ou ouvre votre lien.`, rf_copy: "Copier mon lien", rf_wa: "Envoyer sur WhatsApp", rf_msg: (l) => `Bonjour 😊 J'utilise Ecrici pour gérer mes ventes, mes crédits et mon stock. Essayez-le gratuitement pendant 7 jours : ${l}`, ref_l: "Recommandé par (facultatif)", ref_h: "Nom ou numéro de la personne qui vous a présenté Ecrici.", hint_name: "Écrivez en MAJUSCULES, ex : BOUTIQUE DE VICTOR", hint_phone: "Chiffres seulement, sans le +. Ex :",  forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
+    inst: "Installer l'application", f_plan: "Abonnement :", f_help: "Besoin d'aide ? WhatsApp", f_priv: "Confidentialité et conditions", ios_t: "Sur iPhone : ouvrez ce site dans Safari, touchez ••• (en bas à droite) ou le bouton Partager (carré avec flèche), touchez Partager, puis faites défiler et touchez « Sur l'écran d'accueil ».",  rf_t: "Parrainez un ami", rf_p: g => `Présentez Ecrici à un commerçant. Quand il fait son premier paiement, vous recevez ${g}. Il écrit votre numéro dans « Recommandé par » ou ouvre votre lien.`, rf_copy: "Copier mon lien", rf_wa: "Envoyer sur WhatsApp", rf_msg: (l) => `Bonjour 😊 J'utilise Ecrici pour gérer mes ventes, mes crédits et mon stock. Essayez-le gratuitement pendant 7 jours : ${l}`, pay_btn: "Abonnement : payer ou renouveler", pay_t: "Abonnement Ecrici", pay_len: "Choisissez la durée", pay_m1: "1 mois", pay_m3: "3 mois", pay_m12: "12 mois", pay_to: a => `Envoyez ${a} à :`, pay_nodet: "Écrivez-nous sur WhatsApp pour recevoir les détails de paiement.", pay_ref: "Référence du paiement ou nom de l'expéditeur", pay_go: "J'ai payé", pay_cp: "Copier les détails", pay_cpd: "Copié", pay_wa: "Écrire sur WhatsApp", pay_ok_t: "Merci !", pay_ok_p: "Nous vérifions votre paiement. Votre abonnement sera activé dans les 24 heures, souvent bien plus vite.", pay_chk: "Actualiser", pay_cls: "Fermer", pay_fail: "Envoi impossible. Vérifiez la connexion et réessayez.", pay_msg: (n, p, a, m) => `Bonjour, j'ai payé mon abonnement Ecrici (${m} mois, ${a}) pour la boutique ${n} (${p}).`, ref_l: "Recommandé par (facultatif)", ref_h: "Nom ou numéro de la personne qui vous a présenté Ecrici.", hint_name: "Écrivez en MAJUSCULES, ex : BOUTIQUE DE VICTOR", hint_phone: "Chiffres seulement, sans le +. Ex :",  forgot: "Mot de passe oublié ? WhatsApp", wa_pw: p => `Bonjour, j'ai oublié mon mot de passe Ecrici. Mon numéro : ${p}`,
     wa_new: (n, p) => `Bonjour, je viens de créer mon compte Ecrici pour la boutique ${n} (${p}). Merci de l'activer.`,
     wa_renew: (n, p) => `Bonjour, je souhaite renouveler mon abonnement Ecrici pour la boutique ${n} (${p}).`,
     acct: "Compte", until: d => `Actif jusqu'au ${d}`, sync_ok: "Synchronisé", sync_wait: "En attente de connexion", logout_q: "Se déconnecter ? Les données de cette boutique seront retirées de ce téléphone (elles restent dans votre compte).",
@@ -136,7 +136,7 @@ const G = {
     ab_li: ["Sales and PDF receipts named after the customer", "Customer credit and debts with WhatsApp reminders", "Stock of products and services", "Daily and monthly report: sales, expenses, profit", "Several shops and employees, each with their own login", "Works on phone, tablet and computer"],
     faq_h: "Frequently asked questions",
     faq: [["Does Ecrici work without internet?", "Yes. You keep selling when the network is down. Everything saves on the phone and syncs to your account when you are back online."], ["Can I send receipts on WhatsApp?", "Yes. Every sale makes a PDF receipt or invoice you can send in one tap."], ["How much does Ecrici cost?", "It starts from a low monthly price per shop, with a 7-day free trial. Extra shops cost a little more. The price for your country is shown at the bottom of this page."], ["Can I manage several shops and employees?", "Yes. Each shop has its own books and each employee has their own login."], ["Can I delete my account?", "Yes, at any time. In the app: Settings, Account, \"Delete my account\". Your account and all your data are erased from our servers. Make a backup first."]],
-    rf_t: "Refer a friend", rf_p: g => `Introduce Ecrici to a shop owner. When they make their first payment, you get ${g}. They write your number under "Referred by" or open your link.`, rf_copy: "Copy my link", rf_wa: "Send on WhatsApp", rf_msg: (l) => `Hello 😊 I use Ecrici to manage my sales, credit and stock. Try it free for 7 days: ${l}`, ref_l: "Referred by (optional)", ref_h: "Name or number of the person who introduced you to Ecrici.", inst: "Install the app", f_plan: "Plan:", f_help: "Need help? WhatsApp", f_priv: "Privacy and terms", ios_t: "On iPhone: open this site in Safari, tap ••• (bottom right) or the Share button (square with an arrow), tap Share, then scroll and tap \"Add to Home Screen\".",  hint_name: "Write in CAPITAL letters, e.g. VICTOR'S DRYCLEANER", hint_phone: "Digits only, no + sign. Example:",  forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
+    rf_t: "Refer a friend", rf_p: g => `Introduce Ecrici to a shop owner. When they make their first payment, you get ${g}. They write your number under "Referred by" or open your link.`, rf_copy: "Copy my link", rf_wa: "Send on WhatsApp", rf_msg: (l) => `Hello 😊 I use Ecrici to manage my sales, credit and stock. Try it free for 7 days: ${l}`, pay_btn: "Subscription: pay or renew", pay_t: "Ecrici subscription", pay_len: "Choose how long", pay_m1: "1 month", pay_m3: "3 months", pay_m12: "12 months", pay_to: a => `Send ${a} to:`, pay_nodet: "Message us on WhatsApp to get the payment details.", pay_ref: "Payment reference or sender name", pay_go: "I have paid", pay_cp: "Copy details", pay_cpd: "Copied", pay_wa: "Message us on WhatsApp", pay_ok_t: "Thank you!", pay_ok_p: "We are checking your payment. Your subscription will be active within 24 hours, often much sooner.", pay_chk: "Refresh", pay_cls: "Close", pay_fail: "Could not send. Check your connection and try again.", pay_msg: (n, p, a, m) => `Hello, I paid my Ecrici subscription (${m} months, ${a}) for the shop ${n} (${p}).`, ref_l: "Referred by (optional)", ref_h: "Name or number of the person who introduced you to Ecrici.", inst: "Install the app", f_plan: "Plan:", f_help: "Need help? WhatsApp", f_priv: "Privacy and terms", ios_t: "On iPhone: open this site in Safari, tap ••• (bottom right) or the Share button (square with an arrow), tap Share, then scroll and tap \"Add to Home Screen\".",  hint_name: "Write in CAPITAL letters, e.g. VICTOR'S DRYCLEANER", hint_phone: "Digits only, no + sign. Example:",  forgot: "Forgot password? WhatsApp", wa_pw: p => `Hello, I forgot my Ecrici password. My number: ${p}`,
     wa_new: (n, p) => `Hello, I just created my Ecrici account for the shop ${n} (${p}). Please activate it.`,
     wa_renew: (n, p) => `Hello, I would like to renew my Ecrici subscription for the shop ${n} (${p}).`,
     acct: "Account", until: d => `Active until ${d}`, sync_ok: "Synced", sync_wait: "Waiting for connection", logout_q: "Log out? This shop's data will be removed from this phone (it stays in your account).",
@@ -223,6 +223,7 @@ function drawGate() {
     h = head() + `<div class="card form"><h2>${esc(member ? g("emp_blk_t") : pend ? g("pend_t") : g("blk_t"))}</h2>
       <div class="lg-msg">${esc(member ? g("emp_blk_p") : pend ? g("pend_p", a.name || "") : g("blk_p"))}</div>
       ${w && !member ? `<a class="btn primary" href="${w}" target="_blank" rel="noopener">${esc(g("wa"))}</a>` : ""}
+      ${!pend && !member ? `<button class="btn primary" data-lg="pay">${esc(g("pay_btn"))}</button>` : ""}
       <button class="btn" data-lg="check">${esc(g("check"))}</button>
       ${!pend && !member && lsGet(K.owner) === (sess && sess.uid) ? `<button class="btn" data-lg="backup">${esc(g("backup"))}</button>` : ""}
       <button class="btn small ghost" data-lg="logout" style="justify-self:start">${esc(g("out"))}</button></div>`;
@@ -254,6 +255,7 @@ gate.addEventListener("click", async e => {
   else if (act === "submit") submitAuth();
   else if (act === "forgot") { grab(); let id = ""; try { id = form.phone ? canon(form.country, form.phone) : ""; } catch (x) {} window.open(waLink(g("wa_pw", id ? "+" + id : "")), "_blank"); }
   else if (act === "install") { if (isIOS()) { iosHelp = !iosHelp; drawGate(); } else if (canInst()) { const d = deferredInstall; deferredInstall = null; try { d.prompt(); d.userChoice.then(() => drawGate(), () => drawGate()); } catch (x) { drawGate(); } } }
+  else if (act === "pay") openPay();
   else if (act === "check") enter();
   else if (act === "backup") { try { await backupNow(); } catch (x) {} }
   else if (act === "logout") logout(true);
@@ -578,6 +580,7 @@ window.viewSettings = function () {
   const w = waLink("");
   return baseSettings() + shopsSection() + teamSection() + referSection() + `<section class="sec"><h2>${esc(g("acct"))}</h2><div class="card form">
     <div class="note" style="margin:0">${esc(a.phone ? "+" + a.phone : "")}${until ? " · " + esc(g("until", until)) : ""}<br>${esc(dirty ? g("sync_wait") : g("sync_ok"))}</div>
+    ${member ? "" : `<button class="btn primary" data-lg-act="pay-open">${esc(g("pay_btn"))}</button>`}
     ${w ? `<a class="btn" href="${w}" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">${esc(g("help"))}</a>` : ""}
     <div class="field"><label for="lg-npw">${esc(g("chpw"))}</label><input id="lg-npw" type="password" autocomplete="new-password" placeholder="${esc(g("npw"))}"></div>
     <div class="field"><input id="lg-npw2" type="password" autocomplete="new-password" placeholder="${esc(g("npw2"))}" aria-label="${esc(g("npw2"))}"></div>
@@ -601,12 +604,62 @@ document.addEventListener("click", e => {
   else if (b.dataset.lgAct === "del-close" || (b.dataset.lgAct === "del-veil" && e.target === b)) { if (!dl.busy) { dl.open = false; drawDel(); } }
   else if (b.dataset.lgAct === "del-bk") { try { backupNow(); } catch (x) {} }
   else if (b.dataset.lgAct === "del-go") deleteAccount();
+  else if (b.dataset.lgAct === "pay-open") openPay();
+  else if (b.dataset.lgAct === "pay-close" || (b.dataset.lgAct === "pay-veil" && e.target === b)) { if (!py.busy) { py.open = false; drawPay(); } }
+  else if (b.dataset.lgAct === "pay-m") { py.months = Number(b.dataset.m) || 1; drawPay(); }
+  else if (b.dataset.lgAct === "pay-go") sendClaim();
+  else if (b.dataset.lgAct === "pay-cp") { try { navigator.clipboard.writeText(payLines().join("\n")); py.copied = true; drawPay(); setTimeout(() => { py.copied = false; drawPay(); }, 1500); } catch (x) {} }
+  else if (b.dataset.lgAct === "pay-chk") { py.open = false; drawPay(); enter(); }
   else if (b.dataset.lgAct === "chpw") changePassword();
   else if (b.dataset.lgAct === "tm-invite") { const n = ((document.getElementById("tm-name") || {}).value || "").trim(); if (n) { const bs = document.getElementById("tm-branch"), body = { p_name: n }; if (bs && bs.value) body.p_branch = bs.value; teamCall("team_invite", body); } }
   else if (b.dataset.lgAct === "tm-copy") copyText(b.dataset.link);
   else if (b.dataset.lgAct === "tm-cancel") teamCall("team_cancel", { p_code: b.dataset.id });
   else if (b.dataset.lgAct === "tm-remove") { if (confirm(g("tl_rm_q"))) teamCall("team_remove", { target: b.dataset.id }); }
 }, true);
+
+/* ---------- subscription payment (customer says "I have paid", admin confirms) ---------- */
+const py = { open: false, months: 1, err: "", busy: false, sent: false, copied: false };
+const payLines = () => { const t = CFG.payTo || {}, cc = curCountry(); const v = t[cc] || t.default || []; return (Array.isArray(v) ? v : [String(v)]).filter(Boolean); };
+async function openPay() {
+  if (member) return;
+  py.open = true; py.err = ""; py.busy = false; py.sent = false; py.copied = false; py.months = 1; drawPay();
+  try { const r = await api("/rest/v1/pay_claims?select=months&status=eq.pending&limit=1"); if (r && r.ok && Array.isArray(r.json) && r.json.length) { py.sent = true; if (py.open) drawPay(); } } catch (x) {}
+}
+function drawPay() {
+  let el = document.getElementById("lg-pay");
+  if (!py.open) { if (el) el.remove(); return; }
+  const keep = el ? ((el.querySelector("#pay-ref") || {}).value || "") : "";
+  if (!el) { el = document.createElement("div"); el.id = "lg-pay"; el.style.cssText = "position:relative;z-index:2147483000"; document.body.appendChild(el); }
+  const cc = curCountry(), l = lang(), base = priceOf(cc).base, amt = fmtMoney(base * py.months, cc, l), lines = payLines();
+  const opt = m => `<button class="btn${py.months === m ? " primary" : ""}" data-lg-act="pay-m" data-m="${m}" style="flex:1;padding:10px 4px">${esc(g("pay_m" + m))}<br><small>${esc(fmtMoney(base * m, cc, l))}</small></button>`;
+  let body;
+  if (py.sent) body = `<h2>${esc(g("pay_ok_t"))}</h2><p class="note" style="margin:0">${esc(g("pay_ok_p"))}</p>
+    <div class="actions"><button class="btn primary" data-lg-act="pay-chk">${esc(g("pay_chk"))}</button><button class="btn" data-lg-act="pay-close">${esc(g("pay_cls"))}</button></div>`;
+  else {
+    const a = shopRow(), wa = waLink(g("pay_msg", a.name || "", a.phone || "", amt, py.months));
+    body = `<h2>${esc(g("pay_t"))}</h2><p class="note" style="margin:0">${esc(g("pay_len"))}</p>
+    <div style="display:flex;gap:8px">${opt(1)}${opt(3)}${opt(12)}</div>
+    ${lines.length ? `<div class="note" style="margin:0"><b>${esc(g("pay_to", amt))}</b><br>${lines.map(x => esc(x)).join("<br>")}</div>
+    <button class="btn" data-lg-act="pay-cp">${esc(py.copied ? g("pay_cpd") : g("pay_cp"))}</button>` : `<div class="note" style="margin:0">${esc(g("pay_nodet"))}</div>`}
+    <div class="field"><label for="pay-ref">${esc(g("pay_ref"))}</label><input id="pay-ref" autocomplete="off" maxlength="80" value="${esc(keep)}"></div>
+    ${py.err ? `<div class="err" role="alert">${esc(py.err)}</div>` : ""}
+    <div class="actions"><button class="btn primary" data-lg-act="pay-go" ${py.busy ? "disabled" : ""}>${esc(py.busy ? g("wait") : g("pay_go"))}</button>
+    ${wa ? `<a class="btn" href="${wa}" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">${esc(g("pay_wa"))}</a>` : ""}
+    <button class="btn" data-lg-act="pay-close" ${py.busy ? "disabled" : ""}>${esc(g("pay_cls"))}</button></div>`;
+  }
+  el.innerHTML = `<div class="veil" data-lg-act="pay-veil"><div class="sheet" role="dialog" aria-modal="true"><div class="dlg">${body}</div></div></div>`;
+}
+async function sendClaim() {
+  if (py.busy || member) return;
+  const ref = ((document.getElementById("pay-ref") || {}).value || "").trim().slice(0, 80);
+  py.busy = true; py.err = ""; drawPay();
+  try {
+    const r = await api("/rest/v1/pay_claims", { method: "POST", headers: { Prefer: "return=minimal" }, body: { shop_id: shopId, months: py.months, ref } });
+    py.busy = false;
+    if (r.ok || r.status === 409) py.sent = true; else py.err = g("pay_fail");
+  } catch (x) { py.busy = false; py.err = g("pay_fail"); }
+  drawPay();
+}
 
 /* ---------- delete my account ---------- */
 const dl = { open: false, err: "", busy: false };

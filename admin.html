@@ -48,7 +48,7 @@ const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
 const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
 let sess=null; try{ sess=JSON.parse(lsGet(SK)); }catch(e){}
-let shops=[], branches=[], q="", filter="all", err="", msg="", msgLink="", lastEmail="";
+let shops=[], claims=[], branches=[], q="", filter="all", err="", msg="", msgLink="", lastEmail="";
 
 async function http(path,o){
   o=o||{};
@@ -95,6 +95,7 @@ async function load(){
   if(!r.ok){ err="Could not load ("+r.status+")."; login(); return; }
   shops=r.json||[];
   const rb=await api("/rest/v1/branches?select=*&order=created_at.asc"); branches=(rb.ok&&Array.isArray(rb.json))?rb.json:[];
+  const rc=await api("/rest/v1/pay_claims?select=*&status=eq.pending&order=created_at.asc"); claims=(rc.ok&&Array.isArray(rc.json))?rc.json:[];
   draw();
 }
 function draw(){ draw0(); const sg=err+"|"+msg; if((err||msg)&&sg!==window.__sg) window.scrollTo(0,0); window.__sg=sg; }
@@ -104,7 +105,7 @@ function draw0(){
   const list=shops.filter(s=>(filter==="all"||state(s)===filter)&&(!q||(s.name+" "+s.phone+" "+(s.referred_by||"")).toLowerCase().includes(q.toLowerCase())))
     .sort((a,b)=>pk(a)-pk(b)||String(b.created_at).localeCompare(String(a.created_at)));
   app.innerHTML=`<div class="top"><h1>Ecrici Admin</h1><button id="out">Log out</button></div>
-    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>${refBox()}${refSummary()}${reqs?`<div class="muted"><b>${reqs}</b> extra shop request${reqs>1?"s":""} waiting for activation</div>`:""}
+    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>${claimBox()}${refBox()}${refSummary()}${reqs?`<div class="muted"><b>${reqs}</b> extra shop request${reqs>1?"s":""} waiting for activation</div>`:""}
     <input id="q" placeholder="Search name, phone or referrer" value="${esc(q)}">
     <div class="row">${["all","pending","active","expired","suspended"].map(k=>`<button data-f="${k}" class="${filter===k?"p":""}">${k}</button>`).join("")}</div>
     <div class="err" id="er">${esc(err)}</div>${msg?`<div class="muted">${esc(msg)}${msgLink?` <a href="${esc(msgLink)}" target="_blank" rel="noopener">Send on WhatsApp</a>`:""}</div>`:""}
@@ -112,7 +113,7 @@ function draw0(){
   $("#out").onclick=()=>{ sess=null; lsDel(SK); err=""; login(); };
   $("#q").oninput=e=>{ q=e.target.value; const pos=e.target.selectionStart; draw(); const n=$("#q"); n.focus(); n.setSelectionRange(pos,pos); };
   app.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{ filter=b.dataset.f; draw(); });
-  app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(b.dataset.id,b.dataset.a));
+  app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(b.dataset.id,b.dataset.a,b.dataset.cid));
   app.querySelectorAll("[data-ba]").forEach(b=>b.onclick=()=>bact(b.dataset.bid,b.dataset.ba));
 }
 function refSummary(){
@@ -122,6 +123,11 @@ function refSummary(){
   if(!rows.length) return "";
   const tot=rows.reduce((a,r)=>a+r.n,0);
   return `<details class="card"><summary class="name">Referrals: ${tot} shop${tot>1?"s":""} from ${rows.length} referrer${rows.length>1?"s":""}</summary>${rows.map(r=>`<div class="muted"><b>${esc(r.name)}</b>: ${r.n} signed up, ${r.paid} paid${r.owe?` · to pay ${esc(r.owe)}`:""}</div>`).join("")}</details>`;
+}
+function claimBox(){
+  if(!claims.length) return "";
+  return `<div class="card"><div class="name">Payment claims to check (${claims.length})</div>${claims.map(c=>{ const s=shops.find(x=>x.id===c.shop_id)||{}; const amt=fmtAmt(P(s.country).base*c.months,s.country);
+    return `<div class="muted"><b>${esc(s.name||s.phone||"Unknown")}</b> · ${c.months} month${c.months>1?"s":""} · ${esc(amt)} · ref: ${esc(c.ref||"none")}<br>Check the money arrived, then <button class="p" data-id="${esc(c.shop_id)}" data-cid="${esc(c.id)}" data-a="claim-ok">Confirm</button> <button data-id="${esc(c.shop_id)}" data-cid="${esc(c.id)}" data-a="claim-no">Reject</button></div>`; }).join("")}</div>`;
 }
 function refBox(){
   const due=shops.filter(s=>s.ref_status==="due"); if(!due.length) return "";
@@ -175,8 +181,19 @@ function addTo(base,a){
   if(a==="trial") d.setUTCDate(d.getUTCDate()+7); else d.setUTCMonth(d.getUTCMonth()+({m1:1,m3:3,m12:12}[a]));
   return d.toISOString().slice(0,10);
 }
-async function act(id,a){
+async function act(id,a,cid){
   const s=shops.find(x=>x.id===id); if(!s) return;
+  if(a==="claim-ok"||a==="claim-no"){
+    const c=claims.find(x=>x.id===cid); if(!c) return;
+    err=""; msg=""; msgLink="";
+    if(a==="claim-ok"){ await act(id,"m"+c.months); if(err) return; }
+    const r=await api("/rest/v1/pay_claims?id=eq."+encodeURIComponent(cid),{method:"PATCH",headers:{Prefer:"return=representation"},body:{status:a==="claim-ok"?"confirmed":"rejected",decided_at:new Date().toISOString()}});
+    if(!r.ok){ err=(r.status===404?"Run upgrade-payments.sql in Supabase first. ":"")+"Claim not updated."; draw(); return; }
+    claims=claims.filter(x=>x.id!==cid);
+    msg=(a==="claim-ok"?"Confirmed and activated: ":"Rejected: ")+(s.name||s.phone);
+    if(s.phone){ msgLink="https://wa.me/"+String(s.phone).replace(/\D/g,"")+"?text="+encodeURIComponent(a==="claim-ok"?"Hello, we received your payment. Your Ecrici subscription is active. Thank you!":"Hello, we could not find your Ecrici payment yet. Please send us the receipt on WhatsApp."); }
+    draw(); return;
+  }
   if(a==="pw"){
     const L="ABCDEFGHJKLMNPQRSTUVWXYZ",pk=n=>Array.from({length:n},()=>L[Math.floor(Math.random()*L.length)]).join(""), def=pk(3)+String(Math.floor(1000+Math.random()*9000))+pk(1);
     const np=prompt("New password for "+(s.name||s.phone)+" (8 characters or more). Send it to the shop afterwards:",def);
