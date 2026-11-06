@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Ecrici: shop ledger",
+  "name": "Ecrici: business ledger",
   "short_name": "Ecrici",
-  "description": "Sales, credit, stock and PDF receipts for your shop. Works offline. Ventes, crédits, stock et reçus pour votre boutique.",
+  "description": "Sales, credit, stock and PDF receipts for your business. Works offline. Ventes, crédits, stock et reçus pour votre activité.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
