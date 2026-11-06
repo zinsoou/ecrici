@@ -409,6 +409,12 @@ function mergeLedgers(loc, rem) {
   m.products = unionById(loc.products, rem.products, (x, y) => {
     const b0 = base[x.id], z = Object.assign({}, x);
     if (typeof b0 === "number") z.qty = Math.round((x.qty + y.qty - b0) * 1000) / 1000;
+    if (Array.isArray(x.bs) || Array.isArray(y.bs)) {
+      z.bs = (x.bs || y.bs).map(b => Object.assign({}, b));
+      let diff = Math.round((z.qty - z.bs.reduce((a, b) => a + b.q, 0)) * 1000) / 1000;
+      if (diff > 0) z.bs.push({ n: "", e: "", q: diff });
+      else if (diff < 0) { z.bs.sort((a, b) => (a.e || "9999").localeCompare(b.e || "9999")); for (const b of z.bs) { if (diff >= 0) break; const t = Math.min(b.q, -diff); b.q = Math.round((b.q - t) * 1000) / 1000; diff += t; } z.bs = z.bs.filter(b => b.q > 0); }
+    }
     return z;
   });
   m.counter = Math.max(loc.counter || 0, rem.counter || 0, ...m.txs.map(t => t.no || 0));

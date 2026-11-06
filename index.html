@@ -491,7 +491,7 @@ Object.assign(BIZ,{
 const TOUR_GEN={fr:[["Bienvenue sur Ecrici","Le cahier de votre activité, sur votre téléphone. Une visite d'une minute pour tout comprendre."],["Ajoutez ce que vous vendez","Dans le deuxième onglet, notez le nom et le prix de vos services, chambres, frais ou produits."],["Enregistrez en quelques secondes","Choisissez le client, touchez ce qui a été fourni, puis Payé en totalité, À crédit ou Paiement partiel."],["Reçus et factures","Chaque enregistrement crée un reçu ou une facture PDF au nom du client, à envoyer sur WhatsApp. Ajoutez votre numéro MoMo ou banque dans Réglages : il s'affiche sur les factures."],["Sachez qui vous doit","Les montants impayés sont suivis client par client. Un rappel WhatsApp poli en un geste."],["Voyez vos résultats","Les rapports montrent le jour et le mois : montants encaissés et dépenses."],["Marche sans internet","Continuez sans réseau : tout se synchronise avec votre compte au retour d'internet. Sauvegardez quand vous voulez dans Réglages."],["Plusieurs adresses, une équipe","Ajoutez des activités avec des livres séparés et donnez à chaque employé sa propre connexion (Réglages)."],["Vous êtes prêt !","Commencez directement avec votre activité."]],
  en:[["Welcome to Ecrici","The notebook for your business on your phone. Take a one-minute tour to see how it works."],["Add what you sell","In the second tab, add the name and price of your services, rooms, fees or products."],["Record it in seconds","Pick the customer, tap what was provided, then choose Paid in full, On credit or Part payment."],["Receipts and invoices","Every entry makes a PDF receipt or invoice named after the customer, ready for WhatsApp. Add your MoMo or bank details in Settings and they show on invoices."],["Know who owes you","Unpaid amounts are tracked customer by customer. Send a polite WhatsApp reminder in one tap."],["See your results","Reports show today and this month: money received and expenses."],["Works without internet","Keep going when the network is down. Everything syncs to your account when you are back online. Back up any time in Settings."],["Several locations, one team","Add more businesses with separate books and give each employee their own login (Settings)."],["You are ready!","Start straight away with your own business."]]};
 const VOC={
- rent:{w:["tenants","locataires"],pick:["Units","Logements"],pq:["Search units…","Rechercher un logement…"],oth:["Other charge (type it)","Autre frais (écrivez-le)"],wk:["Choose a tenant","Choisir un locataire"],top:["Units","Logements"],bulk:["Add many units","Ajouter plusieurs logements"],cnt:["Number of rent bills","Nombre de loyers"],billed:1},
+ rent:{w:["tenants","locataires"],pick:["Units","Logements"],pq:["Search units…","Rechercher un logement…"],oth:["Other charge (type it)","Autre frais (écrivez-le)"],wk:["Choose a tenant","Choisir un locataire"],top:["Rent and charges","Loyers et charges"],bulk:["Add many units","Ajouter plusieurs logements"],cnt:["Number of rent bills","Nombre de loyers"],billed:1},
  hotel:{w:["guests","clients"],pick:["Rooms and services","Chambres et services"],pq:["Search rooms or services…","Rechercher une chambre ou un service…"],oth:["Other charge (type it)","Autre prestation (écrivez-la)"],wk:["Walk-in guest","Client de passage"],top:["Most booked rooms","Chambres les plus réservées"],bulk:["Add many rooms","Ajouter plusieurs chambres"],cnt:["Number of stays","Nombre de séjours"],billed:1},
  beauty:{w:["clients","clients"],pick:["Services","Services"],pq:["Search services…","Rechercher un service…"],oth:["Other service (type it)","Autre service (écrivez-le)"],wk:["Walk-in client","Client de passage"],top:["Most requested services","Services les plus demandés"],bulk:["Add many services","Ajouter plusieurs services"],cnt:["Number of visits","Nombre de visites"],billed:1},
  school:{w:["students","élèves"],pick:["Fees","Frais"],pq:["Search fees…","Rechercher des frais…"],oth:["Other fee (type it)","Autres frais (écrivez-les)"],wk:["Other payer","Autre payeur"],top:["Fees","Frais"],bulk:["Add many fees","Ajouter plusieurs frais"],cnt:["Number of payments","Nombre de paiements"],billed:1},
@@ -500,12 +500,13 @@ const VOC={
  health:{w:["patients","patients"],pick:["Services","Soins"],pq:["Search services…","Rechercher un soin…"],oth:["Other service (type it)","Autre acte (écrivez-le)"],wk:["Walk-in patient","Patient de passage"],top:["Most frequent services","Soins les plus fréquents"],bulk:["Add many services","Ajouter plusieurs soins"],cnt:["Number of visits","Nombre de visites"],billed:1},
  repair:{w:["customers","clients"],pick:["Jobs and parts","Travaux et pièces"],pq:["Search jobs or parts…","Rechercher un travail ou une pièce…"],oth:["Other job or part (type it)","Autre travail ou pièce (écrivez-le)"],top:["Most frequent jobs","Travaux les plus fréquents"],bulk:["Add many jobs","Ajouter plusieurs travaux"],cnt:["Number of jobs","Nombre de travaux"]}};
 Object.keys(VOC).forEach(k=>{ const v=VOC[k], B=BIZ[k]; [["en",0],["fr",1]].forEach(([l,i])=>{ const o=B[l]; const w=v.w[i], W=w.charAt(0).toUpperCase()+w.slice(1);
-  if(v.pick) o.pick_lab=v.pick[i]; if(v.pq) o.pick_q=v.pq[i]; if(v.oth) o.item_other=v.oth[i]; if(v.wk){ o.walkin=v.wk[i]; o.walk=v.wk[i]; }
+  if(v.pick) o.pick_lab=v.pick[i]; if(v.pq) o.pick_q=v.pq[i]; if(v.oth) o.item_other=v.oth[i]; if(v.wk){ o.walkin=v.wk[i]; o.walk=k==="rent"?(l==="en"?"No tenant":"Sans locataire"):v.wk[i]; }
   if(v.top) o.rep_top_products=v.top[i]; if(v.bulk) o.bulk_t=v.bulk[i]; if(v.cnt) o.rep_count=v.cnt[i];
   o.late_title=l==="en"?W+" to remind":W+" à relancer"; o.bc_title=l==="en"?"Message your "+w:"Message à vos "+w; o.rep_top_customers=l==="en"?"Top "+w:"Meilleurs "+w;
   const sv={rent:["per month","par mois"],hotel:["per night","par nuit"],beauty:["",""],school:["",""],services:["",""],health:["",""]}[k]; if(sv) o.svc_tag=sv[i];
   o.balance_after=l==="en"?"Balance after this receipt":"Solde après ce reçu";
-  if(v.billed){ o.sold=l==="en"?"Billed today":"Facturé aujourd'hui"; o.rep_sales=l==="en"?"Billed":"Facturé"; o.credit_given=l==="en"?"Left to pay":"Reste à payer"; o.rep_credit=o.credit_given; o.add_line=l==="en"?"+ Add charge":"+ Ajouter une ligne"; }
+  o.balance_now=l==="en"?"Total balance":"Solde total";
+  if(v.billed){ o.sold=l==="en"?"Billed today":"Facturé aujourd'hui"; o.rep_sales=l==="en"?"Billed":"Facturé"; o.credit_given=l==="en"?"Left to pay":"Reste à payer"; o.rep_credit=o.credit_given; o.add_line=l==="en"?"+ Add charge":"+ Ajouter une ligne"; o.sold_units=l==="en"?"times":"fois"; }
   if(!B[l].customers&&(k==="beauty"||k==="services")&&l==="en"){ Object.assign(o,{tab_cust:"Clients",customers:"Clients",customer:"Client",add_customer:"Add client",new_customer:"+ New client",no_customers:"No clients yet."}); }
 }); });
 BIZ.electronics={fr:{},en:{}}; BIZ.pharmacy={fr:{},en:{}};
@@ -516,6 +517,8 @@ VOC.travel={w:["clients","clients"],pick:["Trips and services","Voyages et servi
   o.pick_lab=v.pick[i]; o.pick_q=v.pq[i]; o.item_other=v.oth[i]; o.walkin=v.wk[i]; o.walk=v.wk[i]; o.rep_top_products=v.top[i]; o.bulk_t=v.bulk[i]; o.rep_count=v.cnt[i];
   o.late_title=l==="en"?W+" to remind":W+" à relancer"; o.bc_title=l==="en"?"Message your "+w:"Message à vos "+w; o.rep_top_customers=l==="en"?"Top "+w:"Meilleurs "+w; o.balance_after=l==="en"?"Balance after this receipt":"Solde après ce reçu";
   o.sold=l==="en"?"Billed today":"Facturé aujourd'hui"; o.rep_sales=l==="en"?"Billed":"Facturé"; o.credit_given=l==="en"?"Left to pay":"Reste à payer"; o.rep_credit=o.credit_given; o.add_line=l==="en"?"+ Add line":"+ Ajouter une ligne"; o.svc_tag=""; o.sale=l==="en"?"Booking":"Réservation"; }); })();
+Object.assign(BIZ.health.en,{tab_sale:"Visit",new_sale:"New visit"}); Object.assign(BIZ.health.fr,{tab_sale:"Visite",new_sale:"Nouvelle visite"});
+BIZ.travel.en.sold_units="times"; BIZ.travel.fr.sold_units="fois";
 Object.assign(BIZ.school.en,{tab_sale:"Payment",new_sale:"New payment",tab_stock:"Fee types",stock:"Fee types",phone:"Parent's phone"});
 Object.assign(BIZ.school.fr,{tab_sale:"Paiement",new_sale:"Nouveau paiement",tab_stock:"Types de frais",stock:"Types de frais"});
 Object.entries({rent:["Rent bill","Loyer"],hotel:["Stay","Séjour"],beauty:["Visit","Visite"],school:["Fee","Frais"],services:["Service","Prestation"],repair:["Job","Travail"],health:["Visit","Visite"]}).forEach(([k,v])=>{ BIZ[k].en.sale=v[0]; BIZ[k].fr.sale=v[1]; });
@@ -572,6 +575,31 @@ function seed(){
   return {v:1,updated:Date.now(),counter:no,
     shop:{name:"Ma Boutique",phone:"",country:"BJ",lang:"fr",footer:"",lateDays:14,staffOn:false,recovery:""},
     customers:[a,b,c,d],txs,products,staff:[],expenses:[],expRules:[]};
+}
+const EXN={
+ food:[["Plat du jour","Dish of the day",2500],["Boisson","Drink",500],["Brochettes","Skewers",1500]],
+ electronics:[["Téléphone Tecno","Tecno phone",85000],["Chargeur","Charger",3500],["Écouteurs","Earphones",5000]],
+ pharmacy:[["Paracétamol 500 mg","Paracetamol 500 mg",800],["Amoxicilline 500 mg","Amoxicillin 500 mg",2500],["Sirop contre la toux","Cough syrup",1800]],
+ beauty:[["Coiffure","Haircut",3000],["Tresses","Braids",8000],["Manucure","Manicure",4000]],
+ health:[["Consultation","Consultation",5000],["Analyse de sang","Blood test",6000],["Pansement","Dressing",2000]],
+ school:[["Frais de scolarité","Tuition fee",45000],["Inscription","Registration",15000],["Cantine","Canteen",8000]],
+ repair:[["Écran de téléphone","Phone screen",12000],["Vidange","Oil change",8000],["Batterie","Battery",7000]],
+ travel:[["Billet Cotonou–Lagos","Ticket Cotonou–Lagos",25000],["Réservation d'hôtel","Hotel booking",30000],["Visa","Visa",40000]],
+ services:[["Livraison","Delivery",1500],["Impression","Printing",500],["Installation","Installation",5000]],
+ rent:[["Loyer du mois","Monthly rent",50000],["Caution","Deposit",100000],["Charges","Service charge",10000]],
+ hotel:[["Chambre standard","Standard room",15000],["Chambre climatisée","AC room",25000],["Petit-déjeuner","Breakfast",2000]]};
+const EXI={"Riz 25 kg":0,"Huile 5 L":1,"Sucre 1 kg":2,"Savon":1,"Ciment (sac)":0,"Boîtes de tomate":2,"Eau 1,5 L":1,"Pain":2,"Lait en poudre":0};
+/* while only example data is present, show examples that fit the chosen business type */
+function nicheExamples(){
+  if(S.txs.some(x=>!x.example)||S.customers.some(c=>!c.example)||S.products.some(p=>!p.example)) return;
+  const k=biz(), L=S.shop.lang==="en"?1:0, T=EXN[k];
+  if(S.exHold&&S.exHold.length){ S.products.push(...S.exHold); S.exHold=[]; }
+  S.products.forEach(p=>{ if(!p.eo) p.eo={n:p.name,p:p.price,q:p.qty,l:p.low,c:p.cost||0}; });
+  S.txs.forEach(x=>{ if(x.type==="sale") x.lines.forEach(l=>{ if(!l.eo) l.eo={d:l.d,p:l.p,q:l.q,c:l.c||0}; }); });
+  const svcN=T&&NOSTOCK.includes(k);
+  S.products.forEach(p=>{ const o=p.eo; if(!T){ p.name=o.n; p.price=o.p; p.qty=o.q; p.low=o.l; p.cost=o.c; p.svc=false; return; } const it=T[EXI[o.n]]; p.name=it[L]; p.price=it[2]; p.cost=svcN?0:Math.round(it[2]*.7); p.svc=!!svcN; p.qty=svcN?0:o.q; p.low=svcN?0:o.l; });
+  const seen=new Set(), held=[]; S.products=S.products.filter(p=>{ const n=p.name.toLowerCase(); if(seen.has(n)){ held.push(p); return false; } seen.add(n); return true; }); S.exHold=held;
+  S.txs.forEach(x=>{ if(x.type!=="sale") return; x.lines.forEach(l=>{ const o=l.eo; if(!T){ l.d=o.d; l.p=o.p; l.q=o.q; l.c=o.c; return; } const it=T[EXI[o.d]]; l.d=it[L]; l.p=it[2]; l.q=svcN?Math.min(o.q,2):o.q; l.c=svcN?0:Math.round(it[2]*.7); }); x.total=x.lines.reduce((a,l)=>a+l.q*l.p,0); if(x.paid>x.total) x.paid=x.total; });
 }
 function balanceOf(custId, uptoNo){
   let b=0;
@@ -1117,7 +1145,7 @@ function loadExamples(){
   S.customers.push(...ex.customers); S.txs.push(...ex.txs);
   const names=new Set(S.products.map(q=>q.name.toLowerCase()));
   ex.products.forEach(q=>{ if(!names.has(q.name.toLowerCase())) S.products.push(q); });
-  save(); ui.view="home"; ui.custId=null; render(); toast(t("examples_loaded"));
+  nicheExamples(); save(); ui.view="home"; ui.custId=null; render(); toast(t("examples_loaded"));
 }
 /* --- broadcast --- */
 const BC_TPL={
@@ -1873,6 +1901,7 @@ document.addEventListener("click",e=>{
       s.country=$("#s-country").value; s.lang=$("#s-lang").value; s.footer=$("#s-footer").value.trim(); 
       s.lateDays=Math.max(1,parseInt($("#s-late").value,10)||14);
       s.biz=$("#s-biz").value; try{ localStorage.setItem("ecrici-biz",s.biz); }catch(e){}
+      nicheExamples();
       if(oldC!==s.country&&!$("#s-lang").dataset.touched) {}
       save(); render(); toast(t("saved_ok")); break; }
     case "save-pay": { const out=[]; for(let i=0;i<3;i++){ const n=($("#pay-n-"+i)||{}).value||""; if(n.trim()) out.push({m:($("#pay-m-"+i)||{}).value||"Other",n:n.trim().slice(0,60),a:(($("#pay-a-"+i)||{}).value||"").trim().slice(0,60)}); }
