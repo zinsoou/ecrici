@@ -297,7 +297,7 @@ async function submitAuth() {
   busyAuth = true; drawGate();
   try {
     let r;
-    if (su) r = await http("/auth/v1/signup", { method: "POST", body: { email: emailOf(id), password: pw, data: { name: form.name.trim().toUpperCase(), phone: id, country: form.country, ref: form.ref.trim().slice(0, 60) } } });
+    if (su) r = await http("/auth/v1/signup", { method: "POST", body: { email: emailOf(id), password: pw, data: { name: form.name.trim().toUpperCase(), phone: id, country: form.country, ref: form.ref.trim().slice(0, 60), biz: form.biz || "shop" } } });
     else if (jn) {
       r = await http("/auth/v1/signup", { method: "POST", body: { email: emailOf(id), password: pw, data: { join: form.code, phone: id, country: form.country } } });
       if (!r.ok && /exists|already/i.test(String((r.json || {}).error_code || "") + String((r.json || {}).msg || ""))) r = await http("/auth/v1/token?grant_type=password", { method: "POST", body: { email: emailOf(id), password: pw } });
@@ -460,11 +460,20 @@ async function doPush() {
   }
   throw new Error("sync busy");
 }
+/* tell the admin which kind of business this is (best effort, never blocks saving) */
+async function syncBiz() {
+  try {
+    const b = S && S.shop && S.shop.biz; if (!b || member || !shopId || lid !== shopId) return;
+    const key = shopId + ":" + b; if (lsGet("ecrici-biz-sync") === key) return;
+    const r = await api("/rest/v1/rpc/set_biz", { method: "POST", body: { p_biz: b } });
+    if (r && r.ok) lsSet("ecrici-biz-sync", key);
+  } catch (e) {}
+}
 window.pushCloud = async function () {
   if (!active || !sess) return;
   if (busyPush) { dirtyPush = true; return; }
   busyPush = true;
-  try { await doPush(); }
+  try { await doPush(); syncBiz(); }
   catch (e) {
     storeMode = "device";
     if (e.auth || e.status === 401 || e.status === 403) { busyPush = false; enter(); return; }

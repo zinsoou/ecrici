@@ -849,7 +849,7 @@ function viewHome(){
   if(isOwner()&&canInstall()) h+=`<div class="banner"><span>${t("inst_txt")}</span><span style="display:flex;gap:6px">${deferredInstall?`<button class="btn small primary" data-act="install-app">${t("inst_btn")}</button>`:""}<button class="btn small" data-act="install-off">${t("inst_later")}</button></span></div>`;
   const startOn=false;
   if(biz()==="shop"&&!startOn&&!S.customers.length&&!S.txs.length&&!S.products.length) h+=`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`;
-  h+=homeGuide()+rentCard();
+  h+=homeGuide()+rentCard()+hotelCard()+expiryCard();
   h+=`<section class="sec"><h2>${t("today")}<span>${new Date().toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{weekday:"long",day:"numeric",month:"long"})}</span></h2>
     <div class="sum">
       <div class="card"><div class="lbl">${t("sold")}</div><div class="val num">${money(sold)}</div></div>
@@ -911,7 +911,7 @@ const DETL={
  std:[["N° de série / IMEI","Serial no. / IMEI","ex. 356938035643809","e.g. 356938035643809"],["Garantie","Warranty","ex. 6 mois","e.g. 6 months"]],
  pharmacy:[["N° de lot","Batch no.","ex. B2231","e.g. B2231"],["Date d'expiration","Expiry date","ex. 03/2028 (mois/année)","e.g. 03/2028 (month/year)"]],
  travel:[["Date du voyage","Travel date","ex. 12 déc. 2026","e.g. 12 Dec 2026"],["Voyageurs","Travellers","ex. Ada Okoro, Chidi Okoro","e.g. Ada Okoro, Chidi Okoro"]],
- hotel:[["Date d'arrivée","Check-in date","ex. 12 déc. 2026","e.g. 12 Dec 2026"],["Date de départ","Check-out date","ex. 14 déc. 2026","e.g. 14 Dec 2026"]]};
+ hotel:[["Arrivée","Check-in","",""],["Départ","Check-out","",""]]};
 const detD=()=>DETL[biz()]||DETL.std;
 function detL(){ return detD().map(x=>lx(x[0],x[1])); }
 function detP(){ return detD().map(x=>lx(x[2],x[3])); }
@@ -920,13 +920,42 @@ const PH={
  price:{shop:["ex. 5000","e.g. 5000"],electronics:["ex. 185000","e.g. 420000"],pharmacy:["ex. 1500","e.g. 1500"],food:["ex. 2500","e.g. 2500"],beauty:["ex. 8000","e.g. 8000"],health:["ex. 5000","e.g. 5000"],school:["ex. 60000","e.g. 60000"],repair:["ex. 15000","e.g. 15000"],travel:["ex. 850000","e.g. 850000"],services:["ex. 20000","e.g. 20000"],rent:["ex. 150000","e.g. 150000"],hotel:["ex. 35000","e.g. 35000"]},
  exp:{shop:["ex. Transport, électricité, salaire","e.g. Transport, electricity, salary"],rent:["ex. Réparation plomberie","e.g. Plumbing repair"],hotel:["ex. Lessive, électricité, salaire","e.g. Laundry, electricity, salary"],school:["ex. Salaire des enseignants","e.g. Teachers' salaries"],travel:["ex. Billets d'avion, hôtel","e.g. Flight tickets, hotel"],food:["ex. Ingrédients, gaz, salaire","e.g. Ingredients, gas, salary"],pharmacy:["ex. Loyer, électricité, salaire","e.g. Rent, electricity, salary"]}};
 function ph(k){ const o=PH[k]; const v=o[biz()]||o.shop; return v[L()==="fr"?0:1]; }
-function lnEx(l){ const d=detL(); return [l.sn?`${d[0]}: ${l.sn}`:"",l.w?`${d[1]}: ${l.w}`:""].filter(Boolean).join(" · "); }
+const expOn=()=>["pharmacy","health"].includes(biz());
+const dayAdd=(k,n)=>{ const [y,m,d]=k.split("-").map(Number); return dkey(new Date(y,m-1,d+n)); };
+const daysBetween=(a,b)=>{ const A=a.split("-").map(Number),B=b.split("-").map(Number); return Math.round((new Date(B[0],B[1]-1,B[2])-new Date(A[0],A[1]-1,A[2]))/864e5); };
+function roomsBooked(pid,from,to,skip){ let n=0; S.txs.forEach(x=>{ if(x.type!=="sale"||x.void||x.id===skip) return; (x.lines||[]).forEach(l=>{ if(l.pid===pid&&l.ci&&l.co&&l.ci<to&&l.co>from) n++; }); }); return n; }
+function roomStatus(p){ const t0=todayKey(), total=Math.max(1,+p.rooms||1), busy=roomsBooked(p.id,t0,dayAdd(t0,1)); let until="";
+  if(busy&&total===1) S.txs.forEach(x=>{ if(x.type==="sale"&&!x.void) (x.lines||[]).forEach(l=>{ if(l.pid===p.id&&l.ci&&l.co&&l.ci<=t0&&l.co>t0) until=l.co; }); });
+  return {total,busy,free:Math.max(0,total-busy),until}; }
+function roomText(p,short){ const r=roomStatus(p);
+  if(r.total>1) return lx(`${r.free} libre(s) sur ${r.total}`,`${r.free} of ${r.total} free`);
+  return r.free?lx("Libre","Free"):lx("Occupée"+(r.until&&!short?" jusqu'au "+fmtDay(r.until):""),"Occupied"+(r.until&&!short?" until "+fmtDay(r.until):"")); }
+function parseExp(s){ s=(s||"").trim(); if(!s) return ""; let m,y,mo;
+  if((m=s.match(/^(\d{1,2})[\/.\-\s](\d{4})$/))){ mo=+m[1]; y=+m[2]; }
+  else if((m=s.match(/^(\d{4})[\/.\-](\d{1,2})$/))){ y=+m[1]; mo=+m[2]; }
+  else if((m=s.match(/^(\d{1,2})[\/.\-](\d{2})$/))){ mo=+m[1]; y=2000+(+m[2]); }
+  else if((m=s.match(/^\d{1,2}[\/.\-](\d{1,2})[\/.\-](\d{4})$/))){ mo=+m[1]; y=+m[2]; }
+  else return null;
+  if(mo<1||mo>12||y<2000||y>2100) return null; return y+"-"+String(mo).padStart(2,"0"); }
+const fmtExp=k=>k?k.slice(5)+"/"+k.slice(0,4):"";
+const expEnd=k=>{ const [y,m]=k.split("-").map(Number); return dkey(new Date(y,m,0)); };
+function expState(p){ if(!p||!p.exp||p.svc) return null; const end=expEnd(p.exp), t0=todayKey(); if(end<t0) return {s:"expired"}; const days=daysBetween(t0,end); return days<=90?{s:"soon",days}:{s:"ok"}; }
+function lnEx(l){ const d=detL();
+  if(l.ci||l.co) return [l.ci?`${d[0]}: ${fmtDay(l.ci)}`:"",l.co?`${d[1]}: ${fmtDay(l.co)}`:""].filter(Boolean).join(" · ");
+  return [l.sn?`${d[0]}: ${l.sn}`:"",l.w?`${d[1]}: ${l.w}`:""].filter(Boolean).join(" · "); }
+function detBox(l,i){
+  const lab=t=>`<div class="note" style="margin:0 0 2px;font-size:.72rem">${t}</div>`;
+  if(biz()==="hotel"){
+    if(!(l.ci||l.co||l.open)) return `<button type="button" class="btn small ghost" data-act="line-det" data-i="${i}" style="grid-column:1/-1;justify-self:start">${lx("+ Dates du séjour","+ Stay dates")}</button>`;
+    return `<div class="ldet" style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px"><div>${lab(detL()[0])}<input type="date" data-bind="line.${i}.ci" id="l${i}ci" value="${esc(l.ci||"")}" aria-label="${detL()[0]}"></div><div>${lab(detL()[1])}<input type="date" data-bind="line.${i}.co" id="l${i}co" value="${esc(l.co||"")}" min="${esc(l.ci?dayAdd(l.ci,1):"")}" aria-label="${detL()[1]}"></div></div>`; }
+  if(!(l.sn||l.w||l.open)) return `<button type="button" class="btn small ghost" data-act="line-det" data-i="${i}" style="grid-column:1/-1;justify-self:start">${({pharmacy:lx("+ Lot / expiration","+ Batch / expiry"),travel:lx("+ Date / voyageurs","+ Date / travellers")})[biz()]||lx("+ N° de série / garantie","+ Serial / warranty")}</button>`;
+  return `<div class="ldet" style="grid-column:1/-1;display:grid;grid-template-columns:1fr;gap:8px"><div>${lab(detL()[0])}<input data-bind="line.${i}.sn" id="l${i}sn" value="${esc(l.sn||"")}" placeholder="${detP()[0]}" autocomplete="off" aria-label="${detL()[0]}"></div><div>${lab(detL()[1])}<input data-bind="line.${i}.w" id="l${i}w" value="${esc(l.w||"")}" placeholder="${detP()[1]}" autocomplete="off" aria-label="${detL()[1]}"></div></div>`; }
 function linesHtml(){ const d=ui.draft; return `<div class="note" style="margin:0 0 6px;font-size:.78rem">${lx("Désignation, puis "+t("qty").toLowerCase()+" et prix","Item, then "+t("qty").toLowerCase()+" and price")}</div>`+d.lines.map((l,i)=>`<div class="line">
         <input data-bind="line.${i}.d" id="l${i}d" value="${esc(l.d)}" placeholder="${t("item_other")}" autocomplete="off" aria-label="${t("item")}">
         <input data-bind="line.${i}.q" id="l${i}q" value="${esc(l.q)}" inputmode="decimal" aria-label="${t("qty")}">
         <input data-bind="line.${i}.p" id="l${i}p" value="${esc(l.p)}" inputmode="decimal" placeholder="${t("price")}" aria-label="${t("price")}">
         <button class="x" data-act="del-line" data-i="${i}" aria-label="×" ${d.lines.length===1?"disabled":""}>×</button><div class="hint" id="h${i}">${esc(lineHint(l))}</div>
-        ${!detOn()?"":(l.sn||l.w||l.open)?`<div class="ldet" style="grid-column:1/-1;display:grid;grid-template-columns:1fr;gap:8px"><div><div class="note" style="margin:0 0 2px;font-size:.72rem">${detL()[0]}</div><input data-bind="line.${i}.sn" id="l${i}sn" value="${esc(l.sn||"")}" placeholder="${detP()[0]}" autocomplete="off" aria-label="${detL()[0]}"></div><div><div class="note" style="margin:0 0 2px;font-size:.72rem">${detL()[1]}</div><input data-bind="line.${i}.w" id="l${i}w" value="${esc(l.w||"")}" placeholder="${detP()[1]}" autocomplete="off" aria-label="${detL()[1]}"></div></div>`:`<button type="button" class="btn small ghost" data-act="line-det" data-i="${i}" style="grid-column:1/-1;justify-self:start">${({pharmacy:lx("+ Lot / expiration","+ Batch / expiry"),travel:lx("+ Date / voyageurs","+ Date / travellers"),hotel:lx("+ Dates du séjour","+ Stay dates")})[biz()]||lx("+ N° de série / garantie","+ Serial / warranty")}</button>`}</div>`).join(""); }
+        ${!detOn()?"":detBox(l,i)}</div>`).join(""); }
 function refreshPicks(){ const q=ui.draft?ui.draft.pq:"", m=$("#pk-q"), a=$("#pk-list"), b=$("#pk-inl"), n=$("#pk-n");
   if(a) a.innerHTML=pickList(m?m.value:""); if(b) b.innerHTML=pickList(q,true); pkVis();
   const ln=$("#lines"); if(ln) ln.innerHTML=linesHtml();
@@ -940,18 +969,19 @@ function pickList(q,compact){
   q=(q||"").trim().toLowerCase();
   const list=S.products.filter(p=>!q||p.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
   if(!list.length) return `<p class="note" style="text-align:center">${t("pick_none")}</p>`;
-  return list.map(p=>{ const n=pickQty(p.id); const out=!p.svc&&p.qty<=0, sub=p.svc?t("svc_tag"):out?t("out"):`${t("in_stock")}: ${p.qty}`;
+  return list.map(p=>{ const n=pickQty(p.id); const out=!p.svc&&p.qty<=0, sub=p.svc?(biz()==="hotel"?roomText(p,true):t("svc_tag")):out?t("out"):`${t("in_stock")}: ${p.qty}`;
     if(compact) return `<button class="row pk1" data-act="pick-p" data-id="${p.id}"${out?' style="opacity:.5"':""}><span class="nm">${esc(p.name)}</span><span class="meta">${money(p.price)}${(p.svc?sub:out?sub:p.qty)!==""?" · "+esc(p.svc?sub:out?sub:p.qty):""}</span>${n>0?`<b class="qn">×${n}</b>`:""}</button>`;
     return `<button class="row" data-act="pick-p" data-id="${p.id}"${out?' style="opacity:.5"':""}><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)}${sub?" · "+esc(sub):""}</div></div>${n>0?`<div class="amt"><b>×${n}</b></div>`:""}</button>`; }).join("");
 }
 function pickAdd(id){
   const pr=S.products.find(x=>x.id===id), d=ui.draft; if(!pr||!d) return;
+  const es=expState(pr); if(es&&es.s==="expired"){ toast(lx(`${pr.name} est périmé (${fmtExp(pr.exp)}). Retirez-le du stock.`,`${pr.name} has expired (${fmtExp(pr.exp)}). Remove it from stock.`)); return false; }
   const ex=d.lines.find(l=>l.pid===id), have=pickQty(id);
   if(!pr.svc&&have+1>pr.qty){ toast(t("err_stock",pr.name,pr.qty)); return false; }
   if(ex){ ex.q=String((parseAmt(ex.q)||0)+1); return true; }
   let l=d.lines.find(x=>!x.d.trim()&&!parseAmt(x.p));
   if(!l){ l={d:"",q:"1",p:"",pid:null,auto:false}; d.lines.push(l); }
-  l.d=pr.name; l.pid=pr.id; l.q="1"; l.p=String(pr.price); l.auto=true; return true;
+  l.d=pr.name; l.pid=pr.id; l.q="1"; l.p=String(pr.price); l.auto=true; if(expOn()&&(pr.batch||pr.exp)){ l.sn=pr.batch||""; l.w=pr.exp?fmtExp(pr.exp):""; l.open=true; } return true;
 }
 function lineHint(l){ const p=l.pid&&S.products.find(x=>x.id===l.pid); if(!p||p.svc) return ""; const q=parseAmt(l.q)||0; return `${t("in_stock")}: ${p.qty}`+(q>p.qty?" ⚠":""); }
 function updateSaleTotals(){
@@ -981,6 +1011,17 @@ function homeGuide(){
   if(steps.every(x=>x[0])||S.shop.guideOff) return "";
   const first=steps.findIndex(x=>!x[0]);
   return `<section class="sec"><h2>${lx("Pour bien démarrer","Get started")}<span>${steps.filter(x=>x[0]).length}/3</span></h2><div class="card flush">${steps.map((x,i)=>`<button class="row" data-act="tab" data-v="${x[1]}" ${x[0]?'style="opacity:.55"':""}><div class="main"><div class="name">${x[0]?"✓ ":""}${esc(x[2])}</div></div>${i===first?`<div class="amt"><span class="badge">${lx("Ici","Next")}</span></div>`:""}</button>`).join("")}</div></section>`;
+}
+function hotelCard(){
+  if(biz()!=="hotel"||!S.products.length) return "";
+  const t0=todayKey(); let tot=0,free=0,arr=0,dep=0; S.products.forEach(p=>{ const r=roomStatus(p); tot+=r.total; free+=r.free; });
+  S.txs.forEach(x=>{ if(x.type==="sale"&&!x.void) (x.lines||[]).forEach(l=>{ if(l.ci===t0) arr++; if(l.co===t0) dep++; }); });
+  return `<section class="sec"><h2>${lx("Chambres ce soir","Rooms tonight")}<span>${free}/${tot} ${lx("libres","free")}</span></h2><div class="sum"><div class="card"><div class="lbl">${lx("Arrivées aujourd'hui","Arriving today")}</div><div class="val num">${arr}</div></div><div class="card"><div class="lbl">${lx("Départs aujourd'hui","Leaving today")}</div><div class="val num">${dep}</div></div></div></section>`;
+}
+function expiryCard(){
+  if(!expOn()) return "";
+  const L=S.products.filter(p=>{ const e=expState(p); return !p.svc&&p.qty>0&&e&&e.s!=="ok"; }).sort((a,b)=>expEnd(a.exp).localeCompare(expEnd(b.exp))); if(!L.length) return "";
+  return `<section class="sec"><h2>${lx("Alertes de péremption","Expiry alerts")}<span>${L.length}</span></h2><div class="card flush">${L.slice(0,6).map(p=>{ const e=expState(p); return `<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${p.qty} ${lx("en stock","in stock")} · ${lx("exp.","exp.")} ${fmtExp(p.exp)}</div></div><div class="amt"><span class="badge ${e.s==="expired"?"owed":"late"}">${e.s==="expired"?lx("Périmé","Expired"):lx("Dans "+e.days+" j","In "+e.days+" days")}</span></div></button>`; }).join("")}${L.length>6?`<div class="empty">+${L.length-6}</div>`:""}</div></section>`;
 }
 function rentCard(){
   if(biz()!=="rent"||!isOwner()||!S.customers.some(c=>+c.rent>0)) return "";
@@ -1216,17 +1257,19 @@ function viewStock(){
   if(isOwner()&&list.length&&!nostock()) h+=`<div class="card"><div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${t("stock_value")}</div><div class="num" style="font-size:1.35rem;margin-top:4px">${money(val)}</div></div>`;
   h+=`<div class="card flush">`;
   if(!list.length) h+=`<div class="empty">${t("no_products")}</div>`;
-  h+=list.map(p=>{ if(p.svc) return `<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)}</div></div><div class="amt">${t("svc_tag")?`<span class="badge">${t("svc_tag")}</span>`:""}</div></button>`; const st=p.qty<=0?`<span class="badge owed">${t("out")}</span>`:p.qty<=p.low?`<span class="badge late">${t("low")}</span>`:"";
-    return `<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)}</div></div><div class="amt"><div class="num">${p.qty}</div>${st}</div></button>`; }).join("");
+  h+=list.map(p=>{ if(p.svc) return `<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)}${biz()==="hotel"&&+p.rooms>1?" · "+p.rooms+" "+lx("chambres","rooms"):""}</div></div><div class="amt">${biz()==="hotel"?`<span class="badge ${roomStatus(p).free?"got":"owed"}">${esc(roomText(p))}</span>`:t("svc_tag")?`<span class="badge">${t("svc_tag")}</span>`:""}</div></button>`; const st=p.qty<=0?`<span class="badge owed">${t("out")}</span>`:p.qty<=p.low?`<span class="badge late">${t("low")}</span>`:"";
+    return `<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)}${p.exp?" · "+lx("Exp. ","Exp. ")+fmtExp(p.exp):""}</div></div><div class="amt"><div class="num">${p.qty}</div>${(()=>{ const e=expState(p); return e&&e.s==="expired"?`<span class="badge owed">${lx("Périmé","Expired")}</span>`:e&&e.s==="soon"?`<span class="badge late">${lx("Expire bientôt","Expiring")}</span>`:st; })()}</div></button>`; }).join("");
   return h+`</div></section>`;
 }
 function productModal(m){
   const p=m.id?S.products.find(x=>x.id===m.id):null, own=isOwner(), ro=own?"":"readonly";
   return `<div class="dlg form"><h2>${p?esc(p.name):t("add_product")}</h2>
     <div class="field"><label for="pr-name">${t("product_name")}</label><input id="pr-name" value="${esc(p?p.name:"")}" placeholder="${esc(ph("name"))}" ${ro} autocomplete="off"></div>
-    <label class="chk" ${nostock()?"hidden":""}><input type="checkbox" id="pr-svc" ${(p?p.svc:nostock())?"checked":""} ${own?"":"disabled"} onchange="document.getElementById('pr-stk').hidden=document.getElementById('pr-stk2').hidden=this.checked"> ${t("is_service")}</label>
+    <label class="chk" ${nostock()?"hidden":""}><input type="checkbox" id="pr-svc" ${(p?p.svc:nostock())?"checked":""} ${own?"":"disabled"} onchange="document.getElementById('pr-stk').hidden=document.getElementById('pr-stk2').hidden=this.checked;var xb=document.getElementById('pr-exp-box');if(xb)xb.hidden=this.checked"> ${t("is_service")}</label>
     <div class="grid2"><div class="field"><label for="pr-price">${t("unit_price")}</label><input id="pr-price" value="${esc(p?p.price:"")}" placeholder="${esc(ph("price"))}" inputmode="decimal" ${ro}></div>
     <div class="field" id="pr-stk" ${(p?p.svc:nostock())?"hidden":""}><label for="pr-qty">${t("in_stock")}</label><input id="pr-qty" value="${esc(p?p.qty:"0")}" inputmode="decimal" ${ro}></div></div>
+    ${biz()==="hotel"?`<div class="field"><label for="pr-rooms">${lx("Nombre de chambres de ce type","How many rooms of this type")}</label><input id="pr-rooms" value="${esc(p?(p.rooms||1):"1")}" inputmode="numeric" ${ro} placeholder="1"><p class="note" style="margin:4px 0 0">${lx("Ex. 1 pour « Chambre 101 », 6 pour « Chambre standard ».","e.g. 1 for “Room 101”, 6 for “Standard room”.")}</p></div>`:""}
+    ${expOn()?`<div id="pr-exp-box" ${(p&&p.svc)?"hidden":""}><div class="grid2"><div class="field"><label for="pr-batch">${lx("N° de lot","Batch no.")}</label><input id="pr-batch" value="${esc(p?(p.batch||""):"")}" placeholder="${lx("ex. B2231","e.g. B2231")}" ${ro} autocomplete="off"></div><div class="field"><label for="pr-exp">${lx("Date d'expiration","Expiry date")}</label><input id="pr-exp" value="${esc(p&&p.exp?fmtExp(p.exp):"")}" placeholder="${lx("ex. 03/2028","e.g. 03/2028")}" ${ro} inputmode="numeric" autocomplete="off"></div></div><p class="note" style="margin:-4px 0 8px">${lx("Format mois/année. Vous serez alerté 90 jours avant l'expiration.","Month/year format. You will be alerted 90 days before it expires.")}</p></div>`:""}
     ${own&&!nostock()?`<div class="field"><label for="pr-cost">${t("cost_price")}</label><input id="pr-cost" value="${esc(p?(p.cost||""):"")}" inputmode="decimal"></div>`:""}
     <div id="pr-stk2" ${(p?p.svc:nostock())?"hidden":""}><div class="field"><label for="pr-low">${t("low_alert")}</label><input id="pr-low" value="${esc(p?p.low:"5")}" inputmode="numeric" ${ro}></div>
     ${p?`<div class="field"><label for="pr-add">${t("add_received")}</label><input id="pr-add" inputmode="decimal" placeholder="0"></div>`:""}</div>
@@ -1261,7 +1304,12 @@ function saveProduct(){
     const svc=!!($("#pr-svc")&&$("#pr-svc").checked);
     const price=parseAmt($("#pr-price").value), qty=svc?0:parseAmt($("#pr-qty").value), low=svc?0:Math.max(0,parseAmt($("#pr-low").value));
     const ce=$("#pr-cost"), cost=ce?parseAmt(ce.value):(p&&p.cost)||0;
+    let exp=p&&p.exp||"", batch=p&&p.batch||"";
+    if($("#pr-exp")){ const raw=$("#pr-exp").value.trim(); const pe=svc?"":parseExp(raw); if(pe===null){ er.textContent=lx("Écrivez la date au format mois/année, ex. 03/2028.","Write the date as month/year, e.g. 03/2028."); return; } exp=pe; batch=svc?"":$("#pr-batch").value.trim(); }
+    const rooms=$("#pr-rooms")?Math.max(1,Math.floor(parseAmt($("#pr-rooms").value))||1):(p&&p.rooms)||undefined;
     if(!p){ p={id:uid(),name,price,qty,low,cost,svc}; S.products.push(p); } else { p.name=name; p.price=price; p.qty=qty; p.low=low; p.cost=cost; p.svc=svc; }
+    if(expOn()){ if(exp) p.exp=exp; else delete p.exp; if(batch) p.batch=batch; else delete p.batch; }
+    if(rooms) p.rooms=rooms;
   }
   if(p&&!p.svc){ const ae=$("#pr-add"); const add=ae?parseAmt(ae.value):0; if(add>0) p.qty=Math.round((p.qty+add)*1000)/1000; }
   save(); ui.modal=null; render(); toast(t("product_saved"));
@@ -1645,6 +1693,7 @@ function setBind(path,val){
   else if(path.startsWith("line.")){
     const [,i,k]=path.split("."); const l=d.lines[+i]; l[k]=val;
     if(k==="p") l.auto=false;
+    if(k==="ci"||k==="co"){ if(l.ci&&l.co&&l.co>l.ci){ l.q=String(daysBetween(l.ci,l.co)); const qf=$("#l"+i+"q"); if(qf) qf.value=l.q; } const cf=$("#l"+i+"co"); if(cf&&l.ci) cf.min=dayAdd(l.ci,1); }
     if(k==="d"){ const pr=S.products.find(x=>x.name.toLowerCase()===val.trim().toLowerCase()); l.pid=pr?pr.id:null;
       if(pr&&(!parseAmt(l.p)||l.auto)){ l.p=String(pr.price); l.auto=true; const pf=$("#l"+i+"p"); if(pf) pf.value=l.p; } }
     const h=$("#h"+i); if(h) h.textContent=lineHint(l);
@@ -1652,9 +1701,14 @@ function setBind(path,val){
 }
 function saveSale(kind){
   const d=ui.draft; d.err="";
-  const lines=d.lines.map(l=>({...((l.sn||"").trim()?{sn:l.sn.trim()}:{}),...((l.w||"").trim()?{w:l.w.trim()}:{}),d:l.d.trim(),q:parseAmt(l.q)||0,p:parseAmt(l.p),pid:l.pid||null,c:(()=>{const pr=l.pid&&S.products.find(z=>z.id===l.pid);return pr&&pr.cost>0?pr.cost:0;})()})).filter(l=>l.q>0&&l.p>0);
+  const lines=d.lines.map(l=>({...((l.sn||"").trim()?{sn:l.sn.trim()}:{}),...(l.ci?{ci:l.ci}:{}),...(l.co?{co:l.co}:{}),...((l.w||"").trim()?{w:l.w.trim()}:{}),d:l.d.trim(),q:parseAmt(l.q)||0,p:parseAmt(l.p),pid:l.pid||null,c:(()=>{const pr=l.pid&&S.products.find(z=>z.id===l.pid);return pr&&pr.cost>0?pr.cost:0;})()})).filter(l=>l.q>0&&l.p>0);
   const total=lines.reduce((s,l)=>s+l.q*l.p,0);
   if(!lines.length||total<=0){ d.err=t("err_total"); $("#s-err").textContent=d.err; return; }
+  if(biz()==="hotel"){ const used=[]; for(const l of lines){ if(!l.ci&&!l.co) continue;
+    if(!l.ci||!l.co||l.co<=l.ci){ d.err=lx("Choisissez une date d'arrivée et une date de départ après l'arrivée.","Choose a check-in date and a check-out date after it."); $("#s-err").textContent=d.err; return; }
+    if(l.pid){ const pr=S.products.find(x=>x.id===l.pid), total=Math.max(1,+(pr&&pr.rooms)||1), clash=roomsBooked(l.pid,l.ci,l.co)+used.filter(u=>u.pid===l.pid&&u.ci<l.co&&u.co>l.ci).length;
+      if(clash>=total){ d.err=lx(`${l.d} est déjà réservée du ${fmtDay(l.ci)} au ${fmtDay(l.co)}. Choisissez d'autres dates ou une autre chambre.`,`${l.d} is already booked for ${fmtDay(l.ci)} to ${fmtDay(l.co)}. Choose other dates or another room.`); $("#s-err").textContent=d.err; return; }
+      used.push(l); } } }
   const need={}; lines.forEach(l=>{ if(l.pid) need[l.pid]=(need[l.pid]||0)+l.q; });
   for(const pid in need){ const pr=S.products.find(x=>x.id===pid); if(pr&&!pr.svc&&need[pid]>pr.qty){ d.err=t("err_stock",pr.name,pr.qty); $("#s-err").textContent=d.err; return; } }
   let paid=draftPaid(); if(paid>total) paid=total;

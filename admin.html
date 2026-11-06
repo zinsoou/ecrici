@@ -102,11 +102,11 @@ function draw(){ draw0(); const sg=err+"|"+msg; if((err||msg)&&sg!==window.__sg)
 function draw0(){
   const cnt={pending:0,active:0,expired:0,suspended:0}; shops.forEach(s=>cnt[state(s)]++); const reqs=branches.filter(b=>b.status==="pending").length;
   const order={pending:0,expired:1,suspended:2,active:3}, pk=s=>brOf(s.id).some(b=>b.status==="pending")?-1:order[state(s)];
-  const list=shops.filter(s=>(filter==="all"||state(s)===filter)&&(!q||(s.name+" "+s.phone+" "+(s.referred_by||"")).toLowerCase().includes(q.toLowerCase())))
+  const list=shops.filter(s=>(filter==="all"||state(s)===filter)&&(!q||(s.name+" "+s.phone+" "+(s.referred_by||"")+" "+bizOf(s)).toLowerCase().includes(q.toLowerCase())))
     .sort((a,b)=>pk(a)-pk(b)||String(b.created_at).localeCompare(String(a.created_at)));
   app.innerHTML=`<div class="top"><h1>Ecrici Admin</h1><button id="out">Log out</button></div>
-    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>${claimBox()}${refBox()}${refSummary()}${reqs?`<div class="muted"><b>${reqs}</b> extra shop request${reqs>1?"s":""} waiting for activation</div>`:""}
-    <input id="q" placeholder="Search name, phone or referrer" value="${esc(q)}">
+    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>${claimBox()}${refBox()}${refSummary()}${bizSummary()}${reqs?`<div class="muted"><b>${reqs}</b> extra shop request${reqs>1?"s":""} waiting for activation</div>`:""}
+    <input id="q" placeholder="Search name, phone, type or referrer" value="${esc(q)}">
     <div class="row">${["all","pending","active","expired","suspended"].map(k=>`<button data-f="${k}" class="${filter===k?"p":""}">${k}</button>`).join("")}</div>
     <div class="err" id="er">${esc(err)}</div>${msg?`<div class="muted">${esc(msg)}${msgLink?` <a href="${esc(msgLink)}" target="_blank" rel="noopener">Send on WhatsApp</a>`:""}</div>`:""}
     ${list.map(card).join("")||`<p class="muted">No shops here yet.</p>`}`;
@@ -134,10 +134,17 @@ function refBox(){
   const tot={}; due.forEach(s=>{ const c=P(s.country).cur; tot[c]=(tot[c]||0)+rew(s.country); });
   return `<div class="card"><div class="name">Rewards to pay (${due.length})</div>${due.map(s=>`<div class="muted">${esc(s.referred_by)} · ${esc(fmtAmt(rew(s.country),s.country))} · for ${esc(s.name||s.phone)} <button class="p" data-id="${esc(s.id)}" data-a="refpaid">Mark paid</button></div>`).join("")}</div>`;
 }
+const BIZN={shop:"Shop / general trade",electronics:"Electronics",pharmacy:"Pharmacy",food:"Restaurant / food",beauty:"Salon / beauty",health:"Clinic / lab",school:"School / training",repair:"Workshop / tailoring",travel:"Travel & tours",services:"Other services",rent:"Rentals",hotel:"Hotel / guesthouse"};
+const bizOf=s=>BIZN[s.biz]||"Not chosen yet";
+function bizSummary(){
+  const c={}; shops.forEach(s=>{ const k=bizOf(s); c[k]=(c[k]||0)+1; });
+  const rows=Object.entries(c).sort((a,b)=>b[1]-a[1]); if(!rows.length) return "";
+  return `<div class="card"><div class="name">Businesses by type</div><div class="muted">${rows.map(([k,n])=>`${esc(k)}: <b>${n}</b>`).join(" · ")}</div></div>`;
+}
 function card(s){
   const st=state(s), dl=daysLeft(s), wa=s.phone?`https://wa.me/${String(s.phone).replace(/\D/g,"")}`:"";
   const info=s.paid_until?`Paid until ${s.paid_until}${dl!=null?` (${dl>=0?dl+" days left":Math.abs(dl)+" days ago"})`:""}`:"Not paid yet";
-  return `<div class="card" data-shop="${esc(s.id)}"><div class="top"><div><div class="name">${esc(s.name||"(no name)")}</div><div class="muted">+${esc(s.phone)} · ${esc(s.country)}</div></div><span class="chip ${st}">${st}</span></div>
+  return `<div class="card" data-shop="${esc(s.id)}"><div class="top"><div><div class="name">${esc(s.name||"(no name)")}</div><div class="muted">+${esc(s.phone)} · ${esc(s.country)} · ${esc(bizOf(s))}</div></div><span class="chip ${st}">${st}</span></div>
     <div class="muted">${esc(info)}</div>${refLine(s)}${shopsBlock(s)}
     <div class="row">${st==="pending"?`<button class="p" data-id="${esc(s.id)}" data-a="trial">Approve · 7 days</button>`:""}
       <button data-id="${esc(s.id)}" data-a="m1">+1 month</button><button data-id="${esc(s.id)}" data-a="m3">+3 months</button><button data-id="${esc(s.id)}" data-a="m12">+12 months</button></div>
