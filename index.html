@@ -728,7 +728,7 @@ async function initCloud(){
   }catch(e){ cloud=null; storeMode="device"; updateStatus(); }
 }
 function migrate(p){
-  p.products=p.products||[]; p.staff=p.staff||[]; p.expenses=p.expenses||[]; p.expRules=p.expRules||[]; p.shop.staffOn=!!p.shop.staffOn; p.shop.recovery=p.shop.recovery||""; p.shop.lastBackup=p.shop.lastBackup||"";
+  p.products=p.products||[]; p.appts=p.appts||[]; p.staff=p.staff||[]; p.expenses=p.expenses||[]; p.expRules=p.expRules||[]; p.shop.staffOn=!!p.shop.staffOn; p.shop.recovery=p.shop.recovery||""; p.shop.lastBackup=p.shop.lastBackup||"";
   if(p.shop.staffOn&&!p.staff.length) p.shop.staffOn=false;
   p.txs.forEach(x=>{ if(x.type==="sale") x.lines.forEach(l=>{ if(!("pid" in l)) l.pid=null; if(x.example&&l.c===undefined) l.c=EX_COST[l.d]||0; }); });
   p.products.forEach(q=>{ if(q.cost===undefined) q.cost=q.example?(EX_COST[q.name]||0):0; });
@@ -855,6 +855,15 @@ function canInstall(){
 }
 window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredInstall=e; if(S&&ui.view==="home") render(); });
 window.addEventListener("appinstalled",()=>{ deferredInstall=null; try{localStorage.setItem("ecrici-install-off","1");}catch(e){} if(S) render(); });
+function dayFigures(){ const tk=todayKey(), day=S.txs.filter(x=>dkey(x.date)===tk&&!x.void&&!x.example), sales=day.filter(x=>x.type==="sale");
+  const sold=sales.reduce((a,x)=>a+x.total,0), got=day.reduce((a,x)=>a+(x.type==="sale"?x.paid:x.amount),0), cred=sales.reduce((a,x)=>a+(x.total-x.paid),0);
+  const old=day.filter(x=>x.type!=="sale").reduce((a,x)=>a+x.amount,0), exp=(S.expenses||[]).filter(e=>dkey(e.date)===tk).reduce((a,e)=>a+e.amount,0);
+  const owed=S.customers.reduce((a,c)=>a+Math.max(0,balanceOf(c.id)),0);
+  const by={cash:0,momo:0,transfer:0,none:0}; day.forEach(x=>{ const v=x.type==="sale"?x.paid:x.amount; if(!(v>0)) return; by[x.method&&by[x.method]!==undefined?x.method:"none"]+=v; });
+  return {n:sales.length,sold,got,cred,old,exp,net:got-exp,owed,by}; }
+const cashExp=f=>Math.round((f.by.cash-(f.exp||0))*100)/100;
+function closeText(){ const f=dayFigures(), d=new Date().toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{weekday:"long",day:"numeric",month:"long"});
+  return [`${S.shop.name} - ${lx("Clôture du ","Closing for ")}${d}`,"",`${t("sold")}: ${money(f.sold)} (${f.n})`,`${t("collected")}: ${money(f.got)}`,`${lx("dont anciennes dettes payées","of which old debts paid")}: ${money(f.old)}`,...["cash","momo","transfer"].filter(k=>f.by[k]>0).map(k=>`  ${t(k)}: ${money(f.by[k])}`),`${t("credit_given")}: ${money(f.cred)}`,`${lx("Dépenses","Expenses")}: ${money(f.exp)}`,`${lx("Reste après dépenses","Left after expenses")}: ${money(f.net)}`,...(ui.modal&&ui.modal.counted!==undefined&&ui.modal.counted!==""?[`${lx("Espèces comptées","Cash counted")}: ${money(ui.modal.counted)} (${lx("attendu","expected")} ${money(cashExp(f))}, ${lx("écart","difference")} ${money(ui.modal.counted-cashExp(f))})`]:[]),`${t("to_collect")}: ${money(f.owed)}`].join("\n"); }
 function viewHome(){
   const tk=todayKey();
   const day=S.txs.filter(x=>dkey(x.date)===tk&&!x.void);
@@ -877,7 +886,7 @@ function viewHome(){
   if(isOwner()&&canInstall()) h+=`<div class="banner"><span>${t("inst_txt")}</span><span style="display:flex;gap:6px">${deferredInstall?`<button class="btn small primary" data-act="install-app">${t("inst_btn")}</button>`:""}<button class="btn small" data-act="install-off">${t("inst_later")}</button></span></div>`;
   const startOn=false;
   if(biz()==="shop"&&!startOn&&!S.customers.length&&!S.txs.length&&!S.products.length) h+=`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`;
-  h+=homeGuide()+rentCard()+hotelCard()+expiryCard();
+  h+=homeGuide()+rentCard()+hotelCard()+apptCard()+expiryCard();
   h+=`<section class="sec"><h2>${t("today")}<span>${new Date().toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{weekday:"long",day:"numeric",month:"long"})}</span></h2>
     <div class="sum">
       <div class="card"><div class="lbl">${t("sold")}</div><div class="val num">${money(sold)}</div></div>
@@ -894,7 +903,8 @@ function viewHome(){
   h+=`</div></section>`;
   const lowp=S.products.filter(p=>!p.svc&&p.qty<=p.low).sort((a,b)=>a.qty-b.qty).slice(0,8);
   if(lowp.length){ h+=`<section class="sec"><h2>${t("low_stock_title")}<span>${lowp.length}</span></h2><div class="card flush">`+
-    lowp.map(p=>`<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div></div><div class="amt"><span class="num">${p.qty}</span> ${p.qty<=0?`<span class="badge owed">${t("out")}</span>`:`<span class="badge late">${t("low")}</span>`}</div></button>`).join("")+`</div></section>`; }
+    lowp.map(p=>`<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div></div><div class="amt"><span class="num">${p.qty}</span> ${p.qty<=0?`<span class="badge owed">${t("out")}</span>`:`<span class="badge late">${t("low")}</span>`}</div></button>`).join("")+`</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${[...new Set(S.products.filter(p=>!p.svc&&p.qty<=p.low).map(p=>p.sup||""))].sort().map(k=>`<button class="btn small" data-act="restock-wa" data-k="${esc(k)}">${k?lx("Envoyer à ","Send to ")+esc(k):lx("Envoyer la liste à mon fournisseur (WhatsApp)","Send this list to my supplier (WhatsApp)")}</button>`).join("")}</div></section>`; }
+  if(isOwner()&&(S.txs.some(x=>!x.example))) h+=`<section class="sec"><button class="btn" data-act="close-open">${lx("Clôturer la journée","Close the day")}</button></section>`;
   return h;
 }
 
@@ -925,6 +935,7 @@ function viewSale(){
         <button class="pill" data-act="mode" data-m="part" aria-pressed="${d.mode==="part"}">${t("pay_part")}</button>
       </div>
       ${d.mode==="part"?`<input id="f-part" data-bind="part" value="${esc(d.part)}" inputmode="decimal" placeholder="${t("amount")}" aria-label="${t("amount")}">`:""}
+      ${d.mode!=="credit"?`<div class="seg" style="margin-top:6px" role="group" aria-label="${t("method")}">${["cash","momo","transfer"].map(k=>`<button class="pill" data-act="smethod" data-m="${k}" aria-pressed="${(d.method||S.shop.lastMethod||"cash")===k}">${t(k)}</button>`).join("")}</div>`:""}
       <div class="total" style="border-top:1px dashed var(--line);margin-top:4px"><span>${t("balance_left")}</span><span class="num" id="s-left"></span></div>
     </div>
     ${d.mode!=="full"?`<div class="field"><label for="f-due">${t("due_label")}</label><input id="f-due" type="date" data-bind="due" value="${esc(d.due)}"></div>`:""}
@@ -1058,11 +1069,28 @@ function homeGuide(){
   const first=steps.findIndex(x=>!x[0]);
   return `<section class="sec"><h2>${lx("Pour bien démarrer","Get started")}<span>${steps.filter(x=>x[0]).length}/3</span></h2><div class="card flush">${steps.map((x,i)=>`<button class="row" data-act="tab" data-v="${x[1]}" ${x[0]?'style="opacity:.55"':""}><div class="main"><div class="name">${x[0]?"✓ ":""}${esc(x[2])}</div></div>${i===first?`<div class="amt"><span class="badge">${lx("Ici","Next")}</span></div>`:""}</button>`).join("")}</div></section>`;
 }
+const apptOn=()=>["health","beauty"].includes(biz());
+const wdLabel=k=>{ const t0=todayKey(); if(k===t0) return lx("Aujourd'hui","Today"); if(k===dayAdd(t0,1)) return lx("Demain","Tomorrow"); return fmtDay(k); };
+function apptList(){ const t0=todayKey(); return (S.appts||[]).filter(a=>!a.done&&!a.gone&&a.date>=t0).sort((a,b)=>(a.date+(a.time||"99:99")).localeCompare(b.date+(b.time||"99:99"))); }
+function apptMsg(a){ const c=a.cust&&custById(a.cust), nm=c?c.name:a.name; return lx(`Bonjour ${nm}, rappel de votre rendez-vous chez ${S.shop.name} : ${wdLabel(a.date)} (${fmtDay(a.date)})${a.time?" à "+a.time:""}. Merci de nous prévenir en cas d'empêchement.`,`Hello ${nm}, a reminder of your appointment at ${S.shop.name}: ${wdLabel(a.date)} (${fmtDay(a.date)})${a.time?" at "+a.time:""}. Please let us know if you cannot make it.`); }
+function apptCard(){
+  if(!apptOn()) return "";
+  const L2=apptList(), t0=todayKey(), nT=L2.filter(a=>a.date===t0).length;
+  return `<section class="sec"><h2>${lx("Rendez-vous","Appointments")}<span>${nT?nT+" "+lx("aujourd'hui","today"):L2.length||""}</span></h2><div class="card flush">${L2.length?L2.slice(0,8).map(a=>{ const c=a.cust&&custById(a.cust), nm=c?c.name:a.name, ph=c?c.phone:a.phone;
+    return `<div class="row" style="cursor:default;align-items:flex-start"><div class="main"><div class="name">${esc(nm||"?")}</div><div class="sub">${wdLabel(a.date)}${a.time?" · "+esc(a.time):""}${a.what?" · "+esc(a.what):""}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn small primary" data-act="appt-done" data-id="${a.id}">${lx("Commencer","Start")}</button>${ph?`<button class="btn small" data-act="appt-wa" data-id="${a.id}">${lx("Rappel WhatsApp","WhatsApp reminder")}</button>`:""}<button class="btn small danger" data-act="appt-del" data-id="${a.id}" aria-label="${lx("Annuler ce rendez-vous","Cancel this appointment")}">×</button></div></div></div>`; }).join(""):`<div class="empty">${lx("Aucun rendez-vous à venir.","No upcoming appointments.")}</div>`}</div><button class="btn small" data-act="appt-new" style="margin-top:8px">${lx("+ Nouveau rendez-vous","+ Book an appointment")}</button></section>`;
+}
+function stays(){ const out=[]; S.txs.forEach(x=>{ if(x.type!=="sale"||x.void) return; (x.lines||[]).forEach((l,i)=>{ if(l.ci&&l.co) out.push({x,l,i,name:custName(x.cust)==="?"?t("walk"):custName(x.cust),nights:Math.max(1,daysBetween(l.ci,l.co))}); }); }); return out; }
+function slipHtml(x,l){ const c=x.cust&&custById(x.cust), n=Math.max(1,daysBetween(l.ci,l.co)), left=Math.max(0,x.total-x.paid), line=(a,b)=>`<tr><td style="padding:5px 0;color:#667">${a}</td><td style="padding:5px 0;text-align:right;font-weight:600">${b}</td></tr>`, blank=a=>`<div style="margin-top:14px;font-size:12px;color:#667">${a}</div><div style="border-bottom:1px solid #999;height:20px"></div>`;
+  return `<div style="font-family:system-ui,sans-serif;color:#112;max-width:420px;margin:0 auto"><div style="text-align:center"><div style="font-weight:800;font-size:18px">${esc(S.shop.name)}</div><div style="font-size:12px;color:#667">${esc(S.shop.phone||"")}${S.shop.address?" · "+esc(S.shop.address):""}</div><div style="margin:10px 0 2px;font-weight:700;letter-spacing:.06em">${lx("FICHE D'ARRIVÉE","CHECK-IN SLIP")}</div><div style="font-size:12px;color:#667">${lx("Réservation n°","Booking no.")} ${String(x.no).padStart(4,"0")}</div></div>
+  <table style="width:100%;border-collapse:collapse;margin-top:10px;font-size:14px">${line(lx("Client","Guest"),esc(c?c.name:t("walk")))}${c&&c.phone?line(lx("Téléphone","Phone"),esc(c.phone)):""}${line(lx("Chambre","Room"),esc(l.d))}${line(lx("Arrivée","Check-in"),fmtDay(l.ci))}${line(lx("Départ","Check-out"),fmtDay(l.co))}${line(lx("Nuits","Nights"),n)}${line(lx("Prix par nuit","Rate per night"),money(l.p))}${line(lx("Total de la chambre","Room total"),money(l.q*l.p))}${line(lx("Payé (réservation)","Paid (booking)"),money(x.paid))}${line(lx("Reste à payer","Balance due"),money(left))}</table>
+  ${blank(lx("N° de pièce d'identité / passeport","ID / passport no."))}${blank(lx("Nationalité · Nombre de personnes","Nationality · Number of guests"))}${blank(lx("Signature du client","Guest signature"))}</div>`; }
+function printHtml(title,body){ const w=window.open("","_blank"); if(!w){ toast(lx("Autorisez les fenêtres pour imprimer.","Allow pop-ups to print.")); return; } w.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title></head><body style="margin:18px">${body}</body></html>`); w.document.close(); w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} },350); }
 function hotelCard(){
   if(biz()!=="hotel"||!S.products.length) return "";
   const t0=todayKey(); let tot=0,free=0,arr=0,dep=0; S.products.forEach(p=>{ const r=roomStatus(p); tot+=r.total; free+=r.free; });
   S.txs.forEach(x=>{ if(x.type==="sale"&&!x.void) (x.lines||[]).forEach(l=>{ if(l.ci===t0) arr++; if(l.co===t0) dep++; }); });
-  return `<section class="sec"><h2>${lx("Chambres ce soir","Rooms tonight")}<span>${free}/${tot} ${lx("libres","free")}</span></h2><div class="sum"><div class="card"><div class="lbl">${lx("Arrivées aujourd'hui","Arriving today")}</div><div class="val num">${arr}</div></div><div class="card"><div class="lbl">${lx("Départs aujourd'hui","Leaving today")}</div><div class="val num">${dep}</div></div></div></section>`;
+  return `<section class="sec"><h2>${lx("Chambres ce soir","Rooms tonight")}<span>${free}/${tot} ${lx("libres","free")}</span></h2><div class="sum"><div class="card"><div class="lbl">${lx("Arrivées aujourd'hui","Arriving today")}</div><div class="val num">${arr}</div></div><div class="card"><div class="lbl">${lx("Départs aujourd'hui","Leaving today")}</div><div class="val num">${dep}</div></div></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn small" data-act="cal-open">${lx("Calendrier des chambres","Room calendar")}</button><button class="btn small" data-act="guests-open">${lx("Liste des clients","Guest list")}</button></div></section>`;
 }
 function expiryCard(){
   if(!expOn()) return "";
@@ -1075,18 +1103,23 @@ function rentCard(){
   const k=monthKey(), n=rentDue(k).length; if(!n) return "";
   return `<div class="banner"><span>${lx("Loyers de ","Rent for ")}${esc(monthName(k))} : ${lx(n+" locataire(s) pas encore facturé(s).",n+" tenant(s) not charged yet.")}</span><button class="btn small primary" data-act="rent-open">${lx("Facturer","Charge now")}</button></div>`;
 }
+const memoOn=()=>["health","beauty"].includes(biz());
+const memoLab=()=>biz()==="health"?lx("Notes (allergies, antécédents)","Notes (allergies, medical history)"):lx("Notes (préférences, allergies)","Notes (preferences, allergies)");
 function viewCustomers(){
   const q=ui.search.trim().toLowerCase();
   const list=S.customers.map(c=>({c,b:balanceOf(c.id)}))
-    .filter(x=>!q||x.c.name.toLowerCase().includes(q)||String(x.c.phone).includes(q))
+    .filter(x=>!q||x.c.name.toLowerCase().includes(q)||String(x.c.phone).includes(q)||(x.c.cls||"").toLowerCase().includes(q))
     .sort((a,b)=>b.b-a.b||a.c.name.localeCompare(b.c.name));
   let h=`<section class="sec"><h2 style="flex-wrap:wrap">${t("customers")}<div style="display:flex;gap:6px;flex-wrap:wrap">${biz()==="rent"&&isOwner()?`<button class="btn small" data-act="rent-open">${lx("Loyers du mois","Charge this month's rent")}</button>`:""}<button class="btn small" data-act="bc-open">${t("bc_btn")}</button><button class="btn small primary" data-act="add-cust">${t("add_customer")}</button></div></h2>
     <input id="f-search" data-bind="search" value="${esc(ui.search)}" placeholder="${t("search")}" aria-label="${t("search")}" autocomplete="off">
     <div class="card flush">`;
+  if(biz()==="school"){ const g={}; S.customers.forEach(c=>{ if(!c.cls) return; const k=c.cls.trim(), b=balanceOf(c.id); const e=g[k]||(g[k]={n:0,owe:0,sum:0}); e.n++; if(b>0.001){ e.owe++; e.sum+=b; } });
+    const ks=Object.keys(g).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+    if(ks.length) h=h.replace('<div class="card flush">',`<div class="card flush" style="margin-bottom:10px"><div class="note" style="padding:8px 12px 0">${lx("Par classe (touchez pour filtrer)","By class (tap to filter)")}</div>${ks.map(k=>`<button class="row" data-act="cls-filter" data-k="${esc(k)}"><div class="main"><div class="name">${esc(k)}</div><div class="sub">${g[k].n} ${lx("élève(s)","student(s)")} · ${g[k].owe} ${lx("doivent","owing")}</div></div><div class="amt">${g[k].sum>0.001?`<span class="num" style="color:var(--owed)">${money(g[k].sum)}</span>`:`<span class="badge paid">${t("settled")}</span>`}</div></button>`).join("")}</div><div class="card flush">`); }
   if(!list.length) h+=`<div class="empty">${t("no_customers")}</div>`;
   h+=list.map(({c,b})=>{ const age=b>0?ageDays(oldestUnpaid(c.id)):0, od=b>0?overdueInfo(c.id):null;
     return `<button class="row" data-act="open-cust" data-id="${c.id}"><div class="main"><div class="name">${esc(c.name)}</div>
-      <div class="sub">${esc(c.phone||"")}${biz()==="rent"&&(c.unit||+c.rent)?`</div><div class="sub">${esc(c.unit||"")}${c.unit&&+c.rent?" · ":""}${+c.rent?`${money(+c.rent)}${lx("/mois","/month")}`:""}`:""}${od?` <span class="badge late">${t("overdue_d",od.days)}</span>`:(b>0&&age>=S.shop.lateDays?` <span class="badge late">${age} ${t("days")}</span>`:"")}</div></div>
+      <div class="sub">${esc(c.phone||"")}${c.cls?`${c.phone?" · ":""}${esc(c.cls)}`:""}${biz()==="rent"&&(c.unit||+c.rent)?`</div><div class="sub">${esc(c.unit||"")}${c.unit&&+c.rent?" · ":""}${+c.rent?`${money(+c.rent)}${lx("/mois","/month")}`:""}`:""}${od?` <span class="badge late">${t("overdue_d",od.days)}</span>`:(b>0&&age>=S.shop.lateDays?` <span class="badge late">${age} ${t("days")}</span>`:"")}</div></div>
       <div class="amt">${b>0.001?`<span class="num" style="color:var(--owed)">${money(b)}</span>`:`<span class="badge paid">${t("settled")}</span>`}</div></button>`; }).join("");
   return h+`</div></section>`;
 }
@@ -1095,7 +1128,8 @@ function viewCustomer(){
   const b=balanceOf(c.id);
   const txs=S.txs.filter(x=>x.cust===c.id).sort((a,b)=>b.no-a.no);
   return `<section class="sec"><button class="btn small ghost" data-act="back-cust" style="justify-self:start">← ${t("back")}</button>
-    <div class="card"><h2 style="overflow-wrap:anywhere">${esc(c.name)}</h2><div class="note">${esc(c.phone||"")}</div>
+    <div class="card"><h2 style="overflow-wrap:anywhere">${esc(c.name)}</h2><div class="note">${esc(c.phone||"")}${c.cls?`${c.phone?" · ":""}${esc(c.cls)}`:""}</div>
+      ${c.memo?`<div class="note" style="margin-top:6px;white-space:pre-wrap;overflow-wrap:anywhere">📝 ${esc(c.memo)}</div>`:""}
       ${biz()==="rent"&&(c.unit||+c.rent)?`<div class="note" style="margin-top:2px">${esc(c.unit||"")}${+c.rent?` · ${money(+c.rent)}${lx("/mois","/month")}`:""}</div>`:""}
       ${b>0.001&&nextDue(c.id)?`<div class="note" style="margin-top:6px">${t("next_due")}: ${esc(fmtDay(nextDue(c.id)))}${overdueInfo(c.id)?` · <span class="badge late">${t("overdue_d",overdueInfo(c.id).days)}</span>`:""}</div>`:""}
       <div class="total" style="margin-top:12px"><span>${t("owed_total")}</span><span class="num" style="color:${b>0?"var(--owed)":"var(--paid)"}">${money(Math.max(0,b))}</span></div>
@@ -1318,7 +1352,8 @@ function productModal(m){
     <div class="field" id="pr-stk" ${(p?p.svc:nostock())?"hidden":""}><label for="pr-qty">${t("in_stock")}</label><input id="pr-qty" value="${esc(expOn()?Math.round(m.bs.reduce((a,b)=>a+b.q,0)*1000)/1000:p?p.qty:"0")}" inputmode="decimal" ${ro}${expOn()?" readonly":""}></div></div>
     ${biz()==="hotel"?`<div class="field"><label for="pr-rooms">${lx("Nombre de chambres de ce type","How many rooms of this type")}</label><input id="pr-rooms" value="${esc(p?(p.rooms||1):"1")}" inputmode="numeric" ${ro} placeholder="1"><p class="note" style="margin:4px 0 0">${lx("Ex. 1 pour « Chambre 101 », 6 pour « Chambre standard ».","e.g. 1 for “Room 101”, 6 for “Standard room”.")}</p></div>`:""}
     ${expOn()?`<div id="pr-exp-box" ${(p&&p.svc)?"hidden":""}><label style="font-weight:600;display:block;margin:6px 0">${lx("Lots en stock","Batches in stock")}</label><div id="bt-list">${btList(m.bs)}</div><div class="grid2"><div class="field"><label for="pr-batch">${lx("N° de lot","Batch no.")}</label><input id="pr-batch" placeholder="${lx("ex. B2231","e.g. B2231")}" ${ro} autocomplete="off"></div><div class="field"><label for="pr-exp">${lx("Date d'expiration","Expiry date")}</label><input id="pr-exp" placeholder="${lx("ex. 03/2028","e.g. 03/2028")}" ${ro} inputmode="numeric" autocomplete="off"></div></div><div class="field"><label for="pr-bq">${lx("Quantité de ce lot","Quantity in this batch")}</label><input id="pr-bq" inputmode="decimal" placeholder="${lx("ex. 50","e.g. 50")}" ${ro}></div>${own?`<button type="button" class="btn small" data-act="add-batch" style="margin-bottom:6px">${lx("+ Ajouter ce lot","+ Add this batch")}</button>`:""}<p class="note" style="margin:0 0 8px">${lx("Chaque arrivage = un lot. Format de date mois/année. Le lot qui expire en premier est vendu en premier, et vous êtes alerté 90 jours avant l'expiration.","Each delivery = one batch. Date format month/year. The batch expiring first is sold first, and you are alerted 90 days before expiry.")}</p></div>`:""}
-    ${own&&!nostock()?`<div class="field"><label for="pr-cost">${t("cost_price")}</label><input id="pr-cost" value="${esc(p?(p.cost||""):"")}" inputmode="decimal"></div>`:""}
+    ${own&&!nostock()?`<div class="field"><label for="pr-cost">${t("cost_price")}</label><input id="pr-cost" value="${esc(p?(p.cost||""):"")}" inputmode="decimal"></div>
+    <div class="grid2"><div class="field"><label for="pr-sup">${lx("Fournisseur","Supplier")}</label><input id="pr-sup" value="${esc(p&&p.sup||"")}" autocomplete="off" placeholder="${lx("ex. Grossiste Koffi","e.g. Koffi Wholesale")}"></div><div class="field"><label for="pr-sph">${lx("Tél. du fournisseur","Supplier phone")}</label><input id="pr-sph" value="${esc(p&&p.sph||"")}" inputmode="tel" autocomplete="off"></div></div>`:""}
     <div id="pr-stk2" ${(p?p.svc:nostock())?"hidden":""}><div class="field"><label for="pr-low">${t("low_alert")}</label><input id="pr-low" value="${esc(p?p.low:"5")}" inputmode="numeric" ${ro}></div>
     ${p&&!expOn()?`<div class="field"><label for="pr-add">${t("add_received")}</label><input id="pr-add" inputmode="decimal" placeholder="0"></div>`:""}</div>
     <div class="err" id="pr-err" role="alert"></div>
@@ -1357,6 +1392,7 @@ function saveProduct(){
     if(!p){ p={id:uid(),name,price,qty,low,cost,svc}; S.products.push(p); } else { p.name=name; p.price=price; p.qty=qty; p.low=low; p.cost=cost; p.svc=svc; }
     if(expOn()){ delete p.exp; delete p.batch; if(svc) delete p.bs; else p.bs=m.bs.filter(b=>b.q>0).map(b=>({n:b.n||"",e:b.e||"",q:b.q})); }
     if(rooms) p.rooms=rooms;
+    if($("#pr-sup")){ const a=$("#pr-sup").value.trim(), b=$("#pr-sph").value.trim(); if(a) p.sup=a; else delete p.sup; if(b) p.sph=b; else delete p.sph; }
   }
   if(p&&!p.svc){ const ae=$("#pr-add"); const add=ae?parseAmt(ae.value):0; if(add>0) p.qty=Math.round((p.qty+add)*1000)/1000; }
   save(); ui.modal=null; render(); toast(t("product_saved"));
@@ -1454,6 +1490,7 @@ function receiptLines(x,kind){
     x.lines.forEach(l=>{ out.push(kind==="invoice"&&Number(l.q)!==1?`${l.q} × ${l.d||t("goods")} @ ${money(l.p)}  ${money(l.q*l.p)}`:`${l.q} × ${l.d||t("goods")}  ${money(l.q*l.p)}`); if(lnEx(l)) out.push("   "+lnEx(l)); });
     const ow=kind==="invoice"?oweNow(x):x.total-x.paid;
     out.push("-----",`${t("total")}: ${money(x.total)}`,`${t("paid")}: ${money(x.total-ow)}`);
+    if(x.method&&x.paid>0) out.push(`${lx("Payé par","Paid by")}: ${t(x.method)}`);
     if(ow>0.001) out.push(`${kind==="invoice"?t("due"):t("balance_left")}: ${money(ow)}`);
     if(ow>0.001&&(x.due||kind==="invoice")) out.push(`${t("due_on")}: ${x.due?fmtDay(x.due):t("due_rcpt")}`);
     if(kind==="invoice"&&payLines().length) out.push("",t("pay_t")+":",...payLines());
@@ -1554,7 +1591,7 @@ function ticketPdf(x,kind){
       if(lnEx(l)){ pdfWrap(lnEx(l),"F1",8,IW-AW).forEach(s=>{ txt(s,M,y+7,"F1",8,MUT); y+=11; }); }
       if(kind==="invoice"&&Number(l.q)!==1){ txt("@ "+money(l.p),M,y+7,"F1",8,MUT); y+=11; } hline(y,M,W-M,LINE,0.6); });
     y+=8; hline(y,M,W-M,A,1.6); y+=18; txt(t("total"),M,y,"F2",11.5,INK); txt(money(x.total),W-M,y,"F4",12,INK,"r");
-    y+=17; txt(t("paid"),M,y,"F1",10,INK); txt(money(x.total-owe),W-M,y,"F3",9.5,INK,"r"); y+=6;
+    y+=17; txt(t("paid"),M,y,"F1",10,INK); txt(money(x.total-owe),W-M,y,"F3",9.5,INK,"r"); if(x.method&&x.paid>0){ y+=14; txt(lx("Payé par","Paid by"),M,y,"F1",9,MUT); txt(t(x.method),W-M,y,"F1",9,MUT,"r"); } y+=6;
     if(owe>0.001){ y+=8; const bh=30; ops.push(`${rg(RED)} RG 0.9 w ${M+6} @${y} m ${W-M-6} @${y} l ${W-M} @${y} ${W-M} @${y+6} ${W-M} @${y+6} c ${W-M} @${y+bh-6} l ${W-M} @${y+bh} ${W-M-6} @${y+bh} ${W-M-6} @${y+bh} c ${M+6} @${y+bh} l ${M} @${y+bh} ${M} @${y+bh-6} ${M} @${y+bh-6} c ${M} @${y+6} l ${M} @${y} ${M+6} @${y} ${M+6} @${y} c S`);
       txt(kind==="invoice"?t("due"):t("balance_left"),M+12,y+19,"F2",10,RED); txt(money(owe),W-M-12,y+19,"F4",10,RED,"r"); y+=bh; }
   }else{
@@ -1601,6 +1638,7 @@ function ticketHtml(x,kind){
       x.lines.map(l=>`<tr><td>${esc(l.q)} × ${esc(l.d||t("goods"))}${kind==="invoice"&&Number(l.q)!==1?`<div class="sub" style="font-size:.8rem;color:var(--muted)">@ ${money(l.p)}</div>`:""}${lnEx(l)?`<div class="sub" style="font-size:.8rem;color:var(--muted)">${esc(lnEx(l))}</div>`:""}</td><td class="r num">${money(l.q*l.p)}</td></tr>`).join("")+`</tbody></table>
       <div class="tot grand"><span>${t("total")}</span><span class="num">${money(x.total)}</span></div>
       <div class="tot"><span>${t("paid")}</span><span class="num">${money(x.total-owe)}</span></div>
+      ${x.method&&x.paid>0?`<div class="tot" style="font-size:.85em;color:var(--muted)"><span>${lx("Payé par","Paid by")}</span><span>${t(x.method)}</span></div>`:""}
       ${owe>0.001?`<div class="owe"><span>${kind==="invoice"?t("due"):t("balance_left")}</span><span class="num">${money(owe)}</span></div>`:""}`;
   }else{
     rows=`<div class="tot grand"><span>${t("payment")} · ${t(x.method||"cash")}</span><span class="num">${money(x.amount)}</span></div>`;
@@ -1681,9 +1719,43 @@ function renderModal(){
       <div class="field"><label for="c-name">${t("name")}</label><input id="c-name" autocomplete="off"></div>
       <div class="field"><label for="c-phone">${t("phone")}</label><input id="c-phone" inputmode="tel" placeholder="${esc(C().ph)}" autocomplete="off"></div>
       <p class="note" style="margin:0">${t("phone_hint")}</p>
+      ${biz()==="school"?`<div class="field"><label for="c-cls">${lx("Classe","Class")}</label><input id="c-cls" autocomplete="off" placeholder="${lx("ex. CM2, 6e A","e.g. Grade 5, JSS 1A")}"></div>`:""}
+      ${memoOn()?`<div class="field"><label for="c-memo">${memoLab()}</label><textarea id="c-memo" rows="2" autocomplete="off" placeholder="${lx("Facultatif","Optional")}"></textarea></div>`:""}
       ${biz()==="rent"?`<div class="grid2"><div class="field"><label for="c-unit">${lx("Logement","Unit")}</label><input id="c-unit" autocomplete="off" placeholder="${lx("Ex. Chambre 3","e.g. Flat 3B")}"></div><div class="field"><label for="c-rent">${lx("Loyer par mois","Rent per month")}</label><input id="c-rent" inputmode="decimal" placeholder="${esc(ph("price"))}" autocomplete="off"></div></div>`:""}
       <div class="err" id="c-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-cust">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="appt"){
+    inner=`<div class="dlg form"><h2>${lx("Nouveau rendez-vous","New appointment")}</h2>
+      <div class="field"><label for="ap-cust">${lx("Client","Client")}</label><select id="ap-cust"><option value="">${lx("— Nouveau (écrivez le nom) —","— New (type the name) —")}</option>${S.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select></div>
+      <div class="grid2"><div class="field"><label for="ap-name">${lx("Nom (si nouveau)","Name (if new)")}</label><input id="ap-name" autocomplete="off"></div><div class="field"><label for="ap-phone">${lx("Téléphone","Phone")}</label><input id="ap-phone" inputmode="tel" autocomplete="off"></div></div>
+      <div class="grid2"><div class="field"><label for="ap-date">${lx("Date","Date")}</label><input id="ap-date" type="date" value="${dayAdd(todayKey(),1)}"></div><div class="field"><label for="ap-time">${lx("Heure","Time")}</label><input id="ap-time" type="time"></div></div>
+      <div class="field"><label for="ap-what">${lx("Motif","Reason")}</label><input id="ap-what" autocomplete="off" placeholder="${biz()==="health"?lx("ex. Consultation, contrôle","e.g. Consultation, check-up"):lx("ex. Tresses, coiffure","e.g. Braids, haircut")}"></div>
+      <div class="err" id="ap-err" role="alert"></div>
+      <div class="actions"><button class="btn primary" data-act="appt-save">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="guests"){
+    const t0=todayKey(), all=stays(), inR=(a,b)=>a>=b;
+    const G=[[lx("Arrivent aujourd'hui","Arriving today"),all.filter(z=>z.l.ci===t0)],[lx("Sur place","Staying now"),all.filter(z=>z.l.ci<t0&&z.l.co>t0)],[lx("Partent aujourd'hui","Leaving today"),all.filter(z=>z.l.co===t0&&z.l.ci<t0)],[lx("À venir (14 jours)","Coming up (14 days)"),all.filter(z=>z.l.ci>t0&&z.l.ci<=dayAdd(t0,14)).sort((a,b)=>a.l.ci.localeCompare(b.l.ci))]];
+    inner=`<div class="dlg"><h2>${lx("Liste des clients","Guest list")}</h2>${G.every(g=>!g[1].length)?`<p class="note" style="margin:0 0 8px">${lx("Aucun séjour en cours ou à venir.","No current or upcoming stays.")}</p>`:G.filter(g=>g[1].length).map(g=>`<div class="note" style="margin:8px 0 4px;font-weight:700">${g[0]} (${g[1].length})</div><div class="card flush">${g[1].map(z=>`<button class="row" data-act="slip-open" data-id="${z.x.id}" data-i="${z.i}"><div class="main"><div class="name">${esc(z.name)}</div><div class="sub">${esc(z.l.d)} · ${fmtDay(z.l.ci)} → ${fmtDay(z.l.co)} (${z.nights} ${lx("nuit(s)","night(s)")})</div></div><div class="amt">${z.x.total-z.x.paid>0.001?`<span class="badge owed">${money(z.x.total-z.x.paid)}</span>`:`<span class="badge paid">${t("settled")}</span>`}</div></button>`).join("")}</div>`).join("")}<div class="actions"><button class="btn" data-act="close-modal">${t("close")}</button></div></div>`;
+  }else if(m.type==="slip"){
+    const x=S.txs.find(y=>y.id===m.id), l=x&&x.lines[m.i];
+    inner=l?`<div class="dlg"><div style="background:#fff;color:#112;border-radius:12px;padding:14px;margin-bottom:8px">${slipHtml(x,l)}</div><div class="actions"><button class="btn primary" data-act="slip-print" data-id="${x.id}" data-i="${m.i}">${lx("Imprimer / PDF","Print / PDF")}</button><button class="btn" data-act="guests-open">${t("back")}</button><button class="btn" data-act="close-modal">${t("close")}</button></div></div>`:`<div class="dlg"><button class="btn" data-act="close-modal">${t("close")}</button></div>`;
+  }else if(m.type==="cal"){
+    const t0=todayKey(), st=dayAdd(t0,(m.off||0)*7), days=[...Array(14)].map((_,i)=>dayAdd(st,i));
+    const dn=k=>{ const d=new Date(k+"T12:00:00"); return d.toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{weekday:"short"}).slice(0,2)+"<br>"+d.getDate(); };
+    inner=`<div class="dlg"><h2>${lx("Calendrier des chambres","Room calendar")}</h2>
+      <div style="display:flex;gap:6px;justify-content:space-between"><button class="btn small" data-act="cal-prev">←</button><span class="note" style="align-self:center">${esc(fmtDay(days[0]))} – ${esc(fmtDay(days[13]))}</span><button class="btn small" data-act="cal-next">→</button></div>
+      <div style="overflow-x:auto;margin:8px 0"><table style="border-collapse:collapse;font-size:.74rem;min-width:100%"><thead><tr><th style="text-align:left;position:sticky;left:0;background:var(--card,#fff);padding:4px 6px"></th>${days.map(k=>`<th style="padding:3px 2px;font-weight:${k===t0?800:500};color:${k===t0?"var(--accent,#2347d6)":"inherit"}">${dn(k)}</th>`).join("")}</tr></thead><tbody>
+      ${S.products.map(p=>{ const tot=Math.max(1,+p.rooms||1); return `<tr><td style="position:sticky;left:0;background:var(--card,#fff);padding:4px 6px;white-space:nowrap;font-weight:600">${esc(p.name)}</td>${days.map(k=>{ const n=roomsBooked(p.id,k,dayAdd(k,1)); const full=n>=tot; return `<td style="padding:2px"><div style="min-width:26px;height:26px;border-radius:6px;display:grid;place-items:center;font-weight:700;${n?(full?"background:#d9534f;color:#fff":"background:#f0ad4e;color:#fff"):"background:rgba(46,160,67,.15);color:transparent"}">${n?(tot>1?n:"●"):"·"}</div></td>`; }).join("")}</tr>`; }).join("")}</tbody></table></div>
+      <p class="note" style="margin:0 0 8px">${lx("Vert = libre · Orange = partiellement réservé · Rouge = complet.","Green = free · Orange = partly booked · Red = full.")}</p>
+      <div class="actions"><button class="btn" data-act="close-modal">${t("close")}</button></div></div>`;
+  }else if(m.type==="close"){
+    const f=dayFigures(), row=(a,b,c)=>`<div class="stat"><span>${a}</span><span class="num"${c?` style="color:${c}"`:""}>${b}</span></div>`;
+    inner=`<div class="dlg"><h2>${lx("Clôture de la journée","Closing the day")}</h2>
+      <div class="card flush" style="margin-bottom:8px">${row(t("sold")+" ("+f.n+")",money(f.sold))}${row(t("collected"),money(f.got),"var(--paid)")}${row("↳ "+lx("anciennes dettes payées","old debts paid"),money(f.old))}${["cash","momo","transfer"].filter(k=>f.by[k]>0).map(k=>row("↳ "+t(k),money(f.by[k]))).join("")}${row(t("credit_given"),money(f.cred),"var(--owed)")}${row(lx("Dépenses","Expenses"),money(f.exp))}${row(lx("Reste après dépenses","Left after expenses"),money(f.net))}${row(t("to_collect"),money(f.owed),"var(--owed)")}</div>
+      <div class="field"><label for="cc-in">${lx("Espèces comptées dans la caisse","Cash counted in your till")}</label><div style="display:flex;gap:6px"><input id="cc-in" inputmode="decimal" value="${m.counted!==undefined?esc(m.counted):""}" autocomplete="off" placeholder="${lx("ex. 25000","e.g. 25000")}"><button class="btn" data-act="close-count" type="button">${lx("Comparer","Compare")}</button></div></div>
+      ${m.counted!==undefined&&m.counted!==""?(()=>{ const e=cashExp(f), dd=Math.round((m.counted-e)*100)/100; return `<div class="card" style="margin-bottom:8px;border-color:${Math.abs(dd)<.01?"var(--paid)":"var(--owed)"}"><div class="stat"><span>${lx("Espèces attendues","Cash expected")}</span><span class="num">${money(e)}</span></div><div class="stat"><span>${Math.abs(dd)<.01?lx("Le compte est bon ✓","Matches ✓"):dd>0?lx("En trop","Over by"):lx("Il manque","Short by")}</span><span class="num">${Math.abs(dd)<.01?"":money(Math.abs(dd))}</span></div><p class="note" style="margin:6px 0 0">${lx("Attendu = espèces encaissées aujourd'hui moins les dépenses du jour.","Expected = cash collected today minus today's expenses.")}</p></div>`; })():""}
+      <p class="note" style="margin:0 0 8px">${lx("Comptez votre argent : « Reste après dépenses » doit correspondre à ce que vous avez en caisse et en mobile money aujourd'hui.","Count your money: \"Left after expenses\" should match what you hold today in cash and mobile money.")}</p>
+      <div class="actions"><a class="btn primary" href="https://wa.me/?text=${encodeURIComponent(closeText())}" target="_blank" rel="noopener">${t("whatsapp")}</a><button class="btn" data-act="close-copy">${t("copy")||"Copy"}</button><button class="btn" data-act="close-modal">${t("close")}</button></div></div>`;
   }else if(m.type==="rentrun"){
     const k=monthKey(), list=rentDue(k), tot=list.reduce((a,c)=>a+(+c.rent),0), all=S.customers.filter(c=>+c.rent>0).length;
     inner=`<div class="dlg"><h2>${lx("Loyers de","Rent for")} ${esc(monthName(k))}</h2>
@@ -1713,6 +1785,8 @@ function renderModal(){
       <div class="field"><label for="ec-name">${t("name")}</label><input id="ec-name" value="${esc(c.name)}" autocomplete="off"></div>
       <div class="field"><label for="ec-phone">${t("phone")}</label><input id="ec-phone" value="${esc(c.phone||"")}" inputmode="tel" autocomplete="off"></div>
       <p class="note" style="margin:0">${t("phone_hint")}</p>
+      ${biz()==="school"?`<div class="field"><label for="ec-cls">${lx("Classe","Class")}</label><input id="ec-cls" value="${esc(c.cls||"")}" autocomplete="off"></div>`:""}
+      ${memoOn()?`<div class="field"><label for="ec-memo">${memoLab()}</label><textarea id="ec-memo" rows="2" autocomplete="off">${esc(c.memo||"")}</textarea></div>`:""}
       ${biz()==="rent"?`<div class="grid2"><div class="field"><label for="ec-unit">${lx("Logement","Unit")}</label><input id="ec-unit" value="${esc(c.unit||"")}" autocomplete="off"></div><div class="field"><label for="ec-rent">${lx("Loyer par mois","Rent per month")}</label><input id="ec-rent" value="${esc(c.rent||"")}" placeholder="${esc(ph("price"))}" inputmode="decimal" autocomplete="off"></div></div>`:""}
       <div class="err" id="ec-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-ecust" data-id="${c.id}">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
@@ -1766,9 +1840,10 @@ function saveSale(kind){
     S.customers.push(c); custId=c.id;
   }
   if(!custId&&total-paid>0.001){ d.err=t("err_cust"); $("#s-err").textContent=d.err; return; }
-  const x={id:uid(),no:++S.counter,type:"sale",cust:custId,date:new Date().toISOString(),lines,total,paid,due:(total-paid>0.001&&/^\d{4}-\d{2}-\d{2}$/.test(d.due||""))?d.due:"",note:d.note.trim(),by:me()?me().name:""};
+  const x={id:uid(),no:++S.counter,type:"sale",cust:custId,date:new Date().toISOString(),lines,total,paid,...(paid>0?{method:d.method||S.shop.lastMethod||"cash"}:{}),due:(total-paid>0.001&&/^\d{4}-\d{2}-\d{2}$/.test(d.due||""))?d.due:"",note:d.note.trim(),by:me()?me().name:""};
   for(const pid in need){ const pr=S.products.find(y=>y.id===pid); if(pr&&!pr.svc) pr.qty=Math.round((pr.qty-need[pid])*1000)/1000; }
   if(expOn()) x.lines.forEach(l=>{ const pr=l.pid&&S.products.find(y=>y.id===l.pid); if(!pr||pr.svc) return; const bt=takeBatches(pr,l.q); if(bt.length){ l.bt=bt; const ns=[...new Set(bt.map(b=>b.n).filter(Boolean))]; if(ns.length) l.sn=ns.join(", "); else delete l.sn; const es=bt.map(b=>b.e).filter(Boolean).sort(); if(es.length) l.w=fmtExp(es[0]); else delete l.w; } });
+  if(x.method) S.shop.lastMethod=x.method;
   S.txs.push(x); save();
   ui.draft=null; ui.modal={type:"receipt",id:x.id,kind:kind==="invoice"?"invoice":"receipt"}; ui.view="home"; render(); toast(t("created"));
 }
@@ -1812,9 +1887,29 @@ document.addEventListener("click",e=>{
     case "add-cust": ui.modal={type:"newcust"}; renderModal(); break;
     case "save-cust": {
       const n=$("#c-name").value.trim(); if(!n){ $("#c-err").textContent=t("err_name"); break; }
-      const nc={id:uid(),name:n,phone:$("#c-phone").value.trim(),created:new Date().toISOString()}; if($("#c-rent")){ nc.unit=$("#c-unit").value.trim(); nc.rent=parseAmt($("#c-rent").value)||0; } S.customers.push(nc);
+      const nc={id:uid(),name:n,phone:$("#c-phone").value.trim(),created:new Date().toISOString()}; if($("#c-rent")){ nc.unit=$("#c-unit").value.trim(); nc.rent=parseAmt($("#c-rent").value)||0; } if($("#c-cls")&&$("#c-cls").value.trim()) nc.cls=$("#c-cls").value.trim(); if($("#c-memo")&&$("#c-memo").value.trim()) nc.memo=$("#c-memo").value.trim(); S.customers.push(nc);
       save(); ui.modal=null; render(); toast(t("cust_saved")); break; }
+    case "cls-filter": ui.search=(ui.search.trim().toLowerCase()===el.dataset.k.toLowerCase())?"":el.dataset.k; render(); break;
+    case "appt-new": ui.modal={type:"appt"}; renderModal(); break;
+    case "appt-save": { const er=$("#ap-err"); let cid=$("#ap-cust").value, nm=$("#ap-name").value.trim(), ph=$("#ap-phone").value.trim(), dt=$("#ap-date").value;
+      if(!cid&&!nm){ er.textContent=lx("Choisissez un client ou écrivez son nom.","Choose a client or type their name."); break; }
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(dt)){ er.textContent=lx("Choisissez une date.","Choose a date."); break; }
+      if(!cid){ const c={id:uid(),name:nm,phone:ph,created:new Date().toISOString()}; S.customers.push(c); cid=c.id; }
+      (S.appts=S.appts||[]).push({id:uid(),cust:cid,date:dt,time:$("#ap-time").value||"",what:$("#ap-what").value.trim(),created:new Date().toISOString()}); save(); ui.modal=null; render(); toast(t("saved")||"Saved"); break; }
+    case "appt-done": { const a=(S.appts||[]).find(z=>z.id===id); if(a){ a.done=true; save(); ui.draft=newDraft(a.cust); ui.view="sale"; ui.custId=null; render(); window.scrollTo(0,0); } break; }
+    case "appt-del": if(confirm(lx("Annuler ce rendez-vous ?","Cancel this appointment?"))){ const a=(S.appts||[]).find(z=>z.id===id); if(a){ a.gone=true; save(); render(); } } break;
+    case "appt-wa": { const a=(S.appts||[]).find(z=>z.id===id), c=a&&a.cust&&custById(a.cust); if(a&&c&&c.phone) window.open("https://wa.me/"+intlPhone(c.phone)+"?text="+encodeURIComponent(apptMsg(a)),"_blank","noopener"); break; }
+    case "guests-open": ui.modal={type:"guests"}; renderModal(); break;
+    case "slip-open": ui.modal={type:"slip",id,i:+el.dataset.i}; renderModal(); break;
+    case "slip-print": { const x=S.txs.find(y=>y.id===id), l=x&&x.lines[+el.dataset.i]; if(l) printHtml(lx("Fiche d'arrivée","Check-in slip"),slipHtml(x,l)); break; }
+    case "restock-wa": { const k=el.dataset.k||"", L2=S.products.filter(p=>!p.svc&&p.qty<=p.low&&(p.sup||"")===k).sort((a,b)=>a.qty-b.qty); const ph=L2.map(p=>p.sph).find(Boolean); const msg=lx(`Bonjour${k?" "+k:""}, voici ce dont j'ai besoin pour ${S.shop.name} :\n`,`Hello${k?" "+k:""}, here is what I need for ${S.shop.name}:\n`)+L2.map(p=>`- ${p.name} (${p.qty<=0?lx("épuisé","out of stock"):lx("reste "+p.qty,p.qty+" left")})`).join("\n")+lx("\nMerci de me dire les prix et les délais.","\nPlease tell me the prices and delivery time."); window.open("https://wa.me/"+(ph?intlPhone(ph):"")+"?text="+encodeURIComponent(msg),"_blank","noopener"); break; }
+    case "close-count": { const v=parseAmt($("#cc-in").value); ui.modal.counted=$("#cc-in").value.trim()===""?undefined:v; renderModal(); break; }
+    case "close-open": ui.modal={type:"close"}; renderModal(); break;
+    case "close-copy": copyText(closeText()); toast(t("copied")||"Copied"); break;
     case "rent-open": ui.modal={type:"rentrun"}; renderModal(); break;
+    case "cal-open": ui.modal={type:"cal",off:0}; renderModal(); break;
+    case "cal-prev": ui.modal.off=(ui.modal.off||0)-1; renderModal(); break;
+    case "cal-next": ui.modal.off=(ui.modal.off||0)+1; renderModal(); break;
     case "rent-go": { const n=rentRun(monthKey()); ui.modal=null; render(); toast(lx(n+" loyer(s) ajouté(s)",n+" rent bill(s) added")); break; }
     case "del-cust": ui.modal={type:"delcust",id}; renderModal(); break;
     case "del-cust-yes": S.customers=S.customers.filter(c=>c.id!==id); S.txs.forEach(x=>{ if(x.cust===id) x.cust=null; });
@@ -1835,6 +1930,7 @@ document.addEventListener("click",e=>{
     case "line-det": ui.draft.lines[+el.dataset.i].open=true; render(); break;
     case "del-line": ui.draft.lines.splice(+el.dataset.i,1); render(); break;
     case "mode": ui.draft.mode=el.dataset.m; render(); break;
+    case "smethod": ui.draft.method=el.dataset.m; render(); break;
     case "save-sale": saveSale(el.dataset.k); break;
     case "open-receipt": ui.modal={type:"receipt",id}; renderModal(); break;
     case "copy-receipt": { const k=ui.modal&&ui.modal.kind; copyText(receiptText(S.txs.find(x=>x.id===id),k)); break; }
@@ -1888,7 +1984,7 @@ document.addEventListener("click",e=>{
       const list=bcAudience(b.aud); const pr=$("#bc-progress"); if(pr) pr.textContent=t("bc_progress",list.filter(c=>b.sent[c.id]).length,list.filter(c=>intlPhone(c.phone)).length); break; }
     case "edit-cust": ui.modal={type:"editcust",id}; renderModal(); break;
     case "save-ecust": { const c=custById(id), n=$("#ec-name").value.trim(); if(!n){ $("#ec-err").textContent=t("err_name"); break; }
-      c.name=n; c.phone=$("#ec-phone").value.trim(); if($("#ec-rent")){ c.unit=$("#ec-unit").value.trim(); c.rent=parseAmt($("#ec-rent").value)||0; } save(); ui.modal=null; render(); toast(t("saved_ok")); break; }
+      c.name=n; c.phone=$("#ec-phone").value.trim(); if($("#ec-rent")){ c.unit=$("#ec-unit").value.trim(); c.rent=parseAmt($("#ec-rent").value)||0; } if($("#ec-cls")){ const v=$("#ec-cls").value.trim(); if(v) c.cls=v; else delete c.cls; } if($("#ec-memo")){ const v=$("#ec-memo").value.trim(); if(v) c.memo=v; else delete c.memo; } save(); ui.modal=null; render(); toast(t("saved_ok")); break; }
     case "ask-cancel": ui.modal={type:"cancel",id}; renderModal(); break;
     case "do-cancel": voidTx(id); break;
     case "rep-period": ui.repPeriod=el.dataset.p; ui.repOff=0; render(); break;
