@@ -376,7 +376,7 @@ const T = {
     forgot:"PIN oublié ?",reset_access:"Désactiver le verrouillage",reset_access_hint:"Entrez le code de secours (affiché au propriétaire dans les réglages).",reset_wrong:"Code de secours incorrect.",
     recovery:"Code de secours (notez-le)",served_by:"Servi par",
     pay_t:"Détails de paiement",pay_sub:"Affichés sur toutes vos factures.",pay_n:"Numéro ou compte",pay_a:"Nom du titulaire",pay_bank:"Banque",pay_other:"Autre",pay_go:"+ Ajouter mes détails de paiement",pay_hint:"Une ligne s'ajoute après chaque enregistrement.",
-    bill_to:"Facturé à",st_paid:"PAYÉE",st_part:"PAIEMENT PARTIEL",st_unpaid:"IMPAYÉE",due_rcpt:"À payer dès réception",how_pay:"Comment payer",pay_info:"Détails de paiement (affichés sur les factures)",pay_ph:"Ex : MTN MoMo 97 00 00 00 (Nom)\nMoov Money 96 00 00 00\nBanque : ...",
+    bill_to:"Facturé à",st_paid:"PAYÉE",st_part:"PAIEMENT PARTIEL",st_unpaid:"IMPAYÉE",due_rcpt:"à la réception",how_pay:"Comment payer",pay_info:"Détails de paiement (affichés sur les factures)",pay_ph:"Ex : MTN MoMo 97 00 00 00 (Nom)\nMoov Money 96 00 00 00\nBanque : ...",
     invoice:"FACTURE",as_invoice:"Voir en facture",as_receipt:"Voir en reçu",invoice_note:"Facture simple, sans valeur fiscale.",due:"Reste dû",balance_now:"Solde total du client",
     msg_invoice_intro:(n)=>`Bonjour ${n} 😊 Merci pour votre confiance ! Voici votre facture :`
   },
@@ -450,7 +450,7 @@ const T = {
     forgot:"Forgot PIN?",reset_access:"Turn off the lock",reset_access_hint:"Enter the recovery code (shown to the owner in Settings).",reset_wrong:"Wrong recovery code.",
     recovery:"Recovery code (write it down)",served_by:"Served by",
     pay_t:"Payment details",pay_sub:"Shown on all your invoices.",pay_n:"Number or account",pay_a:"Account name",pay_bank:"Bank",pay_other:"Other",pay_go:"+ Add my payment details",pay_hint:"A new empty line appears after each save.",
-    bill_to:"Bill to",st_paid:"PAID",st_part:"PART PAID",st_unpaid:"UNPAID",due_rcpt:"Due on receipt",how_pay:"How to pay",pay_info:"Payment details (shown on invoices)",pay_ph:"E.g. MTN MoMo 97 00 00 00 (Name)\nMoov Money 96 00 00 00\nBank: ...",
+    bill_to:"Bill to",st_paid:"PAID",st_part:"PART PAID",st_unpaid:"UNPAID",due_rcpt:"on receipt",how_pay:"How to pay",pay_info:"Payment details (shown on invoices)",pay_ph:"E.g. MTN MoMo 97 00 00 00 (Name)\nMoov Money 96 00 00 00\nBank: ...",
     invoice:"INVOICE",as_invoice:"View as invoice",as_receipt:"View as receipt",invoice_note:"Simple invoice, no tax validity.",due:"Amount due",balance_now:"Customer's total balance",
     msg_invoice_intro:(n)=>`Hello ${n} 😊 Thank you for your trust! Here is your invoice:`
   }
@@ -1489,7 +1489,7 @@ function receiptLines(x,kind){
   if(x.by) out.push(`${t("served_by")}: ${x.by}`);
   out.push("");
   if(x.type==="sale"){
-    x.lines.forEach(l=>{ out.push(kind==="invoice"&&Number(l.q)!==1?`${l.q} × ${l.d||t("goods")} @ ${money(l.p)}  ${money(l.q*l.p)}`:`${l.q} × ${l.d||t("goods")}  ${money(l.q*l.p)}`); if(lnEx(l)) out.push("   "+lnEx(l)); });
+    x.lines.forEach(l=>{ out.push(kind==="invoice"&&Number(l.q)!==1?`${qLab(l)} × ${l.d||t("goods")} @ ${money(l.p)}  ${money(l.q*l.p)}`:`${qLab(l)} × ${l.d||t("goods")}  ${money(l.q*l.p)}`); if(lnEx(l)) out.push("   "+lnEx(l)); });
     const ow=kind==="invoice"?oweNow(x):x.total-x.paid;
     out.push("-----",`${t("total")}: ${money(x.total)}`,`${t("paid")}: ${money(x.total-ow)}`);
     if(x.method&&x.paid>0) out.push(`${lx("Payé par","Paid by")}: ${t(x.method)}`);
@@ -1588,7 +1588,7 @@ function ticketPdf(x,kind){
   if(x.type==="sale"){
     txt(t("item").toUpperCase(),M,y+8,"F1",7.5,MUT); txt(t("total").toUpperCase(),W-M,y+8,"F1",7.5,MUT,"r"); y+=14; hline(y,M,W-M,LINE,0.8); 
     const AW=88;
-    x.lines.forEach(l=>{ const wl=pdfWrap(`${l.q} × ${l.d||t("goods")}`,"F1",10,IW-AW); const am=money(l.q*l.p);
+    x.lines.forEach(l=>{ const wl=pdfWrap(`${qLab(l)} × ${l.d||t("goods")}`,"F1",10,IW-AW); const am=money(l.q*l.p);
       txt(am,W-M,y+17,"F3",9,INK,"r"); wl.forEach((s,i)=>txt(s,M,y+17+i*13,"F1",10,INK)); y+=wl.length*13+10;
       if(lnEx(l)){ pdfWrap(lnEx(l),"F1",8,IW-AW).forEach(s=>{ txt(s,M,y+7,"F1",8,MUT); y+=11; }); }
       if(kind==="invoice"&&Number(l.q)!==1){ txt("@ "+money(l.p),M,y+7,"F1",8,MUT); y+=11; } hline(y,M,W-M,LINE,0.6); });
@@ -1637,7 +1637,7 @@ function ticketHtml(x,kind){
   kind=kind||"receipt"; const sh=S.shop; let rows="", owe=x.type==="sale"?(kind==="invoice"?oweNow(x):x.total-x.paid):0;
   if(x.type==="sale"){
     rows=`<table><thead><tr><th>${t("item")}</th><th class="r">${t("total")}</th></tr></thead><tbody>`+
-      x.lines.map(l=>`<tr><td>${esc(l.q)} × ${esc(l.d||t("goods"))}${kind==="invoice"&&Number(l.q)!==1?`<div class="sub" style="font-size:.8rem;color:var(--muted)">@ ${money(l.p)}</div>`:""}${lnEx(l)?`<div class="sub" style="font-size:.8rem;color:var(--muted)">${esc(lnEx(l))}</div>`:""}</td><td class="r num">${money(l.q*l.p)}</td></tr>`).join("")+`</tbody></table>
+      x.lines.map(l=>`<tr><td>${esc(qLab(l))} × ${esc(l.d||t("goods"))}${kind==="invoice"&&Number(l.q)!==1?`<div class="sub" style="font-size:.8rem;color:var(--muted)">@ ${money(l.p)}</div>`:""}${lnEx(l)?`<div class="sub" style="font-size:.8rem;color:var(--muted)">${esc(lnEx(l))}</div>`:""}</td><td class="r num">${money(l.q*l.p)}</td></tr>`).join("")+`</tbody></table>
       <div class="tot grand"><span>${t("total")}</span><span class="num">${money(x.total)}</span></div>
       <div class="tot"><span>${t("paid")}</span><span class="num">${money(x.total-owe)}</span></div>
       ${x.method&&x.paid>0?`<div class="tot" style="font-size:.85em;color:var(--muted)"><span>${lx("Payé par","Paid by")}</span><span>${t(x.method)}</span></div>`:""}
@@ -1824,6 +1824,7 @@ function setBind(path,val){
 }
 const phoneBad=v=>{ const d=String(v||"").replace(/\D/g,""); return d.length>0&&(d.length<8||d.length>15); };
 const PHBAD=()=>lx("Numéro de téléphone invalide (8 à 15 chiffres).","Invalid phone number (8 to 15 digits).");
+const qLab=l=>(l.ci&&l.co?`${l.q} ${Number(l.q)===1?lx("nuit","night"):lx("nuits","nights")}`:l.q);
 function saveSale(kind){
   const d=ui.draft; d.err="";
   const lines=d.lines.map(l=>({...((l.sn||"").trim()?{sn:l.sn.trim()}:{}),...(l.ci?{ci:l.ci}:{}),...(l.co?{co:l.co}:{}),...((l.w||"").trim()?{w:l.w.trim()}:{}),d:l.d.trim(),q:parseAmt(l.q)||0,p:parseAmt(l.p),pid:l.pid||null,c:(()=>{const pr=l.pid&&S.products.find(z=>z.id===l.pid);return pr&&pr.cost>0?pr.cost:0;})()})).filter(l=>l.q>0&&l.p>0);
