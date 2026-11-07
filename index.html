@@ -953,6 +953,9 @@ const DETL={
  travel:[["Date du voyage","Travel date","ex. 12 déc. 2026","e.g. 12 Dec 2026"],["Voyageurs","Travellers","ex. Ada Okoro, Chidi Okoro","e.g. Ada Okoro, Chidi Okoro"]],
  hotel:[["Arrivée","Check-in","",""],["Départ","Check-out","",""]]};
 const detD=()=>DETL[biz()]||DETL.std;
+const DETDATE={travel:[1,0],repair:[0,1]};
+const isIso=v=>/^\d{4}-\d{2}-\d{2}$/.test(String(v||""));
+const detShow=v=>isIso(v)?fmtDay(v):v;
 function detL(){ return detD().map(x=>lx(x[0],x[1])); }
 function detP(){ return detD().map(x=>lx(x[2],x[3])); }
 const PH={
@@ -999,14 +1002,15 @@ function btPending(){ const m=ui.modal; const n=($("#pr-batch")||{value:""}).val
   ["#pr-batch","#pr-exp","#pr-bq"].forEach(k=>{ const f=$(k); if(f) f.value=""; }); btDraw(); return ""; }
 function lnEx(l){ const d=biz()==="pharmacy"?[lx("Lot","Batch"),lx("Exp.","Exp.")]:detL();
   if(l.ci||l.co) return [l.ci?`${d[0]}: ${fmtDay(l.ci)}`:"",l.co?`${d[1]}: ${fmtDay(l.co)}`:""].filter(Boolean).join(" · ");
-  return [l.sn?`${d[0]}: ${l.sn}`:"",l.w?`${d[1]}: ${l.w}`:""].filter(Boolean).join(" · "); }
+  return [l.sn?`${d[0]}: ${detShow(l.sn)}`:"",l.w?`${d[1]}: ${detShow(l.w)}`:""].filter(Boolean).join(" · "); }
 function detBox(l,i){
   const lab=t=>`<div class="note" style="margin:0 0 2px;font-size:.72rem">${t}</div>`;
   if(biz()==="hotel"){
     if(!(l.ci||l.co||l.open)) return `<button type="button" class="btn small ghost" data-act="line-det" data-i="${i}" style="grid-column:1/-1;justify-self:start">${lx("+ Dates du séjour","+ Stay dates")}</button>`;
     return `<div class="ldet" style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px"><div>${lab(detL()[0])}<input type="date" data-bind="line.${i}.ci" id="l${i}ci" min="${todayKey()}" value="${esc(l.ci||"")}" aria-label="${detL()[0]}"></div><div>${lab(detL()[1])}<input type="date" data-bind="line.${i}.co" id="l${i}co" value="${esc(l.co||"")}" min="${esc(l.ci?dayAdd(l.ci,1):"")}" aria-label="${detL()[1]}"></div></div>`; }
   if(!(l.sn||l.w||l.open)) return `<button type="button" class="btn small ghost" data-act="line-det" data-i="${i}" style="grid-column:1/-1;justify-self:start">${({pharmacy:lx("+ Lot / expiration","+ Batch / expiry"),travel:lx("+ Date / voyageurs","+ Date / travellers"),repair:lx("+ Article / date de remise","+ Item / ready date")})[biz()]||lx("+ N° de série / garantie","+ Serial / warranty")}</button>`;
-  return `<div class="ldet" style="grid-column:1/-1;display:grid;grid-template-columns:1fr;gap:8px"><div>${lab(detL()[0])}<input data-bind="line.${i}.sn" id="l${i}sn" value="${esc(l.sn||"")}" placeholder="${detP()[0]}" autocomplete="off" aria-label="${detL()[0]}"></div><div>${lab(detL()[1])}<input data-bind="line.${i}.w" id="l${i}w" value="${esc(l.w||"")}" placeholder="${detP()[1]}" autocomplete="off" aria-label="${detL()[1]}"></div></div>`; }
+  const dd=DETDATE[biz()]||[0,0], inp=(n,key,val)=>dd[n]?`<input type="date" data-bind="line.${i}.${key}" id="l${i}${key}" min="${todayKey()}" value="${esc(isIso(val)?val:"")}" aria-label="${detL()[n]}">`:`<input data-bind="line.${i}.${key}" id="l${i}${key}" value="${esc(val||"")}" placeholder="${detP()[n]}" autocomplete="off" aria-label="${detL()[n]}">`;
+  return `<div class="ldet" style="grid-column:1/-1;display:grid;grid-template-columns:1fr;gap:8px"><div>${lab(detL()[0])}${inp(0,"sn",l.sn)}</div><div>${lab(detL()[1])}${inp(1,"w",l.w)}</div></div>`; }
 function linesHtml(){ const d=ui.draft; return `<div class="note" style="margin:0 0 6px;font-size:.78rem">${lx("Désignation, puis "+t("qty").toLowerCase()+" et prix","Item, then "+t("qty").toLowerCase()+" and price")}</div>`+d.lines.map((l,i)=>`<div class="line">
         <input data-bind="line.${i}.d" id="l${i}d" value="${esc(l.d)}" placeholder="${t("item_other")}" autocomplete="off" aria-label="${t("item")}">
         <input data-bind="line.${i}.q" id="l${i}q" value="${esc(l.q)}" inputmode="decimal" aria-label="${t("qty")}">
@@ -1074,12 +1078,13 @@ const apptOn=()=>["health","beauty"].includes(biz());
 const wdLabel=k=>{ const t0=todayKey(); if(k===t0) return lx("Aujourd'hui","Today"); if(k===dayAdd(t0,1)) return lx("Demain","Tomorrow"); return fmtDay(k); };
 function apptList(){ const t0=todayKey(); return (S.appts||[]).filter(a=>!a.done&&!a.gone&&a.date>=t0).sort((a,b)=>(a.date+(a.time||"99:99")).localeCompare(b.date+(b.time||"99:99"))); }
 function apptMsg(a){ const c=a.cust&&custById(a.cust), nm=c?c.name:a.name; return lx(`Bonjour ${nm}, rappel de votre rendez-vous chez ${S.shop.name} : ${wdLabel(a.date)} (${fmtDay(a.date)})${a.time?" à "+a.time:""}. Merci de nous prévenir en cas d'empêchement.`,`Hello ${nm}, a reminder of your appointment at ${S.shop.name}: ${wdLabel(a.date)} (${fmtDay(a.date)})${a.time?" at "+a.time:""}. Please let us know if you cannot make it.`); }
+function remindList(){ const tm=dayAdd(todayKey(),1); return (S.appts||[]).filter(a=>!a.done&&!a.gone&&a.date===tm&&(()=>{ const c=a.cust&&custById(a.cust); return c&&c.phone; })()); }
 function apptCard(){
   if(!apptOn()) return "";
   const L2=apptList(), t0=todayKey(), nT=L2.filter(a=>a.date===t0).length;
   return `<section class="sec"><h2>${lx("Rendez-vous","Appointments")}<span>${nT?nT+" "+lx("aujourd'hui","today"):L2.length||""}</span></h2><div class="card flush">${L2.length?L2.slice(0,8).map(a=>{ const c=a.cust&&custById(a.cust), nm=c?c.name:a.name, ph=c?c.phone:a.phone;
-    return `<div class="row" style="cursor:default;align-items:flex-start"><div class="main"><div class="name">${esc(nm||"?")}</div><div class="sub">${wdLabel(a.date)}${a.time?" · "+esc(a.time):""}${a.what?" · "+esc(a.what):""}</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn small primary" data-act="appt-done" data-id="${a.id}">${lx("Commencer","Start")}</button>${ph?`<button class="btn small" data-act="appt-wa" data-id="${a.id}">${lx("Rappel WhatsApp","WhatsApp reminder")}</button>`:""}<button class="btn small danger" data-act="appt-del" data-id="${a.id}" aria-label="${lx("Annuler ce rendez-vous","Cancel this appointment")}">×</button></div></div></div>`; }).join(""):`<div class="empty">${lx("Aucun rendez-vous à venir.","No upcoming appointments.")}</div>`}</div><button class="btn small" data-act="appt-new" style="margin-top:8px">${lx("+ Nouveau rendez-vous","+ Book an appointment")}</button></section>`;
+    return `<div class="row" style="cursor:default;align-items:flex-start"><div class="main"><div class="name">${esc(nm||"?")}</div><div class="sub">${wdLabel(a.date)}${a.time?" · "+esc(a.time):""}${a.what?" · "+esc(a.what):""}${a.reminded?" · ✓ "+lx("rappelé","reminded"):""}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn small primary" data-act="appt-done" data-id="${a.id}">${lx("Commencer","Start")}</button>${ph?`<button class="btn small" data-act="appt-wa" data-id="${a.id}">${lx("Rappel WhatsApp","WhatsApp reminder")}</button>`:""}<button class="btn small danger" data-act="appt-del" data-id="${a.id}" aria-label="${lx("Annuler ce rendez-vous","Cancel this appointment")}">×</button></div></div></div>`; }).join(""):`<div class="empty">${lx("Aucun rendez-vous à venir.","No upcoming appointments.")}</div>`}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn small" data-act="appt-new">${lx("+ Nouveau rendez-vous","+ Book an appointment")}</button>${remindList().length?`<button class="btn small" data-act="remind-open">${lx("Rappeler les clients de demain","Remind tomorrow's clients")} (${remindList().length})</button>`:""}</div></section>`;
 }
 function stays(){ const out=[]; S.txs.forEach(x=>{ if(x.type!=="sale"||x.void) return; (x.lines||[]).forEach((l,i)=>{ if(l.ci&&l.co) out.push({x,l,i,name:custName(x.cust)==="?"?t("walk"):custName(x.cust),nights:Math.max(1,daysBetween(l.ci,l.co))}); }); }); return out; }
 function slipHtml(x,l){ const c=x.cust&&custById(x.cust), n=Math.max(1,daysBetween(l.ci,l.co)), left=Math.max(0,x.total-x.paid), line=(a,b)=>`<tr><td style="padding:5px 0;color:#667">${a}</td><td style="padding:5px 0;text-align:right;font-weight:600">${b}</td></tr>`, blank=a=>`<div style="margin-top:14px;font-size:12px;color:#667">${a}</div><div style="border-bottom:1px solid #999;height:20px"></div>`;
@@ -1355,6 +1360,7 @@ function productModal(m){
     ${biz()==="hotel"?`<div class="field"><label for="pr-rooms">${lx("Nombre de chambres de ce type","How many rooms of this type")}</label><input id="pr-rooms" value="${esc(p?(p.rooms||1):"1")}" inputmode="numeric" ${ro} placeholder="1"><p class="note" style="margin:4px 0 0">${lx("Ex. 1 pour « Chambre 101 », 6 pour « Chambre standard ».","e.g. 1 for “Room 101”, 6 for “Standard room”.")}</p></div>`:""}
     ${expOn()?`<div id="pr-exp-box" ${(p&&p.svc)?"hidden":""}><label style="font-weight:600;display:block;margin:6px 0">${lx("Lots en stock","Batches in stock")}</label><div id="bt-list">${btList(m.bs)}</div><div class="grid2"><div class="field"><label for="pr-batch">${lx("N° de lot","Batch no.")}</label><input id="pr-batch" placeholder="${lx("ex. B2231","e.g. B2231")}" ${ro} autocomplete="off"></div><div class="field"><label for="pr-exp">${lx("Date d'expiration","Expiry date")}</label><input id="pr-exp" placeholder="${lx("ex. 03/2028","e.g. 03/2028")}" ${ro} inputmode="numeric" autocomplete="off"></div></div><div class="field"><label for="pr-bq">${lx("Quantité de ce lot","Quantity in this batch")}</label><input id="pr-bq" inputmode="decimal" placeholder="${lx("ex. 50","e.g. 50")}" ${ro}></div>${own?`<button type="button" class="btn small" data-act="add-batch" style="margin-bottom:6px">${lx("+ Ajouter ce lot","+ Add this batch")}</button>`:""}<p class="note" style="margin:0 0 8px">${lx("Chaque arrivage = un lot. Format de date mois/année. Le lot qui expire en premier est vendu en premier, et vous êtes alerté 90 jours avant l'expiration.","Each delivery = one batch. Date format month/year. The batch expiring first is sold first, and you are alerted 90 days before expiry.")}</p></div>`:""}
     ${own&&!nostock()?`<div class="field"><label for="pr-cost">${t("cost_price")}</label><input id="pr-cost" value="${esc(p?(p.cost||""):"")}" inputmode="decimal"></div>
+    ${p&&p.ph&&p.ph.length?`<div class="note" style="margin:0 0 6px"><b>${lx("Derniers achats","Recent purchases")}</b><br>${p.ph.slice(-4).reverse().map(h=>`${fmtDay(h.d)} · +${h.q}${h.c?" · "+lx("à ","at ")+money(h.c):""}${h.s?" · "+esc(h.s):""}`).join("<br>")}</div>`:""}
     <div class="grid2"><div class="field"><label for="pr-sup">${lx("Fournisseur","Supplier")}</label><input id="pr-sup" value="${esc(p&&p.sup||"")}" autocomplete="off" placeholder="${lx("ex. Grossiste Koffi","e.g. Koffi Wholesale")}"></div><div class="field"><label for="pr-sph">${lx("Tél. du fournisseur","Supplier phone")}</label><input id="pr-sph" value="${esc(p&&p.sph||"")}" inputmode="tel" autocomplete="off"></div></div>`:""}
     <div id="pr-stk2" ${(p?p.svc:nostock())?"hidden":""}><div class="field"><label for="pr-low">${t("low_alert")}</label><input id="pr-low" value="${esc(p?p.low:"5")}" inputmode="numeric" ${ro}></div>
     ${p&&!expOn()?`<div class="field"><label for="pr-add">${t("add_received")}</label><input id="pr-add" inputmode="decimal" placeholder="0"></div>`:""}</div>
@@ -1362,6 +1368,15 @@ function productModal(m){
     <div class="actions"><button class="btn primary" data-act="save-product">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button>
     ${p&&own?`<button class="btn danger" data-act="del-product" data-id="${p.id}">${t("delete")}</button>`:""}</div></div>`;
 }
+const BEX={shop:["Sandals, 8000, 12","Sneakers, 25000, 5","Delivery, 1000, service"],electronics:["Tecno Spark 20, 85000, 4","Charger, 3500, 20","Screen repair, 12000, service"],pharmacy:["Paracetamol 500 mg, 800, 100, 03/2028, B2231","Amoxicillin 500 mg, 2500, 40, 11/2027, A771","Consultation, 2000, service"],food:["Rice and chicken, 2500","Water 1.5 L, 300, 24","Grilled fish, 3500"],repair:["Phone screen, 12000, 5","Oil change, 8000, service","Battery, 7000, 3"],beauty:["Haircut, 3000","Braids, 8000","Manicure, 4000"],health:["Consultation, 5000","Blood test, 6000","Dressing, 2000"],school:["Tuition fee, 45000","Registration, 15000","Canteen, 8000"],services:["Printing, 50","Delivery, 1500","Installation, 5000"],travel:["Ticket Cotonou-Lagos, 25000","Hotel booking, 30000","Visa, 40000"],rent:["Studio 1, 45000","Studio 2, 50000","Shop unit A, 80000"],hotel:["Standard room, 15000, 3","AC room, 25000, 2","Suite, 45000, 1"]};
+const BEXF={shop:["Sandales, 8000, 12","Baskets, 25000, 5","Livraison, 1000, service"],electronics:["Tecno Spark 20, 85000, 4","Chargeur, 3500, 20","Réparation d'écran, 12000, service"],pharmacy:["Paracétamol 500 mg, 800, 100, 03/2028, B2231","Amoxicilline 500 mg, 2500, 40, 11/2027, A771","Consultation, 2000, service"],food:["Riz au poulet, 2500","Eau 1,5 L, 300, 24","Poisson braisé, 3500"],repair:["Écran de téléphone, 12000, 5","Vidange, 8000, service","Batterie, 7000, 3"],beauty:["Coiffure, 3000","Tresses, 8000","Manucure, 4000"],health:["Consultation, 5000","Analyse de sang, 6000","Pansement, 2000"],school:["Frais de scolarité, 45000","Inscription, 15000","Cantine, 8000"],services:["Impression, 50","Livraison, 1500","Installation, 5000"],travel:["Billet Cotonou-Lagos, 25000","Réservation d'hôtel, 30000","Visa, 40000"],rent:["Studio 1, 45000","Studio 2, 50000","Local commercial A, 80000"],hotel:["Chambre standard, 15000, 3","Chambre climatisée, 25000, 2","Suite, 45000, 1"]};
+function bulkPh(){ return ((L()==="fr"?BEXF:BEX)[biz()]||BEX.shop).join("\n"); }
+function bulkHelp(){ const k=biz(), fr=L()==="fr";
+  if(k==="hotel") return fr?"Une chambre par ligne : nom, prix par nuit, nombre de chambres de ce type. Le nombre est facultatif (1 par défaut).":"One room type per line: name, price per night, number of rooms of this type. The number is optional (1 if empty).";
+  if(k==="pharmacy") return fr?"Un médicament par ligne : nom, prix, quantité, date d'expiration (mois/année), n° de lot. Seuls le nom et le prix sont obligatoires. Écrivez « service » à la place de la quantité pour une consultation ou un service.":"One medicine per line: name, price, quantity, expiry date (month/year), batch no. Only name and price are required. Write \"service\" instead of the quantity for a consultation or service.";
+  if(nostock()){ const w={rent:[fr?"un logement":"one unit",fr?"loyer par mois":"rent per month"],beauty:[fr?"un service":"one service",fr?"prix":"price"],health:[fr?"un soin":"one service",fr?"prix":"price"],school:[fr?"un type de frais":"one fee type",fr?"montant":"amount"],services:[fr?"un service":"one service",fr?"prix":"price"],travel:[fr?"un voyage ou service":"one trip or service",fr?"prix":"price"]}[k]||[fr?"un article":"one item",fr?"prix":"price"];
+    return fr?`Une ligne par ${w[0].replace(/^une? /,"")} : nom, ${w[1]}. Rien d'autre à écrire.`:`${w[0][0].toUpperCase()+w[0].slice(1)} per line: name, ${w[1]}. Nothing else is needed.`; }
+  return fr?"Un article par ligne : nom, prix, quantité. La quantité est facultative. Écrivez « service » à la place de la quantité pour un service. Ajoutez un prix d'achat à la fin si vous voulez : nom, prix, quantité, prix d'achat.":"One item per line: name, price, quantity. Quantity is optional. Write \"service\" instead of the quantity for a service. Add a cost price at the end if you like: name, price, quantity, cost price."; }
 function saveBulk(){
   const er=$("#bulk-err"), raw=($("#bulk-txt").value||"");
   const lines=raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
@@ -1373,6 +1388,11 @@ function saveBulk(){
     if(!name||!(price>0)){ bad.push(ln); continue; }
     if(names.has(name.toLowerCase())){ dup++; continue; }
     const q=(parts[2]||"").toLowerCase(), svc=nostock()||/^(service|svc|s)$/.test(q);
+    if(biz()==="hotel"){ const rooms=Math.max(1,Math.round(parseAmt(parts[2]))||1); S.products.push({id:uid(),name,price,qty:0,low:0,cost:0,svc:true,rooms}); names.add(name.toLowerCase()); added++; continue; }
+    if(biz()==="pharmacy"&&!svc){ const qty=Math.max(0,parseAmt(parts[2])), ex=(parts[3]||"").trim(), e=ex?parseExp(ex):"";
+      if(e===null||(e&&bState({e}).s==="expired")){ bad.push(ln); continue; }
+      const bt=(parts[4]||"").trim(), pr={id:uid(),name,price,qty,low:5,cost:0,svc:false}; if(qty>0&&(e||bt)) pr.bs=[{n:bt,e:e||"",q:qty}];
+      S.products.push(pr); names.add(name.toLowerCase()); added++; continue; }
     const qty=svc?0:Math.max(0,parseAmt(parts[2])), cost=svc&&parts[3]===undefined?0:parseAmt(parts[3]);
     S.products.push({id:uid(),name,price,qty,low:svc?0:5,cost,svc}); names.add(name.toLowerCase()); added++;
   }
@@ -1388,6 +1408,7 @@ function saveProduct(){
     if(S.products.some(x=>x.id!==(p&&p.id)&&x.name.toLowerCase()===name.toLowerCase())){ er.textContent=t("err_pdup"); return; }
     const svc=!!($("#pr-svc")&&$("#pr-svc").checked);
     if(expOn()&&!svc){ const pe=btPending(); if(pe){ er.textContent=pe; return; } }
+    ui._oq=p?p.qty:0; ui._new=!p;
     const price=parseAmt($("#pr-price").value), qty=svc?0:expOn()?Math.round(m.bs.reduce((a,b)=>a+b.q,0)*1000)/1000:parseAmt($("#pr-qty").value), low=svc?0:Math.max(0,parseAmt($("#pr-low").value));
     const ce=$("#pr-cost"), cost=ce?parseAmt(ce.value):(p&&p.cost)||0;
     const rooms=$("#pr-rooms")?Math.max(1,Math.floor(parseAmt($("#pr-rooms").value))||1):(p&&p.rooms)||undefined;
@@ -1396,7 +1417,8 @@ function saveProduct(){
     if(rooms) p.rooms=rooms;
     if($("#pr-sup")){ const a=$("#pr-sup").value.trim(), b=$("#pr-sph").value.trim(); if(a) p.sup=a; else delete p.sup; if(b) p.sph=b; else delete p.sph; }
   }
-  if(p&&!p.svc){ const ae=$("#pr-add"); const add=ae?parseAmt(ae.value):0; if(add>0) p.qty=Math.round((p.qty+add)*1000)/1000; }
+  if(p&&!p.svc){ const ae=$("#pr-add"); const add=ae?parseAmt(ae.value):0; if(add>0) p.qty=Math.round((p.qty+add)*1000)/1000;
+    if(own){ const bought=expOn()?Math.round((p.qty-ui._oq)*1000)/1000:add+(ui._new?p.qty-add:0); if(bought>0&&!nostock()){ p.ph=(p.ph||[]).concat([{d:todayKey(),q:bought,c:p.cost||0,s:p.sup||""}]).slice(-30); } } }
   save(); ui.modal=null; render(); toast(t("product_saved"));
 }
 
@@ -1463,6 +1485,7 @@ function viewSettings(){
     <div class="field"><label for="s-addr">${t("shop_addr")}</label><input id="s-addr" value="${esc(s.address||"")}" autocomplete="off"></div>
     <div class="field"><label>${t("rc_color")}</label><div class="sw">${ACCENTS.map(c=>`<button type="button" data-act="set-accent" data-c="${c}" aria-pressed="${accentOf(s)===c}" style="background:${c}" aria-label="${c}"></button>`).join("")}</div></div>
     <div class="field"><label for="s-footer">${t("footer")}</label><input id="s-footer" value="${esc(s.footer)}" placeholder="${esc(t("default_footer"))}" autocomplete="off"></div>
+    <div class="field"><label style="display:flex;gap:8px;align-items:flex-start;font-weight:500"><input type="checkbox" id="s-past" ${s.allowPast?"checked":""} style="width:auto;margin-top:3px"><span>${lx("Autoriser les dates passées (pour enregistrer un séjour, un rendez-vous ou un voyage après coup)","Allow past dates (to record a stay, appointment or trip after the fact)")}</span></label></div>
     <div class="field"><label for="s-late">${t("late_after")}</label><input id="s-late" value="${esc(s.lateDays)}" inputmode="numeric"></div>
     <button class="btn primary" data-act="save-settings">${t("save")}</button>
   </div></section>
@@ -1734,6 +1757,9 @@ function renderModal(){
       <div class="field"><label for="ap-what">${lx("Motif","Reason")}</label><input id="ap-what" autocomplete="off" placeholder="${biz()==="health"?lx("ex. Consultation, contrôle","e.g. Consultation, check-up"):lx("ex. Tresses, coiffure","e.g. Braids, haircut")}"></div>
       <div class="err" id="ap-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="appt-save">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="apptremind"){
+    const R=remindList().sort((a,b)=>(a.time||"99").localeCompare(b.time||"99"));
+    inner=`<div class="dlg"><h2>${lx("Rappels pour demain","Reminders for tomorrow")}</h2><p class="note" style="margin:0 0 8px">${lx("Touchez chaque client : WhatsApp s'ouvre avec le message prêt. Revenez ici pour le suivant.","Tap each client: WhatsApp opens with the message ready. Come back here for the next one.")}</p>${R.length?`<div class="card flush">${R.map(a=>{ const c=custById(a.cust); return `<button class="row" data-act="appt-wa" data-id="${a.id}"><div class="main"><div class="name">${esc(c.name)}</div><div class="sub">${a.time?esc(a.time)+" · ":""}${esc(a.what||"")}</div></div><div class="amt">${a.reminded?`<span class="badge paid">✓ ${lx("Envoyé","Sent")}</span>`:`<span class="badge late">WhatsApp</span>`}</div></button>`; }).join("")}</div>`:`<div class="empty">${lx("Aucun rendez-vous demain.","No appointments tomorrow.")}</div>`}<div class="actions"><button class="btn" data-act="close-modal">${t("close")}</button></div></div>`;
   }else if(m.type==="guests"){
     const t0=todayKey(), all=stays(), inR=(a,b)=>a>=b;
     const G=[[lx("Arrivent aujourd'hui","Arriving today"),all.filter(z=>z.l.ci===t0)],[lx("Sur place","Staying now"),all.filter(z=>z.l.ci<t0&&z.l.co>t0)],[lx("Partent aujourd'hui","Leaving today"),all.filter(z=>z.l.co===t0&&z.l.ci<t0)],[lx("À venir (14 jours)","Coming up (14 days)"),all.filter(z=>z.l.ci>t0&&z.l.ci<=dayAdd(t0,14)).sort((a,b)=>a.l.ci.localeCompare(b.l.ci))]];
@@ -1769,8 +1795,8 @@ function renderModal(){
     inner=`<div class="dlg"><h2>${biz()==="shop"?(L()==="fr"?"Supprimer ce client ?":"Delete this customer?"):lx("Supprimer cette fiche ?","Delete this record?")}</h2><p class="note" style="margin:0">${esc(c?c.name:"")} — ${L()==="fr"?"Ses reçus restent dans l'historique.":"Their receipts stay in the history."}</p>
       <div class="actions"><button class="btn danger" data-act="del-cust-yes" data-id="${m.id}">${L()==="fr"?"Supprimer":"Delete"}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
   }else if(m.type==="bulk"){
-    inner=`<div class="dlg form"><h2>${t("bulk_t")}</h2><p class="note" style="margin:0">${t("bulk_help")}</p>
-      <div class="field"><textarea id="bulk-txt" rows="8" placeholder="${esc(t("bulk_ph"))}" autocomplete="off" style="width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)"></textarea></div>
+    inner=`<div class="dlg form"><h2>${t("bulk_t")}</h2><p class="note" style="margin:0">${bulkHelp()}</p>
+      <div class="field"><textarea id="bulk-txt" rows="8" placeholder="${esc(bulkPh())}" autocomplete="off" style="width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)"></textarea></div>
       <div class="err" id="bulk-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-bulk">${t("bulk_go")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
   }else if(m.type==="pick"){
@@ -1830,14 +1856,15 @@ function saveSale(kind){
   const lines=d.lines.map(l=>({...((l.sn||"").trim()?{sn:l.sn.trim()}:{}),...(l.ci?{ci:l.ci}:{}),...(l.co?{co:l.co}:{}),...((l.w||"").trim()?{w:l.w.trim()}:{}),d:l.d.trim(),q:parseAmt(l.q)||0,p:parseAmt(l.p),pid:l.pid||null,c:(()=>{const pr=l.pid&&S.products.find(z=>z.id===l.pid);return pr&&pr.cost>0?pr.cost:0;})()})).filter(l=>l.q>0&&l.p>0);
   const total=lines.reduce((s,l)=>s+l.q*l.p,0);
   if(!lines.length||total<=0){ d.err=t("err_total"); $("#s-err").textContent=d.err; return; }
+  { const dd=DETDATE[biz()]; if(dd&&!S.shop.allowPast){ for(const l of lines){ const f=[l.sn,l.w]; for(let n=0;n<2;n++) if(dd[n]&&isIso(f[n])&&f[n]<todayKey()){ d.err=lx("Cette date ne peut pas être dans le passé.","This date cannot be in the past."); $("#s-err").textContent=d.err; return; } } } }
   if(biz()==="hotel"){ const used=[]; for(const l of lines){ if(!l.ci&&!l.co) continue;
     if(!l.ci||!l.co||l.co<=l.ci){ d.err=lx("Choisissez une date d'arrivée et une date de départ après l'arrivée.","Choose a check-in date and a check-out date after it."); $("#s-err").textContent=d.err; return; }
-    if(l.ci<todayKey()){ d.err=lx("La date d'arrivée ne peut pas être dans le passé. Choisissez aujourd'hui ou une date à venir.","Check-in cannot be in the past. Choose today or a later date."); $("#s-err").textContent=d.err; return; }
+    if(l.ci<todayKey()&&!S.shop.allowPast){ d.err=lx("La date d'arrivée ne peut pas être dans le passé. Choisissez aujourd'hui ou une date à venir.","Check-in cannot be in the past. Choose today or a later date."); $("#s-err").textContent=d.err; return; }
     if(daysBetween(l.ci,l.co)>365){ d.err=lx("Un séjour ne peut pas dépasser 365 nuits.","A stay cannot be longer than 365 nights."); $("#s-err").textContent=d.err; return; }
     if(l.pid){ const pr=S.products.find(x=>x.id===l.pid), total=Math.max(1,+(pr&&pr.rooms)||1), clash=roomsBooked(l.pid,l.ci,l.co)+used.filter(u=>u.pid===l.pid&&u.ci<l.co&&u.co>l.ci).length;
       if(clash>=total){ d.err=lx(`${l.d} est déjà réservée du ${fmtDay(l.ci)} au ${fmtDay(l.co)}. Choisissez d'autres dates ou une autre chambre.`,`${l.d} is already booked for ${fmtDay(l.ci)} to ${fmtDay(l.co)}. Choose other dates or another room.`); $("#s-err").textContent=d.err; return; }
       used.push(l); } } }
-  if(d.mode!=="full"&&d.due&&d.due<todayKey()){ d.err=lx("La date limite ne peut pas être dans le passé.","The due date cannot be in the past."); $("#s-err").textContent=d.err; return; }
+  if(d.mode!=="full"&&d.due&&d.due<todayKey()&&!S.shop.allowPast){ d.err=lx("La date limite ne peut pas être dans le passé.","The due date cannot be in the past."); $("#s-err").textContent=d.err; return; }
   const need={}; lines.forEach(l=>{ if(l.pid) need[l.pid]=(need[l.pid]||0)+l.q; });
   for(const pid in need){ const pr=S.products.find(x=>x.id===pid); if(pr&&!pr.svc&&need[pid]>sellable(pr)){ d.err=t("err_stock",pr.name,sellable(pr)); $("#s-err").textContent=d.err; return; } }
   let paid=draftPaid(); if(paid>total) paid=total;
@@ -1898,18 +1925,19 @@ document.addEventListener("click",e=>{
       const nc={id:uid(),name:n,phone:$("#c-phone").value.trim(),created:new Date().toISOString()}; if($("#c-rent")){ nc.unit=$("#c-unit").value.trim(); nc.rent=parseAmt($("#c-rent").value)||0; } if($("#c-cls")&&$("#c-cls").value.trim()) nc.cls=$("#c-cls").value.trim(); if($("#c-memo")&&$("#c-memo").value.trim()) nc.memo=$("#c-memo").value.trim(); S.customers.push(nc);
       save(); ui.modal=null; render(); toast(t("cust_saved")); break; }
     case "cls-filter": ui.search=(ui.search.trim().toLowerCase()===el.dataset.k.toLowerCase())?"":el.dataset.k; render(); break;
+    case "remind-open": ui.modal={type:"apptremind"}; renderModal(); break;
     case "appt-new": ui.modal={type:"appt"}; renderModal(); break;
     case "appt-save": { const er=$("#ap-err"); let cid=$("#ap-cust").value, nm=$("#ap-name").value.trim(), ph=$("#ap-phone").value.trim(), dt=$("#ap-date").value;
       if(!cid&&!nm){ er.textContent=lx("Choisissez un client ou écrivez son nom.","Choose a client or type their name."); break; }
       if(!/^\d{4}-\d{2}-\d{2}$/.test(dt)){ er.textContent=lx("Choisissez une date.","Choose a date."); break; }
-      if(dt<todayKey()){ er.textContent=lx("La date ne peut pas être dans le passé.","The date cannot be in the past."); break; }
-      { const tm=$("#ap-time").value; if(dt===todayKey()&&tm){ const now=new Date(), hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0"); if(tm<hm){ er.textContent=lx("Cette heure est déjà passée.","That time has already passed."); break; } } }
+      if(dt<todayKey()&&!S.shop.allowPast){ er.textContent=lx("La date ne peut pas être dans le passé.","The date cannot be in the past."); break; }
+      { const tm=$("#ap-time").value; if(dt===todayKey()&&tm&&!S.shop.allowPast){ const now=new Date(), hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0"); if(tm<hm){ er.textContent=lx("Cette heure est déjà passée.","That time has already passed."); break; } } }
       if(phoneBad(ph)){ er.textContent=PHBAD(); break; }
       if(!cid){ const c={id:uid(),name:nm,phone:ph,created:new Date().toISOString()}; S.customers.push(c); cid=c.id; }
       (S.appts=S.appts||[]).push({id:uid(),cust:cid,date:dt,time:$("#ap-time").value||"",what:$("#ap-what").value.trim(),created:new Date().toISOString()}); save(); ui.modal=null; render(); toast(t("saved")||"Saved"); break; }
     case "appt-done": { const a=(S.appts||[]).find(z=>z.id===id); if(a){ a.done=true; save(); ui.draft=newDraft(a.cust); ui.view="sale"; ui.custId=null; render(); window.scrollTo(0,0); } break; }
     case "appt-del": if(confirm(lx("Annuler ce rendez-vous ?","Cancel this appointment?"))){ const a=(S.appts||[]).find(z=>z.id===id); if(a){ a.gone=true; save(); render(); } } break;
-    case "appt-wa": { const a=(S.appts||[]).find(z=>z.id===id), c=a&&a.cust&&custById(a.cust); if(a&&c&&c.phone) window.open("https://wa.me/"+intlPhone(c.phone)+"?text="+encodeURIComponent(apptMsg(a)),"_blank","noopener"); break; }
+    case "appt-wa": { const a=(S.appts||[]).find(z=>z.id===id), c=a&&a.cust&&custById(a.cust); if(a&&c&&c.phone) { window.open("https://wa.me/"+intlPhone(c.phone)+"?text="+encodeURIComponent(apptMsg(a)),"_blank","noopener"); a.reminded=true; save(); if(ui.modal&&ui.modal.type==="apptremind") renderModal(); else render(); } break; }
     case "guests-open": ui.modal={type:"guests"}; renderModal(); break;
     case "slip-open": ui.modal={type:"slip",id,i:+el.dataset.i}; renderModal(); break;
     case "slip-print": { const x=S.txs.find(y=>y.id===id), l=x&&x.lines[+el.dataset.i]; if(l) printHtml(lx("Fiche d'arrivée","Check-in slip"),slipHtml(x,l)); break; }
@@ -2008,6 +2036,7 @@ document.addEventListener("click",e=>{
       s.country=$("#s-country").value; s.lang=$("#s-lang").value; s.footer=$("#s-footer").value.trim(); 
       s.lateDays=Math.max(1,parseInt($("#s-late").value,10)||14);
       s.biz=$("#s-biz").value; try{ localStorage.setItem("ecrici-biz",s.biz); }catch(e){}
+      if($("#s-past").checked) s.allowPast=true; else delete s.allowPast;
       nicheExamples();
       if(oldC!==s.country&&!$("#s-lang").dataset.touched) {}
       save(); render(); toast(t("saved_ok")); break; }

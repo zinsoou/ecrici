@@ -417,7 +417,7 @@ function mergeLedgers(loc, rem) {
   m.customers = unionById(loc.customers, rem.customers, (x, y) => x);
   m.staff = unionById(loc.staff, rem.staff, (x, y) => x);
   m.expenses = unionById(loc.expenses, rem.expenses, (x, y) => x);
-  m.appts = unionById(loc.appts, rem.appts, (x, y) => (y.gone && !x.gone ? y : y.done && !x.done ? y : x));
+  m.appts = unionById(loc.appts, rem.appts, (x, y) => (y.gone && !x.gone ? y : y.done && !x.done ? y : y.reminded && !x.reminded ? y : x));
   m.expRules = unionById(loc.expRules, rem.expRules, (x, y) => (String(x.next) >= String(y.next) ? x : y));
   m.products = unionById(loc.products, rem.products, (x, y) => {
     const b0 = base[x.id], z = Object.assign({}, x);
