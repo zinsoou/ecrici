@@ -938,7 +938,7 @@ function viewSale(){
       ${d.mode!=="credit"?`<div class="seg" style="margin-top:6px" role="group" aria-label="${t("method")}">${["cash","momo","transfer"].map(k=>`<button class="pill" data-act="smethod" data-m="${k}" aria-pressed="${(d.method||S.shop.lastMethod||"cash")===k}">${t(k)}</button>`).join("")}</div>`:""}
       <div class="total" style="border-top:1px dashed var(--line);margin-top:4px"><span>${t("balance_left")}</span><span class="num" id="s-left"></span></div>
     </div>
-    ${d.mode!=="full"?`<div class="field"><label for="f-due">${t("due_label")}</label><input id="f-due" type="date" data-bind="due" value="${esc(d.due)}"></div>`:""}
+    ${d.mode!=="full"?`<div class="field"><label for="f-due">${t("due_label")}</label><input id="f-due" type="date" data-bind="due" min="${todayKey()}" value="${esc(d.due)}"></div>`:""}
     <div class="field"><label for="f-note">${t("note")}</label><input id="f-note" data-bind="note" value="${esc(d.note)}" placeholder="${esc(lx("ex. Payé par virement, à livrer vendredi","e.g. Paid by transfer, deliver on Friday"))}" autocomplete="off"></div>
     <div class="err" id="s-err" role="alert">${esc(d.err)}</div>
     <button class="btn primary" data-act="save-sale">${t("save_sale")}</button>
@@ -993,6 +993,7 @@ function btList(bs){ if(!bs.length) return `<div class="note" style="margin:0 0 
 function btDraw(){ const m=ui.modal; if(!m||!m.bs) return; const l=$("#bt-list"); if(l) l.innerHTML=btList(m.bs); const q=$("#pr-qty"); if(q) q.value=String(Math.round(m.bs.reduce((a,b)=>a+b.q,0)*1000)/1000); }
 function btPending(){ const m=ui.modal; const n=($("#pr-batch")||{value:""}).value.trim(), raw=($("#pr-exp")||{value:""}).value.trim(), qs=($("#pr-bq")||{value:""}).value.trim();
   if(!n&&!raw&&!qs) return ""; const e=parseExp(raw); if(e===null) return lx("Écrivez la date au format mois/année, ex. 03/2028.","Write the date as month/year, e.g. 03/2028.");
+  if(e&&bState({e}).s==="expired") return lx("Cette date est déjà passée : ne stockez pas de médicament périmé.","That date has already passed: do not stock expired medicine.");
   const q=parseAmt(qs); if(!(q>0)) return lx("Indiquez la quantité de ce lot.","Enter how many are in this batch.");
   const ex=m.bs.find(b=>(b.n||"")===n&&(b.e||"")===e); if(ex) ex.q=Math.round((ex.q+q)*1000)/1000; else m.bs.push({n,e,q});
   ["#pr-batch","#pr-exp","#pr-bq"].forEach(k=>{ const f=$(k); if(f) f.value=""; }); btDraw(); return ""; }
@@ -1003,7 +1004,7 @@ function detBox(l,i){
   const lab=t=>`<div class="note" style="margin:0 0 2px;font-size:.72rem">${t}</div>`;
   if(biz()==="hotel"){
     if(!(l.ci||l.co||l.open)) return `<button type="button" class="btn small ghost" data-act="line-det" data-i="${i}" style="grid-column:1/-1;justify-self:start">${lx("+ Dates du séjour","+ Stay dates")}</button>`;
-    return `<div class="ldet" style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px"><div>${lab(detL()[0])}<input type="date" data-bind="line.${i}.ci" id="l${i}ci" value="${esc(l.ci||"")}" aria-label="${detL()[0]}"></div><div>${lab(detL()[1])}<input type="date" data-bind="line.${i}.co" id="l${i}co" value="${esc(l.co||"")}" min="${esc(l.ci?dayAdd(l.ci,1):"")}" aria-label="${detL()[1]}"></div></div>`; }
+    return `<div class="ldet" style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px"><div>${lab(detL()[0])}<input type="date" data-bind="line.${i}.ci" id="l${i}ci" min="${todayKey()}" value="${esc(l.ci||"")}" aria-label="${detL()[0]}"></div><div>${lab(detL()[1])}<input type="date" data-bind="line.${i}.co" id="l${i}co" value="${esc(l.co||"")}" min="${esc(l.ci?dayAdd(l.ci,1):"")}" aria-label="${detL()[1]}"></div></div>`; }
   if(!(l.sn||l.w||l.open)) return `<button type="button" class="btn small ghost" data-act="line-det" data-i="${i}" style="grid-column:1/-1;justify-self:start">${({pharmacy:lx("+ Lot / expiration","+ Batch / expiry"),travel:lx("+ Date / voyageurs","+ Date / travellers"),repair:lx("+ Article / date de remise","+ Item / ready date")})[biz()]||lx("+ N° de série / garantie","+ Serial / warranty")}</button>`;
   return `<div class="ldet" style="grid-column:1/-1;display:grid;grid-template-columns:1fr;gap:8px"><div>${lab(detL()[0])}<input data-bind="line.${i}.sn" id="l${i}sn" value="${esc(l.sn||"")}" placeholder="${detP()[0]}" autocomplete="off" aria-label="${detL()[0]}"></div><div>${lab(detL()[1])}<input data-bind="line.${i}.w" id="l${i}w" value="${esc(l.w||"")}" placeholder="${detP()[1]}" autocomplete="off" aria-label="${detL()[1]}"></div></div>`; }
 function linesHtml(){ const d=ui.draft; return `<div class="note" style="margin:0 0 6px;font-size:.78rem">${lx("Désignation, puis "+t("qty").toLowerCase()+" et prix","Item, then "+t("qty").toLowerCase()+" and price")}</div>`+d.lines.map((l,i)=>`<div class="line">
@@ -1087,7 +1088,8 @@ function slipHtml(x,l){ const c=x.cust&&custById(x.cust), n=Math.max(1,daysBetwe
   ${blank(lx("N° de pièce d'identité / passeport","ID / passport no."))}${blank(lx("Nationalité · Nombre de personnes","Nationality · Number of guests"))}${blank(lx("Signature du client","Guest signature"))}</div>`; }
 function printHtml(title,body){ const w=window.open("","_blank"); if(!w){ toast(lx("Autorisez les fenêtres pour imprimer.","Allow pop-ups to print.")); return; } w.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title></head><body style="margin:18px">${body}</body></html>`); w.document.close(); w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} },350); }
 function hotelCard(){
-  if(biz()!=="hotel"||!S.products.length) return "";
+  if(biz()!=="hotel") return "";
+  if(!S.products.length) return `<section class="sec"><h2>${lx("Chambres","Rooms")}</h2><div class="card"><p class="note" style="margin:0 0 8px">${lx("Ajoutez vos chambres pour voir le calendrier, la liste des clients et les fiches d'arrivée.","Add your rooms to see the room calendar, guest list and check-in slips.")}</p><button class="btn primary small" data-act="tab" data-v="stock">${lx("Ajouter mes chambres","Add my rooms")}</button></div></section>`;
   const t0=todayKey(); let tot=0,free=0,arr=0,dep=0; S.products.forEach(p=>{ const r=roomStatus(p); tot+=r.total; free+=r.free; });
   S.txs.forEach(x=>{ if(x.type==="sale"&&!x.void) (x.lines||[]).forEach(l=>{ if(l.ci===t0) arr++; if(l.co===t0) dep++; }); });
   return `<section class="sec"><h2>${lx("Chambres ce soir","Rooms tonight")}<span>${free}/${tot} ${lx("libres","free")}</span></h2><div class="sum"><div class="card"><div class="lbl">${lx("Arrivées aujourd'hui","Arriving today")}</div><div class="val num">${arr}</div></div><div class="card"><div class="lbl">${lx("Départs aujourd'hui","Leaving today")}</div><div class="val num">${dep}</div></div></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn small" data-act="cal-open">${lx("Calendrier des chambres","Room calendar")}</button><button class="btn small" data-act="guests-open">${lx("Liste des clients","Guest list")}</button></div></section>`;
@@ -1728,7 +1730,7 @@ function renderModal(){
     inner=`<div class="dlg form"><h2>${lx("Nouveau rendez-vous","New appointment")}</h2>
       <div class="field"><label for="ap-cust">${lx("Client","Client")}</label><select id="ap-cust"><option value="">${lx("— Nouveau (écrivez le nom) —","— New (type the name) —")}</option>${S.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select></div>
       <div class="grid2"><div class="field"><label for="ap-name">${lx("Nom (si nouveau)","Name (if new)")}</label><input id="ap-name" autocomplete="off"></div><div class="field"><label for="ap-phone">${lx("Téléphone","Phone")}</label><input id="ap-phone" inputmode="tel" autocomplete="off"></div></div>
-      <div class="grid2"><div class="field"><label for="ap-date">${lx("Date","Date")}</label><input id="ap-date" type="date" value="${dayAdd(todayKey(),1)}"></div><div class="field"><label for="ap-time">${lx("Heure","Time")}</label><input id="ap-time" type="time"></div></div>
+      <div class="grid2"><div class="field"><label for="ap-date">${lx("Date","Date")}</label><input id="ap-date" type="date" min="${todayKey()}" value="${dayAdd(todayKey(),1)}"></div><div class="field"><label for="ap-time">${lx("Heure","Time")}</label><input id="ap-time" type="time"></div></div>
       <div class="field"><label for="ap-what">${lx("Motif","Reason")}</label><input id="ap-what" autocomplete="off" placeholder="${biz()==="health"?lx("ex. Consultation, contrôle","e.g. Consultation, check-up"):lx("ex. Tresses, coiffure","e.g. Braids, haircut")}"></div>
       <div class="err" id="ap-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="appt-save">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
@@ -1820,6 +1822,8 @@ function setBind(path,val){
     const h=$("#h"+i); if(h) h.textContent=lineHint(l);
   }
 }
+const phoneBad=v=>{ const d=String(v||"").replace(/\D/g,""); return d.length>0&&(d.length<8||d.length>15); };
+const PHBAD=()=>lx("Numéro de téléphone invalide (8 à 15 chiffres).","Invalid phone number (8 to 15 digits).");
 function saveSale(kind){
   const d=ui.draft; d.err="";
   const lines=d.lines.map(l=>({...((l.sn||"").trim()?{sn:l.sn.trim()}:{}),...(l.ci?{ci:l.ci}:{}),...(l.co?{co:l.co}:{}),...((l.w||"").trim()?{w:l.w.trim()}:{}),d:l.d.trim(),q:parseAmt(l.q)||0,p:parseAmt(l.p),pid:l.pid||null,c:(()=>{const pr=l.pid&&S.products.find(z=>z.id===l.pid);return pr&&pr.cost>0?pr.cost:0;})()})).filter(l=>l.q>0&&l.p>0);
@@ -1827,9 +1831,12 @@ function saveSale(kind){
   if(!lines.length||total<=0){ d.err=t("err_total"); $("#s-err").textContent=d.err; return; }
   if(biz()==="hotel"){ const used=[]; for(const l of lines){ if(!l.ci&&!l.co) continue;
     if(!l.ci||!l.co||l.co<=l.ci){ d.err=lx("Choisissez une date d'arrivée et une date de départ après l'arrivée.","Choose a check-in date and a check-out date after it."); $("#s-err").textContent=d.err; return; }
+    if(l.ci<todayKey()){ d.err=lx("La date d'arrivée ne peut pas être dans le passé. Choisissez aujourd'hui ou une date à venir.","Check-in cannot be in the past. Choose today or a later date."); $("#s-err").textContent=d.err; return; }
+    if(daysBetween(l.ci,l.co)>365){ d.err=lx("Un séjour ne peut pas dépasser 365 nuits.","A stay cannot be longer than 365 nights."); $("#s-err").textContent=d.err; return; }
     if(l.pid){ const pr=S.products.find(x=>x.id===l.pid), total=Math.max(1,+(pr&&pr.rooms)||1), clash=roomsBooked(l.pid,l.ci,l.co)+used.filter(u=>u.pid===l.pid&&u.ci<l.co&&u.co>l.ci).length;
       if(clash>=total){ d.err=lx(`${l.d} est déjà réservée du ${fmtDay(l.ci)} au ${fmtDay(l.co)}. Choisissez d'autres dates ou une autre chambre.`,`${l.d} is already booked for ${fmtDay(l.ci)} to ${fmtDay(l.co)}. Choose other dates or another room.`); $("#s-err").textContent=d.err; return; }
       used.push(l); } } }
+  if(d.mode!=="full"&&d.due&&d.due<todayKey()){ d.err=lx("La date limite ne peut pas être dans le passé.","The due date cannot be in the past."); $("#s-err").textContent=d.err; return; }
   const need={}; lines.forEach(l=>{ if(l.pid) need[l.pid]=(need[l.pid]||0)+l.q; });
   for(const pid in need){ const pr=S.products.find(x=>x.id===pid); if(pr&&!pr.svc&&need[pid]>sellable(pr)){ d.err=t("err_stock",pr.name,sellable(pr)); $("#s-err").textContent=d.err; return; } }
   let paid=draftPaid(); if(paid>total) paid=total;
@@ -1886,7 +1893,7 @@ document.addEventListener("click",e=>{
     case "back-cust": ui.custId=null; render(); break;
     case "add-cust": ui.modal={type:"newcust"}; renderModal(); break;
     case "save-cust": {
-      const n=$("#c-name").value.trim(); if(!n){ $("#c-err").textContent=t("err_name"); break; }
+      const n=$("#c-name").value.trim(); if(!n){ $("#c-err").textContent=t("err_name"); break; } if(phoneBad($("#c-phone").value)){ $("#c-err").textContent=PHBAD(); break; }
       const nc={id:uid(),name:n,phone:$("#c-phone").value.trim(),created:new Date().toISOString()}; if($("#c-rent")){ nc.unit=$("#c-unit").value.trim(); nc.rent=parseAmt($("#c-rent").value)||0; } if($("#c-cls")&&$("#c-cls").value.trim()) nc.cls=$("#c-cls").value.trim(); if($("#c-memo")&&$("#c-memo").value.trim()) nc.memo=$("#c-memo").value.trim(); S.customers.push(nc);
       save(); ui.modal=null; render(); toast(t("cust_saved")); break; }
     case "cls-filter": ui.search=(ui.search.trim().toLowerCase()===el.dataset.k.toLowerCase())?"":el.dataset.k; render(); break;
@@ -1894,6 +1901,9 @@ document.addEventListener("click",e=>{
     case "appt-save": { const er=$("#ap-err"); let cid=$("#ap-cust").value, nm=$("#ap-name").value.trim(), ph=$("#ap-phone").value.trim(), dt=$("#ap-date").value;
       if(!cid&&!nm){ er.textContent=lx("Choisissez un client ou écrivez son nom.","Choose a client or type their name."); break; }
       if(!/^\d{4}-\d{2}-\d{2}$/.test(dt)){ er.textContent=lx("Choisissez une date.","Choose a date."); break; }
+      if(dt<todayKey()){ er.textContent=lx("La date ne peut pas être dans le passé.","The date cannot be in the past."); break; }
+      { const tm=$("#ap-time").value; if(dt===todayKey()&&tm){ const now=new Date(), hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0"); if(tm<hm){ er.textContent=lx("Cette heure est déjà passée.","That time has already passed."); break; } } }
+      if(phoneBad(ph)){ er.textContent=PHBAD(); break; }
       if(!cid){ const c={id:uid(),name:nm,phone:ph,created:new Date().toISOString()}; S.customers.push(c); cid=c.id; }
       (S.appts=S.appts||[]).push({id:uid(),cust:cid,date:dt,time:$("#ap-time").value||"",what:$("#ap-what").value.trim(),created:new Date().toISOString()}); save(); ui.modal=null; render(); toast(t("saved")||"Saved"); break; }
     case "appt-done": { const a=(S.appts||[]).find(z=>z.id===id); if(a){ a.done=true; save(); ui.draft=newDraft(a.cust); ui.view="sale"; ui.custId=null; render(); window.scrollTo(0,0); } break; }
@@ -1983,7 +1993,7 @@ document.addEventListener("click",e=>{
     case "bc-sent": { const b=bcState(); b.sent[el.dataset.bcid]=1; el.textContent=t("bc_sent");
       const list=bcAudience(b.aud); const pr=$("#bc-progress"); if(pr) pr.textContent=t("bc_progress",list.filter(c=>b.sent[c.id]).length,list.filter(c=>intlPhone(c.phone)).length); break; }
     case "edit-cust": ui.modal={type:"editcust",id}; renderModal(); break;
-    case "save-ecust": { const c=custById(id), n=$("#ec-name").value.trim(); if(!n){ $("#ec-err").textContent=t("err_name"); break; }
+    case "save-ecust": { const c=custById(id), n=$("#ec-name").value.trim(); if(!n){ $("#ec-err").textContent=t("err_name"); break; } if(phoneBad($("#ec-phone").value)){ $("#ec-err").textContent=PHBAD(); break; }
       c.name=n; c.phone=$("#ec-phone").value.trim(); if($("#ec-rent")){ c.unit=$("#ec-unit").value.trim(); c.rent=parseAmt($("#ec-rent").value)||0; } if($("#ec-cls")){ const v=$("#ec-cls").value.trim(); if(v) c.cls=v; else delete c.cls; } if($("#ec-memo")){ const v=$("#ec-memo").value.trim(); if(v) c.memo=v; else delete c.memo; } save(); ui.modal=null; render(); toast(t("saved_ok")); break; }
     case "ask-cancel": ui.modal={type:"cancel",id}; renderModal(); break;
     case "do-cancel": voidTx(id); break;
