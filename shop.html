@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="google" content="notranslate">
+<meta name="robots" content="noindex">
+<meta name="ecrici-shop-page" content="1">
+<title>Shop</title>
+<meta name="theme-color" content="#0E1A4F">
+<link rel="icon" href="/icon.svg">
+<style>
+:root{--bg:#F5F6FA;--card:#fff;--ink:#0E1A4F;--mut:#5B6385;--line:#E3E6F0;--acc:#2447D6;--wa:#1FA855;--warn:#B4540A}
+@media(prefers-color-scheme:dark){:root{--bg:#0B1030;--card:#141B45;--ink:#EEF1FF;--mut:#A3ABD3;--line:#252E63;--acc:#7C97FF;--wa:#2BC066;--warn:#F0A25A}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+header{background:#0E1A4F;color:#fff;padding:28px 16px 22px}
+.w{max-width:640px;margin:0 auto;padding:0 16px}header .w{padding:0}
+h1{margin:0;font-size:26px;line-height:1.15;letter-spacing:-.3px;overflow-wrap:anywhere}
+.tag{margin:8px 0 0;color:#C9D3F5;font-size:15px}.addr{margin:4px 0 0;color:#9FB0EA;font-size:13px}
+main{padding:16px 0 170px}
+h2{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin:6px 0 10px}
+.s{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;margin-bottom:12px}
+.it{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px}
+.it .n{flex:1;min-width:0}.it .n b{display:block;font-weight:650;overflow-wrap:anywhere}.it .n span{color:var(--mut);font-size:14px}
+.out{color:var(--warn);font-size:13px;font-weight:650}
+.q{display:flex;align-items:center;gap:8px}.q button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:20px;font-weight:700;cursor:pointer}
+.q button.p{background:var(--acc);border-color:var(--acc);color:#fff}.q i{min-width:20px;text-align:center;font-style:normal;font-weight:700}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -8px 24px rgba(14,26,79,.12)}
+.bar .w{padding:0;display:grid;gap:8px}.bar input{padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;width:100%}
+.go{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:14px 18px;border:0;border-radius:14px;background:var(--wa);color:#fff;font:inherit;font-weight:750;font-size:17px;cursor:pointer}
+.go[disabled]{opacity:.45;cursor:default}
+.hint{text-align:center;color:var(--mut);font-size:13px;margin:0}
+.msg{text-align:center;padding:64px 16px;color:var(--mut)}.msg b{display:block;font-size:20px;color:var(--ink);margin-bottom:6px}
+.im{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--line);flex:none;cursor:zoom-in}.lb{position:fixed;inset:0;background:rgba(5,8,25,.88);display:flex;align-items:center;justify-content:center;z-index:9;padding:16px}.lb img{max-width:100%;max-height:100%;border-radius:14px}
+.rp{text-align:center;font-size:12px;color:var(--mut);padding:0 0 10px}.rp button{background:none;border:0;color:var(--mut);text-decoration:underline;font:inherit;cursor:pointer;padding:4px}.rs{display:grid;gap:6px;max-width:320px;margin:8px auto}.rs button{padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer;text-decoration:none}
+.pw{text-align:center;font-size:13px;color:var(--mut);padding:18px 0 4px}.pw a{color:var(--acc);font-weight:700;text-decoration:none}
+</style>
+</head>
+<body>
+<header><div class="w"><h1 id="nm">&nbsp;</h1><p class="tag" id="tg" hidden></p><p class="addr" id="ad" hidden></p></div></header>
+<main class="w" id="m"><div class="msg">…</div></main>
+<script src="/config.js"></script>
+<script>
+const $=i=>document.getElementById(i);const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const T={fr:{nf:"Page introuvable",nfs:"Ce lien n'existe pas ou a été désactivé.",srch:"Rechercher…",out:"Épuisé",name:"Votre nom (facultatif)",send:"Envoyer sur WhatsApp",total:"Total",pick:"Choisissez au moins un article",hi:"Bonjour",ask:"je voudrais commander :",nm:"Mon nom :",pw:"Page créée avec",mk:"Créez la vôtre, 7 jours gratuits",hint:"Vous enverrez votre commande directement au vendeur sur WhatsApp.",err:"Impossible de charger la page. Vérifiez votre connexion.",none:"Aucun article trouvé.",empty:"Cette page n'a pas encore d'articles.",rep:"Signaler cette page",why:"Pourquoi ?",r1:"Arnaque ou faux vendeur",r2:"Articles illégaux ou dangereux",r3:"Contenu choquant",r4:"Autre",thx:"Merci. Nous allons examiner cette page."},
+en:{nf:"Page not found",nfs:"This link does not exist or has been turned off.",srch:"Search…",out:"Sold out",name:"Your name (optional)",send:"Send on WhatsApp",total:"Total",pick:"Choose at least one item",hi:"Hello",ask:"I would like to order:",nm:"My name:",pw:"Page made with",mk:"Make yours, 7 days free",hint:"You will send your order straight to the seller on WhatsApp.",err:"Could not load the page. Check your connection.",none:"No items found.",empty:"This page has no items yet.",rep:"Report this page",why:"Why?",r1:"Scam or fake seller",r2:"Illegal or dangerous items",r3:"Offensive content",r4:"Other",thx:"Thank you. We will review this page."}};
+let D=null,Q={},lg="en",tx=T.en;
+const slug=((new URLSearchParams(location.search).get("s"))||((location.pathname.match(/^\/s\/([^\/]+)/)||[])[1])||"").toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0,30);
+const dl=(navigator.language||"en").slice(0,2)==="fr"?"fr":"en";
+function msg(b,s){ $("m").innerHTML=`<div class="msg"><b>${esc(b)}</b>${esc(s||"")}</div>`; }
+async function load(){
+  tx=T[dl];
+  if(!slug){ msg(tx.nf,tx.nfs); return; }
+  try{
+    const r=await fetch(String(ECRICI.url).replace(/\/+$/,"")+"/rest/v1/catalogs?slug=eq."+slug+"&active=eq.true&select=data",{headers:{apikey:ECRICI.key}});
+    if(!r.ok) throw 0; const j=await r.json();
+    if(!j.length){ msg(tx.nf,tx.nfs); return; }
+    D=j[0].data; lg=D.lang==="fr"?"fr":"en"; tx=T[lg]; document.documentElement.lang=lg; draw();
+  }catch(e){ msg(tx.err); }
+}
+function draw(){
+  document.title=D.name; $("nm").textContent=D.name;
+  if(D.tag){ $("tg").textContent=D.tag; $("tg").hidden=false; } if(D.addr){ $("ad").textContent=D.addr; $("ad").hidden=false; }
+  const its=D.items||[]; const lab=(D.lab||[])[lg==="fr"?0:1]||"";
+  if(!its.length){ $("m").innerHTML=`<div class="msg">${esc(tx.empty)}</div>`; return; }
+  $("m").innerHTML=`<h2>${esc(lab)}</h2>${its.length>8?`<input class="s" id="q" placeholder="${esc(tx.srch)}" autocomplete="off">`:""}<div id="l"></div>
+  <div class="pw">${esc(tx.pw)} <a href="https://ecrici.com/" target="_blank" rel="noopener">Ecrici</a> · <a href="https://ecrici.com/" target="_blank" rel="noopener">${esc(tx.mk)}</a></div>
+  <div class="rp" id="rp"></div><div class="bar"><div class="w"><input id="cn" placeholder="${esc(tx.name)}" maxlength="60" autocomplete="name"><button class="go" id="go" disabled><span>${esc(tx.send)}</span><span id="tt"></span></button><p class="hint">${esc(tx.hint)}</p></div></div>`;
+  if($("q")) $("q").addEventListener("input",list);
+  $("l").addEventListener("click",e=>{const b=e.target.closest("button[data-i]");if(!b)return;const i=+b.dataset.i,d=+b.dataset.d;Q[i]=Math.max(0,Math.min(99,(Q[i]||0)+d));if(!Q[i])delete Q[i];list();});
+  $("go").addEventListener("click",send); list();
+  $("l").addEventListener("click",e=>{const z=e.target.closest("img[data-z]");if(!z)return;const o=document.createElement("div");o.className="lb";o.innerHTML='<img alt="">';o.firstChild.src=z.dataset.z;o.onclick=()=>o.remove();document.body.appendChild(o);});
+  $("rp").innerHTML=`<button id="rb">${esc(tx.rep)}</button>`;$("rb").onclick=report;
+}
+function fm(n){ const c=D.cur||["",0,0]; const num=new Intl.NumberFormat(lg==="fr"?"fr-FR":"en-NG",{maximumFractionDigits:c[2]}).format(n).replace(/[\u00a0\u202f]/g," "); return c[1]?num+" "+c[0]:c[0]+" "+num; }
+function list(){
+  const q=($("q")?$("q").value:"").trim().toLowerCase(); let h="";
+  D.items.forEach((x,i)=>{ if(q&&!x.n.toLowerCase().includes(q)) return; const n=Q[i]||0;
+    h+=`<div class="it">${x.i?`<img class="im" loading="lazy" alt="" src="${esc(x.i)}" data-z="${esc(x.i)}">`:""}<div class="n"><b>${esc(x.n)}</b><span>${x.p>0?esc(x.f):""}</span></div>${x.a?`<div class="q">${n?`<button data-i="${i}" data-d="-1" aria-label="-1">−</button><i>${n}</i>`:""}<button class="p" data-i="${i}" data-d="1" aria-label="+1">+</button></div>`:`<span class="out">${esc(tx.out)}</span>`}</div>`; });
+  $("l").innerHTML=h||`<div class="msg">${esc(tx.none)}</div>`;
+  let c=0,tot=0;Object.keys(Q).forEach(k=>{c+=Q[k];tot+=Q[k]*D.items[k].p;});
+  $("go").disabled=!c; $("tt").textContent=c?(tot>0?tx.total+" "+fm(tot):"×"+c):"";
+}
+function send(){
+  const ls=Object.keys(Q).map(k=>{const x=D.items[k];return "• "+Q[k]+" × "+x.n+(x.p>0?" ("+fm(Q[k]*x.p)+")":"");});if(!ls.length)return;
+  let tot=0;Object.keys(Q).forEach(k=>tot+=Q[k]*D.items[k].p);const nm=$("cn").value.trim();
+  const text=tx.hi+" "+D.name+", "+tx.ask+"\n"+ls.join("\n")+(tot>0?"\n"+tx.total+": "+fm(tot):"")+(nm?"\n"+tx.nm+" "+nm:"");
+  location.href="https://wa.me/"+String(D.phone||"").replace(/\D/g,"")+"?text="+encodeURIComponent(text);
+}
+function report(){
+  $("rp").innerHTML=`<div class="rs"><b>${esc(tx.why)}</b>${[1,2,3,4].map(n=>`<button data-r="${n}">${esc(tx["r"+n])}</button>`).join("")}</div>`;
+  $("rp").onclick=async e=>{const b=e.target.closest("button[data-r]");if(!b)return;const why=tx["r"+b.dataset.r];$("rp").onclick=null;
+    try{await fetch(String(ECRICI.url).replace(/\/+$/,"")+"/rest/v1/catalog_reports",{method:"POST",headers:{apikey:ECRICI.key,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({slug:slug,reason:why})});}catch(_){}
+    $("rp").innerHTML=esc(tx.thx);};
+}
+load();
+</script>
+</body>
+</html>

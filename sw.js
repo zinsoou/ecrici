@@ -1,6 +1,6 @@
 /* Offline cache. Bump VERSION whenever you upload a new index.html. */
-const VERSION = "ecrici-v74";
-const FILES = ["./", "index.html", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "config.js", "hosted.js", "privacy.html"];
+const VERSION = "ecrici-v76";
+const FILES = ["./", "index.html", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "config.js", "hosted.js", "privacy.html", "qr.js"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => Promise.all(FILES.map(f => c.add(f).catch(() => {})))).then(() => self.skipWaiting()));
 });
@@ -12,7 +12,7 @@ self.addEventListener("fetch", e => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.pathname.startsWith("/rest/") || url.pathname.startsWith("/auth/") || url.hostname.endsWith("supabase.co")) return;   // never cache account data
-  if (url.pathname.endsWith("admin.html")) return;
+  if (url.pathname.endsWith("admin.html") || url.pathname.endsWith("shop.html") || url.pathname.startsWith("/s/")) return;
   if (url.origin !== location.origin) {           // fonts: try network, fall back to cache
     e.respondWith(fetch(req).then(r => { const cp = r.clone(); caches.open(VERSION).then(c => c.put(req, cp)); return r; }).catch(() => caches.match(req)));
     return;

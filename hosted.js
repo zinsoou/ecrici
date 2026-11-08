@@ -488,11 +488,43 @@ async function syncBiz() {
     if (r && r.ok) lsSet("ecrici-biz-sync", key);
   } catch (e) {}
 }
+/* ---------- public catalog (one read-only row per shop) ---------- */
+async function catPublish(force) {
+  if (!active || !sess || member || !window.__catData) return { skip: true };
+  const c = S && S.shop && S.shop.cat, id = lid || shopId; if (!c || !c.slug || !id) return { skip: true };
+  const d = window.__catData(), sig = JSON.stringify([id, c.slug, !!c.on, d]);
+  if (!c.on && !lsGet("ecrici-cat-pub")) return { ok: true };
+  if (!force && lsGet("ecrici-cat-pub") === sig) return { ok: true, same: true };
+  try {
+    const body = { slug: c.slug, data: d, active: !!c.on, updated_at: new Date().toISOString() };
+    let r = await api("/rest/v1/catalogs?shop_id=eq." + id, { method: "PATCH", headers: { Prefer: "return=representation" }, body });
+    if (r.ok && Array.isArray(r.json) && !r.json.length) r = await api("/rest/v1/catalogs", { method: "POST", headers: { Prefer: "return=minimal" }, body: Object.assign({ shop_id: id }, body) });
+    if (!r.ok) return { ok: false, taken: r.status === 409, status: r.status };
+    lsSet("ecrici-cat-pub", sig); return { ok: true };
+  } catch (e) { return { ok: false, offline: !!e.offline }; }
+}
+window.__catPub = catPublish;
+/* product photos: small public JPEGs in the "catalog" bucket, one folder per shop */
+async function catImg(blob, pid, oldUrl) {
+  if (!active || !sess || member || !blob) return null;
+  const id = lid || shopId; if (!id) return null;
+  try {
+    const tk = await token(), path = id + "/" + String(pid).replace(/[^a-z0-9_-]/gi, "") + "-" + Date.now().toString(36) + ".jpg";
+    const r = await fetch(BASE + "/storage/v1/object/catalog/" + path, { method: "POST", headers: { apikey: CFG.key, Authorization: "Bearer " + tk, "Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000" }, body: blob });
+    if (!r.ok) return null;
+    if (oldUrl) catImgDel(oldUrl);
+    return BASE + "/storage/v1/object/public/catalog/" + path;
+  } catch (e) { return null; }
+}
+async function catImgDel(url) {
+  try { const m = String(url).split("/storage/v1/object/public/catalog/")[1]; if (!m || !active || !sess || member) return; const tk = await token(); await fetch(BASE + "/storage/v1/object/catalog/" + m, { method: "DELETE", headers: { apikey: CFG.key, Authorization: "Bearer " + tk } }); } catch (e) {}
+}
+window.__catImg = catImg; window.__catImgDel = catImgDel;
 window.pushCloud = async function () {
   if (!active || !sess) return;
   if (busyPush) { dirtyPush = true; return; }
   busyPush = true;
-  try { await doPush(); syncBiz(); }
+  try { await doPush(); syncBiz(); catPublish().catch(() => {}); }
   catch (e) {
     storeMode = "device";
     if (e.auth || e.status === 401 || e.status === 403) { busyPush = false; enter(); return; }
