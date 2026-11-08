@@ -1365,7 +1365,9 @@ function productModal(m){
     <div id="pr-stk2" ${(p?p.svc:nostock())?"hidden":""}><div class="field"><label for="pr-low">${t("low_alert")}</label><input id="pr-low" value="${esc(p?p.low:"5")}" inputmode="numeric" ${ro}></div>
     ${p&&!expOn()?`<div class="field"><label for="pr-add">${t("add_received")}</label><input id="pr-add" inputmode="decimal" placeholder="0"></div>`:""}</div>
     ${own&&catOn()&&window.__catImg?`<div class="field"><label>${lx("Photo (affichée sur ma page)","Photo (shown on my page)")}</label><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><img id="pr-prev" alt="" src="${esc(m.prev||(p&&p.img)||"")}" style="width:64px;height:64px;object-fit:cover;border-radius:12px;background:var(--line,#ddd);${(m.prev||(p&&p.img))&&!m.rmImg?"":"display:none"}"><label class="btn small" style="cursor:pointer;margin:0">${lx("Choisir une photo","Choose a photo")}<input type="file" id="pr-img" accept="image/*" style="display:none"></label><button type="button" class="btn small ghost" data-act="img-rm" ${(m.prev||(p&&p.img))&&!m.rmImg?"":"hidden"}>${lx("Retirer","Remove")}</button></div></div>`:""}
-    ${own&&catOn()?`<label class="chk"><input type="checkbox" id="pr-show" ${p&&p.hide?"":"checked"}> ${lx("Afficher sur ma page en ligne","Show on my online page")}</label>`:""}
+    ${own&&catOn()?`<label class="chk"><input type="checkbox" id="pr-show" ${p&&p.hide?"":"checked"}> ${lx("Afficher sur ma page en ligne","Show on my online page")}</label>
+    <div class="grid2"><div class="field"><label for="pr-cat">${lx("Catégorie sur ma page","Category on my page")}</label><input id="pr-cat" list="pr-cats" maxlength="24" value="${esc(p&&p.cat||"")}" placeholder="${lx("ex. Boissons","e.g. Drinks")}" autocomplete="off"><datalist id="pr-cats">${[...new Set(S.products.map(x=>x.cat).filter(Boolean))].map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
+    <label class="chk" style="align-self:end"><input type="checkbox" id="pr-pin" ${p&&p.pin?"checked":""}> ${lx("En haut, avec « Promo »","Top, with “Promo” tag")}</label></div>`:""}
     <div class="err" id="pr-err" role="alert"></div>
     <div class="actions"><button class="btn primary" data-act="save-product">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button>
     ${p&&own?`<button class="btn danger" data-act="del-product" data-id="${p.id}">${t("delete")}</button>`:""}</div></div>`;
@@ -1417,7 +1419,8 @@ function saveProduct(){
     if(!p){ p={id:uid(),name,price,qty,low,cost,svc}; S.products.push(p); } else { p.name=name; p.price=price; p.qty=qty; p.low=low; p.cost=cost; p.svc=svc; }
     if(expOn()){ delete p.exp; delete p.batch; if(svc) delete p.bs; else p.bs=m.bs.filter(b=>b.q>0).map(b=>({n:b.n||"",e:b.e||"",q:b.q})); }
     if(rooms) p.rooms=rooms;
-    if($("#pr-show")){ if($("#pr-show").checked) delete p.hide; else p.hide=true; }
+    if($("#pr-show")){ if($("#pr-show").checked) delete p.hide; else p.hide=true;
+      const cv=($("#pr-cat").value||"").trim().slice(0,24); if(cv) p.cat=cv; else delete p.cat; if($("#pr-pin").checked) p.pin=true; else delete p.pin; }
     if($("#pr-sup")){ const a=$("#pr-sup").value.trim(), b=$("#pr-sph").value.trim(); if(a) p.sup=a; else delete p.sup; if(b) p.sph=b; else delete p.sph; }
   }
   if(p&&!p.svc){ const ae=$("#pr-add"); const add=ae?parseAmt(ae.value):0; if(add>0) p.qty=Math.round((p.qty+add)*1000)/1000;
@@ -1427,9 +1430,10 @@ function saveProduct(){
   save(); ui.modal=null; render(); toast(t("product_saved"));
   if(job&&window.__catImg){ toast(lx("Envoi de la photo…","Uploading photo…")); window.__catImg(job.blob,job.id,job.old).then(url=>{ const q=S.products.find(x=>x.id===job.id); if(q&&url){ q.img=url; save(); render(); toast(lx("Photo ajoutée","Photo added")); } else toast(lx("Photo non envoyée (pas d'internet ?). Réessayez.","Photo not sent (no internet?). Try again.")); }).catch(()=>toast(lx("Photo non envoyée. Réessayez.","Photo not sent. Try again."))); }
 }
-function resizeImg(file,max,cb){
+function resizeImg(file,max,cb,sq){
   const fr=new FileReader(); fr.onerror=()=>cb(null);
-  fr.onload=()=>{ const im=new Image(); im.onerror=()=>cb(null); im.onload=()=>{ const k=Math.min(1,max/Math.max(im.width,im.height)), w=Math.max(1,Math.round(im.width*k)), h=Math.max(1,Math.round(im.height*k)); const c=document.createElement("canvas"); c.width=w; c.height=h; const g=c.getContext("2d"); g.fillStyle="#fff"; g.fillRect(0,0,w,h); g.drawImage(im,0,0,w,h); c.toBlob(b=>cb(b),"image/jpeg",0.72); }; im.src=fr.result; };
+  fr.onload=()=>{ const im=new Image(); im.onerror=()=>cb(null); im.onload=()=>{ const k=Math.min(1,max/Math.max(im.width,im.height)), w=Math.max(1,Math.round(im.width*k)), h=Math.max(1,Math.round(im.height*k)); const c=document.createElement("canvas"); const g=c.getContext("2d");
+      if(sq){ const m=Math.min(im.width,im.height), o=Math.min(max,m); c.width=c.height=o; g.fillStyle="#fff"; g.fillRect(0,0,o,o); g.drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,o,o); } else { c.width=w; c.height=h; g.fillStyle="#fff"; g.fillRect(0,0,w,h); g.drawImage(im,0,0,w,h); } c.toBlob(b=>cb(b),"image/jpeg",0.72); }; im.src=fr.result; };
   fr.readAsDataURL(file);
 }
 
@@ -1497,18 +1501,23 @@ function qrDraw(url){
 }
 window.__catData=function(){
   const c=S.shop.cat||{}, ns=nostock();
-  const items=S.products.filter(p=>!p.hide&&p.name).slice(0,300).map(p=>({n:String(p.name).slice(0,80),p:Number(p.price)||0,f:money(p.price),a:(p.svc||ns)?1:(sellable(p)>0?1:0),i:p.img||undefined}));
-  return {v:1,name:S.shop.name,biz:biz(),lang:L(),phone:intlPhone(c.phone||S.shop.phone||""),tag:String(c.tag||"").slice(0,120),addr:String(S.shop.address||"").slice(0,120),lab:CATLAB[biz()]||CATLAB.shop,cur:[C().sym,C().after?1:0,(C().sym==="FCFA"||C().dec===0)?0:2],items};
+  const items=S.products.filter(p=>!p.hide&&p.name).slice(0,300).map(p=>({n:String(p.name).slice(0,80),p:Number(p.price)||0,f:money(p.price),a:(p.svc||ns)?1:(sellable(p)>0?1:0),i:p.img||undefined,c:p.cat||undefined,x:p.pin?1:undefined}));
+  return {v:1,name:S.shop.name,biz:biz(),lang:L(),phone:intlPhone(c.phone||S.shop.phone||""),tag:String(c.tag||"").slice(0,120),addr:String(S.shop.address||"").slice(0,120),col:ACCENTS.includes(c.color)?c.color:accentOf(S.shop),logo:c.logo||undefined,cover:c.cover||undefined,hrs:String(c.hrs||"").slice(0,70),lab:CATLAB[biz()]||CATLAB.shop,cur:[C().sym,C().after?1:0,(C().sym==="FCFA"||C().dec===0)?0:2],items};
 };
 function catSection(){
   if(!window.__catPub||!isOwner()) return "";
   shortCheck();
-  const c=S.shop.cat||{}, url=catUrl(), m=ui.catMsg||"";
+  const c0=S.shop.cat||{}, d=ui.cd||{}, c=Object.assign({},c0,d), url=catUrl(), m=ui.catMsg||"";
+  const col=ACCENTS.includes(c0.color)?c0.color:accentOf(S.shop);
+  const imgF=(k,lab,w)=>`<div class="field"><label>${lab}</label><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${c0[k]?`<img alt="" src="${esc(c0[k])}" style="width:${w}px;height:56px;object-fit:cover;border-radius:${k==="logo"?"50%":"10px"}">`:""}<label class="btn small" style="cursor:pointer;margin:0">${lx("Choisir","Choose")}<input type="file" id="c-${k}" accept="image/*" style="display:none"></label>${c0[k]?`<button type="button" class="btn small ghost" data-act="cat-img-rm" data-k="${k}">${lx("Retirer","Remove")}</button>`:""}</div></div>`;
   return `<section class="sec" id="cat-box"><h2>${lx("Ma page en ligne","My online page")}</h2><div class="card form">
     <p class="note" style="margin:0">${lx("Partagez un lien sur WhatsApp ou ailleurs. Vos clients voient vos prix et vous envoient leur commande sur WhatsApp. Le stock et les coûts ne sont jamais affichés.","Share one link on WhatsApp or anywhere. Your customers see your prices and send you their order on WhatsApp. Your stock numbers and costs are never shown.")}</p>
     <label class="chk"><input type="checkbox" id="c-on" ${c.on?"checked":""}> ${lx("Activer ma page en ligne","Turn on my online page")}</label>
     <div class="field"><label for="c-slug">${lx("Nom du lien (lettres, chiffres, tirets)","Link name (letters, numbers, dashes)")}</label><input id="c-slug" value="${esc(c.slug||catSlugify(S.shop.name))}" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
     <div class="field"><label for="c-phone">${lx("Numéro WhatsApp pour les commandes","WhatsApp number for orders")}</label><input id="c-phone" value="${esc(c.phone||S.shop.phone||"")}" inputmode="tel" autocomplete="off"></div>
+    <div class="field"><label>${lx("Couleur de ma page","My page color")}</label><div class="sw">${ACCENTS.map(k=>`<button type="button" data-act="cat-col" data-c="${k}" aria-pressed="${col===k}" style="background:${k}" aria-label="${k}"></button>`).join("")}</div></div>
+    ${imgF("logo",lx("Logo (rond)","Logo (round)"),56)}${imgF("cover",lx("Photo de couverture (facultatif)","Cover photo (optional)"),100)}
+    <div class="field"><label for="c-hrs">${lx("Horaires (facultatif)","Opening hours (optional)")}</label><input id="c-hrs" value="${esc(c.hrs||"")}" maxlength="70" placeholder="${lx("ex. Lun-Sam 8h-19h","e.g. Mon-Sat 8am-7pm")}" autocomplete="off"></div>
     <div class="field"><label for="c-tag">${lx("Petit message (facultatif)","Short message (optional)")}</label><input id="c-tag" value="${esc(c.tag||"")}" maxlength="120" placeholder="${lx("ex. Livraison à Cotonou et Calavi","e.g. Delivery in Lagos and Abuja")}" autocomplete="off"></div>
     <div class="err" id="c-err" role="alert">${esc(m)}</div>
     <button class="btn primary" data-act="save-cat">${lx("Enregistrer et publier","Save and publish")}</button>
@@ -1517,14 +1526,16 @@ function catSection(){
     <p class="note" style="margin:0">${lx("Dans chaque article, décochez « Afficher sur ma page » pour le cacher.","In each item, untick “Show on my online page” to hide it.")}</p>`:""}
   </div></section>`;
 }
+function catGrab(){ const g=id=>($("#"+id)||{}).value; if(!$("#c-slug")) return; ui.cd={slug:g("c-slug"),phone:g("c-phone"),tag:g("c-tag"),hrs:g("c-hrs")}; }
+function catPatch(o){ S.shop.cat=Object.assign({},S.shop.cat||{},o); save(); window.__catPub&&S.shop.cat.slug&&S.shop.cat.on&&window.__catPub(true).catch(()=>{}); render(); }
 async function saveCat(){
-  const slug=catSlugify($("#c-slug").value), on=$("#c-on").checked, ph=$("#c-phone").value.trim(), tag=$("#c-tag").value.trim();
+  const slug=catSlugify($("#c-slug").value), on=$("#c-on").checked, ph=$("#c-phone").value.trim(), tag=$("#c-tag").value.trim(), hrs=$("#c-hrs").value.trim();
   const er=$("#c-err"); const fail=m=>{ ui.catMsg=m; er.textContent=m; };
   if(on){ if(!catSlugOk(slug)) return fail(lx("Le nom du lien doit avoir 3 à 30 lettres, chiffres ou tirets.","The link name needs 3 to 30 letters, numbers or dashes."));
     if(!intlPhone(ph)) return fail(lx("Entrez un numéro WhatsApp valide pour recevoir les commandes.","Enter a valid WhatsApp number to receive orders.")); }
-  const old=S.shop.cat||{}; S.shop.cat={on,slug:slug||old.slug||"",phone:ph,tag}; save(); ui.catMsg="";
+  const old=S.shop.cat||{}; S.shop.cat=Object.assign({},old,{on,slug:slug||old.slug||"",phone:ph,tag,hrs}); save(); ui.catMsg="";
   const r=await window.__catPub(true).catch(()=>({ok:false,offline:true}));
-  if(r&&r.ok){ render(); toast(on?lx("Page publiée","Page published"):lx("Page désactivée","Page turned off")); return; }
+  if(r&&r.ok){ ui.cd=null; render(); toast(on?lx("Page publiée","Page published"):lx("Page désactivée","Page turned off")); return; }
   S.shop.cat=old; save(); 
   ui.catMsg=r&&r.skip?lx("Connectez-vous à votre compte pour publier.","Sign in to your account to publish."):r&&r.taken?lx("Ce nom de lien est déjà pris. Essayez un autre.","That link name is already taken. Try another."):r&&r.offline?lx("Pas d'internet. Réessayez quand vous êtes en ligne.","No internet. Try again when you are online."):lx("Impossible de publier maintenant. Réessayez.","Could not publish right now. Try again."); render();
 }
@@ -1540,6 +1551,8 @@ function viewSettings(){
     <p class="note" style="margin:0">${t("country_note")}</p>
     <div class="field"><label for="s-biz">${lx("Type d'activité","Type of business")}</label><select id="s-biz">${BIZ_LIST.map(k=>[k,lx(BIZ_NAME[k][0],BIZ_NAME[k][1])]).map(([k,l])=>`<option value="${k}" ${biz()===k?"selected":""}>${l}</option>`).join("")}</select></div>
     <div class="field"><label for="s-addr">${t("shop_addr")}</label><input id="s-addr" value="${esc(s.address||"")}" autocomplete="off"></div>
+    <div class="field"><label for="s-tax">${lx("N° d'entreprise sur les reçus (RCCM, IFU…) — facultatif","Business number on receipts (RCCM, IFU, tax ID…), optional")}</label><input id="s-tax" value="${esc(s.taxId||"")}" maxlength="40" placeholder="${lx("ex. IFU 3201912345678","e.g. RC 1234567")}" autocomplete="off"></div>
+    <div class="field"><label>${lx("Logo sur les reçus (facultatif)","Logo on receipts (optional)")}</label><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${s.logoData?`<img alt="" src="${esc(s.logoData)}" style="width:56px;height:56px;border-radius:50%;object-fit:cover">`:""}<label class="btn small" style="cursor:pointer;margin:0">${lx("Choisir un logo","Choose a logo")}<input type="file" id="s-logo" accept="image/*" style="display:none"></label>${s.logoData?`<button type="button" class="btn small ghost" data-act="logo-rm">${lx("Retirer","Remove")}</button>`:""}</div></div>
     <div class="field"><label>${t("rc_color")}</label><div class="sw">${ACCENTS.map(c=>`<button type="button" data-act="set-accent" data-c="${c}" aria-pressed="${accentOf(s)===c}" style="background:${c}" aria-label="${c}"></button>`).join("")}</div></div>
     <div class="field"><label for="s-footer">${t("footer")}</label><input id="s-footer" value="${esc(s.footer)}" placeholder="${esc(t("default_footer"))}" autocomplete="off"></div>
     <div class="field"><label style="display:flex;gap:8px;align-items:flex-start;font-weight:500"><input type="checkbox" id="s-past" ${s.allowPast?"checked":""} style="width:auto;margin-top:3px"><span>${lx("Autoriser les dates passées (pour enregistrer un séjour, un rendez-vous ou un voyage après coup)","Allow past dates (to record a stay, appointment or trip after the fact)")}</span></label></div>
@@ -1562,7 +1575,7 @@ const pad4=n=>String(n).padStart(4,"0");
 const docTitle=(x,kind)=>`${kind==="invoice"?t("invoice"):t("receipt")} ${t("receipt_no")} ${pad4(x.no)}`;
 function receiptLines(x,kind){
   kind=kind||"receipt"; const sh=S.shop; const out=[];
-  out.push(sh.name.toUpperCase()); if(sh.phone) out.push(fmtPhone(sh.phone)); if(sh.address) out.push(sh.address);
+  out.push(sh.name.toUpperCase()); if(sh.phone) out.push(fmtPhone(sh.phone)); if(sh.address) out.push(sh.address); if(sh.taxId) out.push(sh.taxId);
   out.push(docTitle(x,kind),fmtDate(x.date)); if(x.void) out.push("*** "+t("cancelled").toUpperCase()+" ***"); out.push("");
   if(kind==="invoice"&&x.type==="sale"){ out.push(`[${t(invStatus(x)[0])}]`,`${t("bill_to")}: ${custName(x.cust)}${custPhone(x.cust)?" · "+custPhone(x.cust):""}`); }
   else out.push(`${t("customer")}: ${custName(x.cust)}`);
@@ -1645,6 +1658,7 @@ function ticketPdf(x,kind){
   // header band
   const hdr=[]; hdr.push({s:sh.name.toUpperCase(),f:"F2",z:15,c:WHITE,wrap:true});
   if(sh.phone) hdr.push({s:fmtPhone(sh.phone),f:"F1",z:9.5,c:mix(A,0.88)}); if(sh.address) hdr.push({s:sh.address,f:"F1",z:9.5,c:mix(A,0.88),wrap:true});
+  if(sh.taxId) hdr.push({s:sh.taxId,f:"F1",z:9,c:mix(A,0.8),wrap:true});
   let hy=18; const circleY=hy+20; hy+=40+10;
   const hl=[]; hdr.forEach(h=>{ (h.wrap?pdfWrap(h.s,h.f,h.z,IW):[h.s]).forEach(l=>{ hy+=h.z+4; hl.push({s:l,f:h.f,z:h.z,c:h.c,y:hy}); }); }); hy+=14;
   ops.push(`${rg(A)} rg 0 0 ${W} ${hy} re f`.replace("0 0 "+W,"0 @"+hy+" "+W).replace(" re f"," re f")); ops[ops.length-1]=`BAND`;
@@ -1652,7 +1666,9 @@ function ticketPdf(x,kind){
   // circle
   const cx=W/2, cr=20, k=0.5523*cr, cc=mix(A,0.22);
   ops.push(`${rg(cc)} rg ${cx} @${circleY-cr} m ${cx+k} @${circleY-cr} ${cx+cr} @${circleY-k} ${cx+cr} @${circleY} c ${cx+cr} @${circleY+k} ${cx+k} @${circleY+cr} ${cx} @${circleY+cr} c ${cx-k} @${circleY+cr} ${cx-cr} @${circleY+k} ${cx-cr} @${circleY} c ${cx-cr} @${circleY-k} ${cx-k} @${circleY-cr} ${cx} @${circleY-cr} c f`);
-  txt(initialsOf(sh.name),cx,circleY+4.5,"F2",13,WHITE,"c");
+  const logo=sh.logoData&&/^data:image\/jpeg;base64,/.test(sh.logoData)?sh.logoData:"";
+  if(logo){ const kk=0.5523*cr; ops.push(`q ${cx} @${circleY-cr} m ${cx+kk} @${circleY-cr} ${cx+cr} @${circleY-kk} ${cx+cr} @${circleY} c ${cx+cr} @${circleY+kk} ${cx+kk} @${circleY+cr} ${cx} @${circleY+cr} c ${cx-kk} @${circleY+cr} ${cx-cr} @${circleY+kk} ${cx-cr} @${circleY} c ${cx-cr} @${circleY-kk} ${cx-kk} @${circleY-cr} ${cx} @${circleY-cr} c h W n ${2*cr} 0 0 ${2*cr} ${cx-cr} @${circleY+cr} cm /Im1 Do Q`); }
+  else txt(initialsOf(sh.name),cx,circleY+4.5,"F2",13,WHITE,"c");
   hl.forEach(l=>txt(l.s,W/2,l.y,l.f,l.z,l.c,"c")); y=hy+16;
   // meta
   const title=docTitle(x,kind), date=fmtDate(x.date);
@@ -1690,10 +1706,12 @@ function ticketPdf(x,kind){
   const H=Math.ceil(y+24);
   let cs=ops.map(o=>o==="BAND"?`${rg(A)} rg 0 ${H-band.h} ${W} ${band.h} re f`:o.replace(/@(-?[\d.]+)/g,(m,v)=>(H-parseFloat(v)).toFixed(2))).join("\n");
   const objs=["<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R /F3 7 0 R /F4 8 0 R >> >> >>`,
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R /F3 7 0 R /F4 8 0 R >>${logo?" /XObject << /Im1 9 0 R >>":""} >> >>`,
     `<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`,
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>","<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>",
     "<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>","<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold /Encoding /WinAnsiEncoding >>"];
+  if(logo){ try{ const bin=atob(logo.split(",")[1]); let w=0,h=0; for(let q=2;q<bin.length-9;){ if(bin.charCodeAt(q)!==255){ q++; continue; } const m=bin.charCodeAt(q+1); if(m>=0xC0&&m<=0xC2){ h=bin.charCodeAt(q+5)*256+bin.charCodeAt(q+6); w=bin.charCodeAt(q+7)*256+bin.charCodeAt(q+8); break; } q+=2+bin.charCodeAt(q+2)*256+bin.charCodeAt(q+3); }
+      if(w&&h) objs.push(`<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bin.length} >>\nstream\n${bin}\nendstream`); else throw 0; }catch(e){ cs=cs.replace(/\/Im1 Do/g,""); objs[2]=objs[2].replace(" /XObject << /Im1 9 0 R >>",""); } }
   let pdf="%PDF-1.4\n", offs=[]; objs.forEach((o,i)=>{ offs.push(pdf.length); pdf+=(i+1)+" 0 obj\n"+o+"\nendobj\n"; });
   const xr=pdf.length; pdf+="xref\n0 "+(objs.length+1)+"\n0000000000 65535 f \n"+offs.map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("")+"trailer\n<< /Size "+(objs.length+1)+" /Root 1 0 R >>\nstartxref\n"+xr+"\n%%EOF";
   const u=new Uint8Array(pdf.length); for(let i=0;i<pdf.length;i++) u[i]=pdf.charCodeAt(i)&255; return new Blob([u],{type:"application/pdf"});
@@ -1725,7 +1743,7 @@ function ticketHtml(x,kind){
   }else{
     rows=`<div class="tot grand"><span>${t("payment")} · ${t(x.method||"cash")}</span><span class="num">${money(x.amount)}</span></div>`;
   }
-  return `<div class="ticket" style="--acc:${accentOf(sh)}"><div class="hd"><div class="mono">${esc(initialsOf(sh.name))}</div><h3>${esc(sh.name)}</h3>${sh.phone?`<div class="sub">${esc(fmtPhone(sh.phone))}</div>`:""}${sh.address?`<div class="sub">${esc(sh.address)}</div>`:""}</div>
+  return `<div class="ticket" style="--acc:${accentOf(sh)}"><div class="hd">${sh.logoData?`<img class="mono" alt="" src="${esc(sh.logoData)}" style="object-fit:cover;background:#fff;padding:0">`:`<div class="mono">${esc(initialsOf(sh.name))}</div>`}<h3>${esc(sh.name)}</h3>${sh.phone?`<div class="sub">${esc(fmtPhone(sh.phone))}</div>`:""}${sh.address?`<div class="sub">${esc(sh.address)}</div>`:""}${sh.taxId?`<div class="sub">${esc(sh.taxId)}</div>`:""}</div>
     <div class="meta"><b>${docTitle(x,kind)}</b><span>${fmtDate(x.date)}</span></div>
     ${x.void?`<div style="color:var(--owed);font-weight:600;text-align:center;padding:8px 0">— ${t("cancelled").toUpperCase()} —</div>`:""}
     ${kind==="invoice"&&x.type==="sale"?`<div style="text-align:center;padding:8px 0 0"><span style="display:inline-block;border:2px solid ${invStatus(x)[1]};color:${invStatus(x)[1]};border-radius:8px;padding:2px 12px;font-weight:800;letter-spacing:.06em;font-size:.85rem">${t(invStatus(x)[0])}</span></div>
@@ -2093,7 +2111,7 @@ document.addEventListener("click",e=>{
     case "save-settings": {
       const s=S.shop, oldC=s.country;
       s.name=$("#s-name").value.trim()||"Ma Boutique"; s.phone=$("#s-phone").value.trim(); s.address=($("#s-addr").value||"").trim();
-      s.country=$("#s-country").value; s.lang=$("#s-lang").value; s.footer=$("#s-footer").value.trim(); 
+      s.country=$("#s-country").value; s.lang=$("#s-lang").value; s.footer=$("#s-footer").value.trim(); { const tx=$("#s-tax").value.trim().slice(0,40); if(tx) s.taxId=tx; else delete s.taxId; }
       s.lateDays=Math.max(1,parseInt($("#s-late").value,10)||14);
       s.biz=$("#s-biz").value; try{ localStorage.setItem("ecrici-biz",s.biz); }catch(e){}
       if($("#s-past").checked) s.allowPast=true; else delete s.allowPast;
@@ -2101,6 +2119,9 @@ document.addEventListener("click",e=>{
       if(oldC!==s.country&&!$("#s-lang").dataset.touched) {}
       save(); render(); toast(t("saved_ok")); break; }
     case "save-cat": saveCat(); break;
+    case "logo-rm": delete S.shop.logoData; save(); render(); break;
+    case "cat-col": catGrab(); catPatch({color:el.dataset.c}); break;
+    case "cat-img-rm": { catGrab(); const k=el.dataset.k, old=(S.shop.cat||{})[k]; if(old&&window.__catImgDel) window.__catImgDel(old); const n=Object.assign({},S.shop.cat); delete n[k]; S.shop.cat=n; catPatch({}); break; }
     case "img-rm": { const m=ui.modal; if(m){ m.rmImg=true; delete m.blob; m.prev=""; const im=$("#pr-prev"); if(im) im.style.display="none"; el.hidden=true; } break; }
     case "cat-qr": ui.modal={type:"catqr"}; renderModal(); break;
     case "cat-qr-print": { const im=$("#qr-img"); if(im) printHtml(S.shop.name,`<div style="text-align:center;font-family:system-ui,sans-serif;padding:24px"><div style="font-size:26px;font-weight:800">${esc(S.shop.name)}</div><div style="font-size:18px;margin:8px 0 18px">${lx("Scannez pour voir nos prix et commander","Scan to see our prices and order")}</div><img src="${im.src}" style="width:320px;height:320px"><div style="font-size:13px;color:#667;margin-top:14px">${esc(catUrl())}</div></div>`); break; }
@@ -2147,6 +2168,10 @@ document.addEventListener("change",e=>{
   if(el.dataset&&el.dataset.bind==="cust"){ setBind("cust",el.value); }
   if(el.id==="pr-img"&&el.files&&el.files[0]&&ui.modal&&ui.modal.type==="product"){ const m=ui.modal;
     resizeImg(el.files[0],640,b=>{ if(!b||b.size>280000){ toast(lx("Photo illisible ou trop lourde. Essayez-en une autre.","Photo unreadable or too large. Try another.")); return; } m.blob=b; delete m.rmImg; try{ if(m.prev&&m.prev.startsWith("blob:")) URL.revokeObjectURL(m.prev); }catch(e){} m.prev=URL.createObjectURL(b); const im=$("#pr-prev"); if(im){ im.src=m.prev; im.style.display=""; } const rb=document.querySelector('[data-act="img-rm"]'); if(rb) rb.hidden=false; }); }
+  if(el.id==="s-logo"&&el.files&&el.files[0]){ resizeImg(el.files[0],160,b=>{ if(!b||b.size>40000){ toast(lx("Photo illisible ou trop lourde.","Photo unreadable or too large.")); return; } const fr=new FileReader(); fr.onload=()=>{ S.shop.logoData=fr.result; save(); render(); toast(lx("Logo ajouté","Logo added")); }; fr.readAsDataURL(b); },true); }
+  if((el.id==="c-logo"||el.id==="c-cover")&&el.files&&el.files[0]){ const k=el.id.slice(2); catGrab(); toast(lx("Envoi de la photo…","Uploading photo…"));
+    resizeImg(el.files[0],k==="logo"?256:1000,b=>{ if(!b||b.size>280000){ toast(lx("Photo illisible ou trop lourde. Essayez-en une autre.","Photo unreadable or too large. Try another.")); return; }
+      const old=(S.shop.cat||{})[k]; (window.__catImg?window.__catImg(b,k,old):Promise.resolve(null)).then(url=>{ if(url) catPatch({[k]:url}); else toast(lx("Photo non envoyée (pas d'internet ?). Réessayez.","Photo not sent (no internet?). Try again.")); }).catch(()=>toast(lx("Photo non envoyée. Réessayez.","Photo not sent. Try again."))); }); }
   if(el.id==="s-country"){ const l=$("#s-lang"); if(l) l.value=COUNTRIES[el.value].lang; }
   if(el.id==="f-import"&&el.files&&el.files[0]){
     const fr=new FileReader();
