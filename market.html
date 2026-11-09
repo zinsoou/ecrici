@@ -23,7 +23,7 @@ h1{margin:0;font-size:26px;letter-spacing:-.3px}.sub{margin:4px 0 14px;color:#C9
 main{padding:10px 0 60px}
 .c{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;text-decoration:none;color:inherit}
 .av{width:52px;height:52px;border-radius:50%;flex:none;object-fit:cover;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;background:var(--hd)}
-.c b{display:block;overflow-wrap:anywhere}.c .m{color:var(--mut);font-size:14px}.c .t{color:var(--mut);font-size:13px;margin-top:2px}
+.c b{display:block;overflow-wrap:anywhere}.vf{color:#067647;font-size:12px;font-weight:700;background:#ECFDF3;border-radius:99px;padding:1px 8px;margin-left:4px;white-space:nowrap}.c .m{color:var(--mut);font-size:14px}.c .t{color:var(--mut);font-size:13px;margin-top:2px}
 .mt{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.mt span{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:13px}
 .msg{text-align:center;padding:48px 16px;color:var(--mut)}.msg b{display:block;font-size:19px;color:var(--ink);margin-bottom:6px}
 .more{display:block;width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:650;cursor:pointer}
@@ -54,7 +54,7 @@ function chrome(){ document.documentElement.lang=lg; $("sb").textContent=tx().sb
 function url(p){ return "/shop.html?s="+encodeURIComponent(p); }
 function card(r){ const co2=CO.find(c=>c[0]===r.country), place=[r.city,co2?nm(co2):""].filter(Boolean).join(", "), bn=BZ.find(b=>b[0]===r.biz), col=/^#[0-9a-f]{6}$/i.test(r.col||"")?r.col:"#0E1A4F";
   const av=/^https:\/\//.test(r.logo||"")?`<img class="av" alt="" loading="lazy" src="${esc(r.logo)}">`:`<div class="av" style="background:${col}">${esc((r.name||"?").trim().slice(0,2).toUpperCase())}</div>`;
-  return `<a class="c" href="${url(r.slug)}">${av}<div style="min-width:0"><b>${esc(r.name)}</b><div class="m">${esc([bn?nm(bn):"",place].filter(Boolean).join(" · "))}</div>${r.tag?`<div class="t">${esc(r.tag)}</div>`:""}${(r.matches||[]).length?`<div class="mt">${r.matches.map(m=>`<span>${esc(m.n)}${m.f?" · "+esc(m.f):""}</span>`).join("")}</div>`:""}</div></a>`; }
+  return `<a class="c" href="${url(r.slug)}">${av}<div style="min-width:0"><b>${esc(r.name)}${r.verified?`<span class="vf" title="${lg==='fr'?'Vérifié par Ecrici':'Verified by Ecrici'}"> ✔ ${lg==='fr'?'Vérifié':'Verified'}</span>`:""}</b><div class="m">${esc([bn?nm(bn):"",place].filter(Boolean).join(" · "))}</div>${r.tag?`<div class="t">${esc(r.tag)}</div>`:""}${(r.matches||[]).length?`<div class="mt">${r.matches.map(m=>`<span>${esc(m.n)}${m.f?" · "+esc(m.f):""}</span>`).join("")}</div>`:""}</div></a>`; }
 async function load(more){ const my=++seq; if(!more){ off=0; $("r").innerHTML=`<div class="msg">…</div>`; $("mr").innerHTML=""; }
   try{ const r=await fetch(String(ECRICI.url).replace(/\/+$/,"")+"/rest/v1/rpc/market_search",{method:"POST",headers:{apikey:ECRICI.key,"Content-Type":"application/json"},body:JSON.stringify({p_q:q,p_country:co||null,p_biz:bz||null,p_limit:24,p_offset:off})});
     if(!r.ok) throw 0; const j=await r.json(); if(my!==seq) return;

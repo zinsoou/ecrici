@@ -1491,6 +1491,8 @@ function paySection(){
 const catOn=()=>!!(window.__catPub&&!window.__member&&S.shop.cat&&S.shop.cat.on);
 const CATLAB={shop:["Produits","Products"],electronics:["Produits","Products"],pharmacy:["Médicaments","Medicines"],food:["Menu","Menu"],beauty:["Prestations","Services"],health:["Prestations","Services"],school:["Frais et services","Fees and services"],repair:["Services","Services"],travel:["Voyages et services","Trips and services"],services:["Services","Services"],rent:["Biens à louer","Properties for rent"],hotel:["Chambres","Rooms"]};
 const catSlugify=v=>String(v||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,30);
+const CATRES=["admin","administrator","support","help","official","security","verify","verified","bank","mtn","moov","celtiis","orange","wave","momo","mobilemoney","mobile-money","paypal","opay","paystack","flutterwave","kkiapay","fedapay","mpesa","airtel","www","api","app","login","market","shop","pay","payment","privacy","terms","install"];
+const catReserved=v=>CATRES.includes(v)||v.includes("ecrici");
 const catSlugOk=v=>/^[a-z0-9][a-z0-9-]{2,29}$/.test(v)&&!/--/.test(v)&&!/-$/.test(v);
 const shortOk=()=>{ try{ return localStorage.getItem("ecrici-short")==="1"; }catch(e){ return false; } };
 const catUrl=()=>{ const c=S.shop.cat; return c&&c.slug?location.origin+(shortOk()?"/s/"+c.slug:"/shop.html?s="+c.slug):""; };
@@ -1530,6 +1532,7 @@ function catSection(){
     ${imgF("logo",lx("Logo (rond)","Logo (round)"),56)}${imgF("cover",lx("Photo de couverture (facultatif)","Cover photo (optional)"),100)}
     <div class="field"><label for="c-hrs">${lx("Horaires (facultatif)","Opening hours (optional)")}</label><input id="c-hrs" value="${esc(c.hrs||"")}" maxlength="70" placeholder="${lx("ex. Lun-Sam 8h-19h","e.g. Mon-Sat 8am-7pm")}" autocomplete="off"></div>
     <label class="chk"><input type="checkbox" id="c-list" ${c.listed?"checked":""}> ${lx("Me lister dans Ecrici Market (les clients me trouvent)","List me in Ecrici Market (customers can find me)")}</label>
+    ${window.__waAdmin&&window.__waAdmin("x")?`<p class="muted" style="margin:6px 0 0"><a href="${esc(window.__waAdmin(lx("Bonjour, je voudrais le badge Vérifié pour ma page Ecrici : ","Hello, I would like the Verified badge for my Ecrici page: ")+(c.slug||"")+" ("+S.shop.name+")"))}" target="_blank" rel="noopener">✔ ${lx("Demander le badge Vérifié (les clients vous font plus confiance)","Ask for the Verified badge (customers trust you more)")}</a></p>`:""}
     <div class="field"><label for="c-city">${lx("Ma ville (pour le Market)","My city (for the Market)")}</label><input id="c-city" value="${esc(c.city||"")}" maxlength="40" placeholder="${lx("ex. Cotonou","e.g. Lagos")}" autocomplete="off"></div>
     <div class="field"><label for="c-tag">${lx("Petit message (facultatif)","Short message (optional)")}</label><input id="c-tag" value="${esc(c.tag||"")}" maxlength="120" placeholder="${lx("ex. Livraison à Cotonou et Calavi","e.g. Delivery in Lagos and Abuja")}" autocomplete="off"></div>
     <div class="err" id="c-err" role="alert">${esc(m)}</div>
@@ -1545,12 +1548,13 @@ async function saveCat(){
   const slug=catSlugify($("#c-slug").value), on=$("#c-on").checked, ph=$("#c-phone").value.trim(), tag=$("#c-tag").value.trim(), hrs=$("#c-hrs").value.trim(), listed=$("#c-list").checked, city=$("#c-city").value.trim().slice(0,40);
   const er=$("#c-err"); const fail=m=>{ ui.catMsg=m; er.textContent=m; };
   if(on){ if(!catSlugOk(slug)) return fail(lx("Le nom du lien doit avoir 3 à 30 lettres, chiffres ou tirets.","The link name needs 3 to 30 letters, numbers or dashes."));
+    if(catReserved(slug)) return fail(lx("Ce nom de lien est réservé. Choisissez le nom de votre boutique.","That link name is reserved. Use your shop name instead."));
     if(!intlPhone(ph)) return fail(lx("Entrez un numéro WhatsApp valide pour recevoir les commandes.","Enter a valid WhatsApp number to receive orders.")); }
   const old=S.shop.cat||{}; S.shop.cat=Object.assign({},old,{on,slug:slug||old.slug||"",phone:ph,tag,hrs,listed:listed&&on,city}); save(); ui.catMsg="";
   const r=await window.__catPub(true).catch(()=>({ok:false,offline:true}));
   if(r&&r.ok){ ui.cd=null; render(); toast(on?lx("Page publiée","Page published"):lx("Page désactivée","Page turned off")); return; }
   S.shop.cat=old; save(); 
-  ui.catMsg=r&&r.skip?lx("Connectez-vous à votre compte pour publier.","Sign in to your account to publish."):r&&r.taken?lx("Ce nom de lien est déjà pris. Essayez un autre.","That link name is already taken. Try another."):r&&r.offline?lx("Pas d'internet. Réessayez quand vous êtes en ligne.","No internet. Try again when you are online."):lx("Impossible de publier maintenant. Réessayez.","Could not publish right now. Try again."); render();
+  ui.catMsg=r&&r.skip?lx("Connectez-vous à votre compte pour publier.","Sign in to your account to publish."):r&&r.taken?lx("Ce nom de lien est déjà pris. Essayez un autre.","That link name is already taken. Try another."):r&&r.reserved?lx("Ce nom (ou le nom de votre boutique) est réservé. Évitez « Ecrici », « support », « MTN » et les noms de banques.","That name (or your shop name) is reserved. Avoid \"Ecrici\", \"support\", \"MTN\" and bank names."):r&&r.offline?lx("Pas d'internet. Réessayez quand vous êtes en ligne.","No internet. Try again when you are online."):lx("Impossible de publier maintenant. Réessayez.","Could not publish right now. Try again."); render();
 }
 function viewSettings(){
   const s=S.shop;

@@ -97,7 +97,7 @@ async function load(){
   const rb=await api("/rest/v1/branches?select=*&order=created_at.asc"); branches=(rb.ok&&Array.isArray(rb.json))?rb.json:[];
   const rc=await api("/rest/v1/pay_claims?select=*&status=eq.pending&order=created_at.asc"); claims=(rc.ok&&Array.isArray(rc.json))?rc.json:[];
   const rr=await api("/rest/v1/catalog_reports?select=*&order=created_at.desc&limit=500"); reps=(rr.ok&&Array.isArray(rr.json))?rr.json:[];
-  const rp=await api("/rest/v1/catalogs?select=slug,shop_id,active,blocked,listed,name:data->>name&limit=1000"); pages=(rp.ok&&Array.isArray(rp.json))?rp.json:[];
+  let rp=await api("/rest/v1/catalogs?select=slug,shop_id,active,blocked,listed,verified,created_at,name:data->>name,phone:data->>phone&order=created_at.desc&limit=1000"); if(!rp.ok) rp=await api("/rest/v1/catalogs?select=slug,shop_id,active,blocked,listed,name:data->>name&limit=1000"); pages=(rp.ok&&Array.isArray(rp.json))?rp.json:[];
   draw();
 }
 function draw(){ draw0(); const sg=err+"|"+msg; if((err||msg)&&sg!==window.__sg) window.scrollTo(0,0); window.__sg=sg; }
@@ -107,7 +107,7 @@ function draw0(){
   const list=shops.filter(s=>(filter==="all"||state(s)===filter)&&(!q||(s.name+" "+s.phone+" "+(s.referred_by||"")+" "+bizOf(s)).toLowerCase().includes(q.toLowerCase())))
     .sort((a,b)=>pk(a)-pk(b)||String(b.created_at).localeCompare(String(a.created_at)));
   app.innerHTML=`<div class="top"><h1>Ecrici Admin</h1><button id="out">Log out</button></div>
-    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>${claimBox()}${pageBox()}${refBox()}${refSummary()}${bizSummary()}${reqs?`<div class="muted"><b>${reqs}</b> extra shop request${reqs>1?"s":""} waiting for activation</div>`:""}
+    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>${claimBox()}${pageBox()}${verifyBox()}${refBox()}${refSummary()}${bizSummary()}${reqs?`<div class="muted"><b>${reqs}</b> extra shop request${reqs>1?"s":""} waiting for activation</div>`:""}
     <input id="q" placeholder="Search name, phone, type or referrer" value="${esc(q)}">
     <div class="row">${["all","pending","active","expired","suspended"].map(k=>`<button data-f="${k}" class="${filter===k?"p":""}">${k}</button>`).join("")}</div>
     <div class="err" id="er">${esc(err)}</div>${msg?`<div class="muted">${esc(msg)}${msgLink?` <a href="${esc(msgLink)}" target="_blank" rel="noopener">Send on WhatsApp</a>`:""}</div>`:""}
@@ -118,6 +118,7 @@ function draw0(){
   app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(b.dataset.id,b.dataset.a,b.dataset.cid));
   app.querySelectorAll("[data-ba]").forEach(b=>b.onclick=()=>bact(b.dataset.bid,b.dataset.ba));
   app.querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>pgAct(b.dataset.slug,b.dataset.pg));
+  app.querySelectorAll("[data-vf]").forEach(b=>b.onclick=()=>vfAct(b.dataset.slug,b.dataset.vf==="on"));
 }
 function refSummary(){
   const g={}; shops.filter(s=>s.referred_by).forEach(s=>{ const k=s.referred_by.trim().toLowerCase(); (g[k]=g[k]||{name:s.referred_by.trim(),list:[]}).list.push(s); });
@@ -134,6 +135,17 @@ function pageBox(){
   if(!pages.length&&!rows.length) return "";
   return `<details class="card" ${rows.length?"open":""}><summary class="name">Online pages: ${live} live · ${pages.filter(p=>p.listed&&p.active&&!p.blocked).length} in Market${Object.keys(g).length?` · <span style="color:#b91c1c">⚠ ${Object.keys(g).length} reported</span>`:""}</summary>${rows.map(r=>{ const p=pages.find(x=>x.slug===r.slug)||{}; const link="/shop.html?s="+encodeURIComponent(r.slug);
     return `<div class="muted"><b>${esc(p.name||r.slug)}</b> (${esc(r.slug)}) · ${r.n} report${r.n===1?"":"s"}${Object.keys(r.why).length?": "+Object.entries(r.why).map(([k,v])=>esc(k)+" ×"+v).join(", "):""}${p.blocked?" · <b>TURNED OFF</b>":""}<br><a href="${link}" target="_blank" rel="noopener">View page</a> <button class="p" data-pg="${p.blocked?"on":"off"}" data-slug="${esc(r.slug)}">${p.blocked?"Turn back on":"Turn off"}</button> ${r.n?`<button data-pg="clear" data-slug="${esc(r.slug)}">Dismiss reports</button>`:""}</div>`; }).join("")||`<div class="muted">No reports. Nothing to check.</div>`}</details>`;
+}
+function verifyBox(){
+  const ok=pages.filter(p=>p.active&&!p.blocked); if(!ok.length) return "";
+  const nv=ok.filter(p=>p.verified).length, list=ok.slice().sort((a,b)=>(a.verified?1:0)-(b.verified?1:0)).slice(0,40);
+  return `<details class="card"><summary class="name">Verified shops: ${nv} of ${ok.length}</summary><div class="muted">Call the owner and check the shop first (phone, photo or ID). Then tap Verify. Verified shops show a green badge and come first in Market.</div>${list.map(p=>`<div class="muted"><b>${esc(p.name||p.slug)}</b> (${esc(p.slug)})${p.phone?" · "+esc(p.phone):""}${p.verified?" · <b style=\"color:#067647\">✔ VERIFIED</b>":""}<br><a href="/shop.html?s=${encodeURIComponent(p.slug)}" target="_blank" rel="noopener">View page</a> <button class="${p.verified?"":"p"}" data-vf="${p.verified?"off":"on"}" data-slug="${esc(p.slug)}">${p.verified?"Remove badge":"Verify"}</button></div>`).join("")}${ok.length>40?`<div class="muted">Showing 40 of ${ok.length}.</div>`:""}</details>`;
+}
+async function vfAct(slug,on){
+  err=""; msg="";
+  const r=await api("/rest/v1/rpc/admin_verify_page",{method:"POST",body:{p_slug:slug,p_on:on}});
+  if(!r.ok){ err="Run the safety SQL (piece A) in Supabase first."; draw(); return; }
+  const p=pages.find(x=>x.slug===slug); if(p) p.verified=on; msg=(on?"Verified: ":"Badge removed: ")+slug; draw();
 }
 async function pgAct(slug,a){
   err=""; msg="";
