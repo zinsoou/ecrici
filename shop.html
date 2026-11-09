@@ -34,16 +34,27 @@ h2{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);
 .im{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--line);flex:none;cursor:zoom-in}.lb{position:fixed;inset:0;background:rgba(5,8,25,.88);display:flex;align-items:center;justify-content:center;z-index:9;padding:16px}.lb img{max-width:100%;max-height:100%;border-radius:14px}
 .rp{text-align:center;font-size:12px;color:var(--mut);padding:0 0 10px}.rp button{background:none;border:0;color:var(--mut);text-decoration:underline;font:inherit;cursor:pointer;padding:4px}.rs{display:grid;gap:6px;max-width:320px;margin:8px auto}.rs button{padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer;text-decoration:none}
 .pw{text-align:center;font-size:13px;color:var(--mut);padding:18px 0 4px}.pw a{color:var(--acc);font-weight:700;text-decoration:none}.pl{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 18px;margin-top:6px}.pl a{white-space:nowrap}.fm input,.fm select,.fm textarea{min-height:46px}
+
+header{position:relative}.sh{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px)}
+.it,.fm,.cd{box-shadow:0 1px 2px rgba(14,26,79,.04),0 8px 22px rgba(14,26,79,.06)}
+.imw{position:relative;flex:none;display:block}.mb{position:absolute;right:-4px;bottom:-4px;background:var(--hd,#0E1A4F);color:#fff;font:600 11px/1 system-ui;border-radius:99px;padding:3px 6px;font-style:normal;border:2px solid var(--card)}
+.cd{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;margin-bottom:14px}.cp{position:relative;aspect-ratio:16/10;background:var(--line);cursor:zoom-in}.cp img{width:100%;height:100%;object-fit:cover;display:block}.cn{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;font-weight:600;border-radius:99px;padding:4px 10px}
+.cb{display:flex;gap:12px;align-items:center;padding:12px 14px}.cb .n{flex:1;min-width:0}.cb .n b{display:block;font-weight:700;font-size:17px;overflow-wrap:anywhere}.cb .n span{color:var(--mut);font-size:15px}
+.gl{display:flex;gap:8px;overflow-x:auto;margin:0 -16px 14px;padding:0 16px;scrollbar-width:none;scroll-snap-type:x proximity}.gl img{flex:none;width:132px;height:92px;object-fit:cover;border-radius:14px;background:var(--line);scroll-snap-align:start;cursor:zoom-in}
+.lb2{position:fixed;inset:0;background:#050819;z-index:20;display:flex;flex-direction:column}.gs{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.gp{flex:none;width:100%;height:100%;scroll-snap-align:center;display:flex;align-items:center;justify-content:center;padding:56px 12px 70px}.gp img{max-width:100%;max-height:100%;border-radius:12px;object-fit:contain}
+.gx{position:absolute;top:12px;right:12px;width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:26px;line-height:1;cursor:pointer}.gd{position:absolute;bottom:26px;left:0;right:0;display:flex;justify-content:center;gap:7px}.gd i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35)}.gd i.on{background:#fff}
+.gn{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:26px;cursor:pointer}.gn.l{left:8px}.gn.r{right:8px}@media(hover:none){.gn{display:none}}
+@media(prefers-color-scheme:dark){.sf{background:#33270E;border-color:#5A4318;color:#F2D9A4}.it,.fm,.cd{box-shadow:none}}
 </style>
 </head>
 <body>
-<header id="hd"><div class="w hr"><img class="lg" id="lgo" alt="" hidden><div><h1 id="nm">&nbsp;</h1><p class="tag" id="tg" hidden></p><p class="hrs" id="hr" hidden></p><p class="addr" id="ad" hidden></p><p class="up" id="up" hidden></p><p class="ph" id="ph" hidden></p></div></div></header>
+<header id="hd"><button class="sh" id="sh" type="button" hidden></button><div class="w hr"><img class="lg" id="lgo" alt="" hidden><div><h1 id="nm">&nbsp;</h1><p class="tag" id="tg" hidden></p><p class="hrs" id="hr" hidden></p><p class="addr" id="ad" hidden></p><p class="up" id="up" hidden></p><p class="ph" id="ph" hidden></p></div></div></header>
 <main class="w" id="m"><div class="msg">…</div></main>
 <script src="/config.js"></script>
 <script>
 const $=i=>document.getElementById(i);const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const T={fr:{nf:"Page introuvable",nfs:"Ce lien n'existe pas ou a été désactivé.",srch:"Rechercher…",out:"Épuisé",name:"Votre nom (facultatif)",send:"Envoyer sur WhatsApp",total:"Total",pick:"Choisissez au moins un article",hi:"Bonjour",ask:"je voudrais commander :",nm:"Mon nom :",pw:"Page créée avec",mk:"Créez la vôtre, 7 jours gratuits",hint:"Vous enverrez votre commande directement au vendeur sur WhatsApp.",err:"Impossible de charger la page. Vérifiez votre connexion.",none:"Aucun article trouvé.",empty:"Cette page n'a pas encore d'articles.",book:"Réserver sur WhatsApp",askB:"je voudrais réserver :",det:"Vos informations",upd:"Prix mis à jour",td:"aujourd'hui",yd:"hier",dg:"il y a {n} jours",dm:"il y a {n} mois",e1:"Choisissez les dates d'arrivée et de départ (le départ après l'arrivée).",all:"Tout",oth:"Autres",promo:"Promo",hrsl:"Horaires",mkt:"Voir d'autres boutiques",rep:"Signaler cette page",why:"Pourquoi ?",r1:"Arnaque ou faux vendeur",r2:"Articles illégaux ou dangereux",r3:"Contenu choquant",r4:"Autre",thx:"Merci. Nous allons examiner cette page.",ver:"Vérifié par Ecrici",since:"Sur Ecrici depuis",safe:"Ecrici ne gère pas les paiements. Ne payez pas avant d'avoir vu l'article ou reçu le service, et méfiez-vous des vendeurs inconnus."},
-en:{nf:"Page not found",nfs:"This link does not exist or has been turned off.",srch:"Search…",out:"Sold out",name:"Your name (optional)",send:"Send on WhatsApp",total:"Total",pick:"Choose at least one item",hi:"Hello",ask:"I would like to order:",nm:"My name:",pw:"Page made with",mk:"Make yours, 7 days free",hint:"You will send your order straight to the seller on WhatsApp.",err:"Could not load the page. Check your connection.",none:"No items found.",empty:"This page has no items yet.",book:"Book on WhatsApp",askB:"I would like to book:",det:"Your details",upd:"Prices updated",td:"today",yd:"yesterday",dg:"{n} days ago",dm:"{n} months ago",e1:"Choose check-in and check-out dates (check-out after check-in).",all:"All",oth:"Other",promo:"Promo",hrsl:"Hours",mkt:"Browse more shops",rep:"Report this page",why:"Why?",r1:"Scam or fake seller",r2:"Illegal or dangerous items",r3:"Offensive content",r4:"Other",thx:"Thank you. We will review this page.",ver:"Verified by Ecrici",since:"On Ecrici since",safe:"Ecrici does not handle payments. Don't pay before you see the item or get the service, and be careful with sellers you don't know."}};
+const T={fr:{nf:"Page introuvable",nfs:"Ce lien n'existe pas ou a été désactivé.",srch:"Rechercher…",out:"Épuisé",name:"Votre nom (facultatif)",send:"Envoyer sur WhatsApp",total:"Total",pick:"Choisissez au moins un article",hi:"Bonjour",ask:"je voudrais commander :",nm:"Mon nom :",pw:"Page créée avec",mk:"Créez la vôtre, 7 jours gratuits",hint:"Vous enverrez votre commande directement au vendeur sur WhatsApp.",err:"Impossible de charger la page. Vérifiez votre connexion.",none:"Aucun article trouvé.",empty:"Cette page n'a pas encore d'articles.",book:"Réserver sur WhatsApp",askB:"je voudrais réserver :",det:"Vos informations",upd:"Prix mis à jour",td:"aujourd'hui",yd:"hier",dg:"il y a {n} jours",dm:"il y a {n} mois",e1:"Choisissez les dates d'arrivée et de départ (le départ après l'arrivée).",all:"Tout",oth:"Autres",promo:"Promo",hrsl:"Horaires",mkt:"Voir d'autres boutiques",rep:"Signaler cette page",why:"Pourquoi ?",r1:"Arnaque ou faux vendeur",r2:"Articles illégaux ou dangereux",r3:"Contenu choquant",r4:"Autre",thx:"Merci. Nous allons examiner cette page.",ver:"Vérifié par Ecrici",share:"Partager",copied:"Lien copié",ph:"Photos",since:"Sur Ecrici depuis",safe:"Ecrici ne gère pas les paiements. Ne payez pas avant d'avoir vu l'article ou reçu le service, et méfiez-vous des vendeurs inconnus."},
+en:{nf:"Page not found",nfs:"This link does not exist or has been turned off.",srch:"Search…",out:"Sold out",name:"Your name (optional)",send:"Send on WhatsApp",total:"Total",pick:"Choose at least one item",hi:"Hello",ask:"I would like to order:",nm:"My name:",pw:"Page made with",mk:"Make yours, 7 days free",hint:"You will send your order straight to the seller on WhatsApp.",err:"Could not load the page. Check your connection.",none:"No items found.",empty:"This page has no items yet.",book:"Book on WhatsApp",askB:"I would like to book:",det:"Your details",upd:"Prices updated",td:"today",yd:"yesterday",dg:"{n} days ago",dm:"{n} months ago",e1:"Choose check-in and check-out dates (check-out after check-in).",all:"All",oth:"Other",promo:"Promo",hrsl:"Hours",mkt:"Browse more shops",rep:"Report this page",why:"Why?",r1:"Scam or fake seller",r2:"Illegal or dangerous items",r3:"Offensive content",r4:"Other",thx:"Thank you. We will review this page.",ver:"Verified by Ecrici",share:"Share",copied:"Link copied",ph:"Photos",since:"On Ecrici since",safe:"Ecrici does not handle payments. Don't pay before you see the item or get the service, and be careful with sellers you don't know."}};
 let D=null,Q={},lg="en",tx=T.en,cat="";
 const slug=((new URLSearchParams(location.search).get("s"))||((location.pathname.match(/^\/s\/([^\/]+)/)||[])[1])||"").toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0,30);
 const dl=(navigator.language||"en").slice(0,2)==="fr"?"fr":"en";
@@ -60,8 +71,23 @@ async function load(){
     D=j[0].data; D._u=j[0].updated_at; D._v=j[0].verified===true; D._c=j[0].created_at||""; lg=D.lang==="fr"?"fr":"en"; tx=T[lg]; document.documentElement.lang=lg; draw();
   }catch(e){ msg(tx.err); }
 }
+const okU=u=>/^https:\/\//.test(u||"")||/^http:\/\/localhost/.test(u||"");
+const imgs=x=>[x.i].concat(x.g||[]).filter(okU).slice(0,5);
+const VIS=["hotel","rent","travel","food","beauty"];
+function openGal(list,st){ if(!list.length) return; const o=document.createElement("div"); o.className="lb2"; o.setAttribute("role","dialog");
+  o.innerHTML='<div class="gs">'+list.map(()=>'<div class="gp"><img alt=""></div>').join("")+'</div><button class="gx" aria-label="Close">×</button>'+(list.length>1?'<div class="gd">'+list.map(()=>'<i></i>').join("")+'</div><button class="gn l" aria-label="Previous">‹</button><button class="gn r" aria-label="Next">›</button>':"");
+  const gs=o.querySelector(".gs"), im=o.querySelectorAll(".gp img"), dots=o.querySelectorAll(".gd i"); im.forEach((e,i)=>e.src=list[i]);
+  const cur=()=>Math.round(gs.scrollLeft/Math.max(1,gs.clientWidth)); const mark=()=>{ const c=cur(); dots.forEach((d,i)=>d.classList.toggle("on",i===c)); };
+  const close=()=>{ o.remove(); document.body.style.overflow=""; document.removeEventListener("keydown",key); };
+  const go=d=>gs.scrollTo({left:Math.max(0,Math.min(list.length-1,cur()+d))*gs.clientWidth,behavior:"smooth"});
+  const key=e=>{ if(e.key==="Escape") close(); else if(e.key==="ArrowRight") go(1); else if(e.key==="ArrowLeft") go(-1); };
+  o.addEventListener("click",e=>{ if(e.target.closest(".gx")||e.target.classList.contains("gp")||e.target.classList.contains("gs")) close(); else if(e.target.closest(".gn.l")) go(-1); else if(e.target.closest(".gn.r")) go(1); });
+  gs.addEventListener("scroll",mark,{passive:true}); document.addEventListener("keydown",key); document.body.style.overflow="hidden"; document.body.appendChild(o);
+  gs.scrollLeft=(st||0)*gs.clientWidth; mark(); }
+async function share(){ const u=location.href.split("#")[0]; try{ if(navigator.share){ await navigator.share({title:D.name,url:u}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
+  try{ await navigator.clipboard.writeText(u); $("sh").textContent=tx.copied; setTimeout(()=>$("sh").textContent="↗ "+tx.share,1800); }catch(e){ prompt(tx.share,u); } }
 function draw(){
-  document.title=D.name; $("nm").textContent=D.name;
+  document.title=D.name; $("nm").textContent=D.name; $("sh").textContent="↗ "+tx.share; $("sh").hidden=false; $("sh").onclick=share;
   if(/^#[0-9a-f]{6}$/i.test(D.col||"")){ document.documentElement.style.setProperty("--hd",D.col); document.querySelector('meta[name=theme-color]').content=D.col; }
   const ok=u=>/^https:\/\//.test(u||"")||/^http:\/\/localhost/.test(u||"");
   if(ok(D.logo)){ $("lgo").src=D.logo; $("lgo").hidden=false; }
@@ -75,7 +101,7 @@ function draw(){
   if(D.tag){ $("tg").textContent=D.tag; $("tg").hidden=false; } if(D.addr){ $("ad").textContent=D.addr; $("ad").hidden=false; }
   const its=D.items||[]; const lab=(D.lab||[])[lg==="fr"?0:1]||"";
   if(!its.length){ $("m").innerHTML=`<div class="msg">${esc(tx.empty)}</div>`; return; }
-  $("m").innerHTML=`<h2>${esc(lab)}</h2><div class="tabs" id="tb" hidden></div>${its.length>8?`<input class="s" id="q" placeholder="${esc(tx.srch)}" autocomplete="off">`:""}<div id="l"></div><div class="sf">⚠ ${esc(tx.safe)}</div><div class="fm" id="fm"></div>
+  $("m").innerHTML=`${(D.gal||[]).filter(okU).length?`<div class="gl" id="gl">${(D.gal||[]).filter(okU).slice(0,8).map((u,i)=>`<img loading="lazy" alt="" src="${esc(u)}" data-gi="${i}">`).join("")}</div>`:""}<h2>${esc(lab)}</h2><div class="tabs" id="tb" hidden></div>${its.length>8?`<input class="s" id="q" placeholder="${esc(tx.srch)}" autocomplete="off">`:""}<div id="l"></div><div class="sf">⚠ ${esc(tx.safe)}</div><div class="fm" id="fm"></div>
   <div class="pw">${esc(tx.pw)} <a href="https://ecrici.com/" target="_blank" rel="noopener">Ecrici</a><div class="pl"><a href="https://ecrici.com/" target="_blank" rel="noopener">${esc(tx.mk)}</a><a href="/market.html">${esc(tx.mkt)}</a></div></div>
   <div class="rp" id="rp"></div><div class="bar"><div class="w"><button class="go" id="go" disabled><span>${esc(tx.send)}</span><span id="tt"></span></button><p class="hint">${esc(tx.hint)}</p></div></div>`;
   const cats=[...new Set(its.map(x=>x.c).filter(Boolean))];
@@ -85,7 +111,8 @@ function draw(){
   if($("q")) $("q").addEventListener("input",list);
   $("l").addEventListener("click",e=>{const b=e.target.closest("button[data-i]");if(!b)return;const i=+b.dataset.i,d=+b.dataset.d;Q[i]=Math.max(0,Math.min(99,(Q[i]||0)+d));if(!Q[i])delete Q[i];list();});
   form(); $("go").addEventListener("click",send); list();
-  $("l").addEventListener("click",e=>{const z=e.target.closest("img[data-z]");if(!z)return;const o=document.createElement("div");o.className="lb";o.innerHTML='<img alt="">';o.firstChild.src=z.dataset.z;o.onclick=()=>o.remove();document.body.appendChild(o);});
+  $("l").addEventListener("click",e=>{const z=e.target.closest("[data-g]");if(!z)return;openGal(imgs(D.items[+z.dataset.g]),0);});
+  if($("gl")) $("gl").addEventListener("click",e=>{const z=e.target.closest("img[data-gi]");if(z)openGal((D.gal||[]).filter(okU).slice(0,8),+z.dataset.gi);});
   $("rp").innerHTML=`<button id="rb">${esc(tx.rep)}</button>`;$("rb").onclick=report;
 }
 const FM={
@@ -116,7 +143,10 @@ function list(){
   const q=($("q")?$("q").value:"").trim().toLowerCase(); let h="";
   const ord=D.items.map((x,i)=>i).sort((a,b)=>(D.items[b].x?1:0)-(D.items[a].x?1:0)||a-b);
   ord.forEach(i=>{ const x=D.items[i]; if(q&&!x.n.toLowerCase().includes(q)) return; if(cat==="~other"?x.c:cat&&x.c!==cat) return; const n=Q[i]||0;
-    h+=`<div class="it">${x.i?`<img class="im" loading="lazy" alt="" src="${esc(x.i)}" data-z="${esc(x.i)}">`:""}<div class="n"><b>${esc(x.n)}${x.x?`<span class="pr">${esc(tx.promo)}</span>`:""}</b><span>${x.p>0?esc(x.f):""}</span></div>${x.a?`<div class="q">${n?`<button data-i="${i}" data-d="-1" aria-label="-1">−</button><i>${n}</i>`:""}<button class="p" data-i="${i}" data-d="1" aria-label="+1">+</button></div>`:`<span class="out">${esc(tx.out)}</span>`}</div>`; });
+    const im=imgs(x), ctl=x.a?`<div class="q">${n?`<button data-i="${i}" data-d="-1" aria-label="-1">−</button><i>${n}</i>`:""}<button class="p" data-i="${i}" data-d="1" aria-label="+1">+</button></div>`:`<span class="out">${esc(tx.out)}</span>`;
+    const nm=`<div class="n"><b>${esc(x.n)}${x.x?`<span class="pr">${esc(tx.promo)}</span>`:""}</b><span>${x.p>0?esc(x.f):""}</span></div>`;
+    if(VIS.includes(D.biz)&&im.length) h+=`<div class="cd"><div class="cp" data-g="${i}"><img loading="lazy" alt="" src="${esc(im[0])}">${im.length>1?`<span class="cn">📷 ${im.length}</span>`:""}</div><div class="cb">${nm}${ctl}</div></div>`;
+    else h+=`<div class="it">${im.length?`<span class="imw" data-g="${i}"><img class="im" loading="lazy" alt="" src="${esc(im[0])}">${im.length>1?`<i class="mb">+${im.length-1}</i>`:""}</span>`:""}${nm}${ctl}</div>`; });
   $("l").innerHTML=h||`<div class="msg">${esc(tx.none)}</div>`;
   let c=0,tot=0;Object.keys(Q).forEach(k=>{c+=Q[k];tot+=Q[k]*D.items[k].p;});
   $("go").disabled=!c; $("tt").textContent=c?(tot>0&&!NOTOT.includes(D.biz)?tx.total+" "+fm(tot):"×"+c):"";

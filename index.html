@@ -207,6 +207,7 @@ input[type=number]{font-family:var(--font-mono)}
 .ticket .hd{text-align:center;margin:-22px -20px 0;padding:20px 16px 16px;border-radius:14px 14px 0 0;background:var(--acc);color:#fff}
 .ticket .hd .sub{color:rgba(255,255,255,.88)}
 .ticket .mono{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-family:var(--font-display);font-weight:700;font-size:1.1rem;letter-spacing:.04em}
+.phg{display:flex;gap:8px;flex-wrap:wrap}.pht{position:relative;width:72px;height:72px;border-radius:12px;overflow:hidden;background:var(--line,#ddd);flex:none}.pht img{width:100%;height:100%;object-fit:cover;display:block}.pht.add{display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed var(--line,#bbb);background:transparent;cursor:pointer;color:inherit}.pht.add span{font-size:24px;line-height:1}.pht.add small{font-size:11px}.phx{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:15px;line-height:1;padding:0;cursor:pointer}.phm{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;font-size:10px;text-align:center;padding:1px 0}
 .sw{display:flex;gap:7px;flex-wrap:wrap}.sw button{width:32px;height:32px;border-radius:50%;border:3px solid transparent;cursor:pointer;padding:0}.sw button[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 2px var(--card) inset}
 .ticket h3{font-family:var(--font-display);font-size:1.4rem;letter-spacing:.02em;text-transform:uppercase;overflow-wrap:anywhere}
 .ticket .sub{color:var(--muted);font-size:.88rem}
@@ -1365,7 +1366,7 @@ function productModal(m){
     <div class="grid2"><div class="field"><label for="pr-sup">${lx("Fournisseur","Supplier")}</label><input id="pr-sup" value="${esc(p&&p.sup||"")}" autocomplete="off" placeholder="${lx("ex. Grossiste Koffi","e.g. Koffi Wholesale")}"></div><div class="field"><label for="pr-sph">${lx("Tél. du fournisseur","Supplier phone")}</label><input id="pr-sph" value="${esc(p&&p.sph||"")}" inputmode="tel" autocomplete="off"></div></div>`:""}
     <div id="pr-stk2" ${(p?p.svc:nostock())?"hidden":""}><div class="field"><label for="pr-low">${t("low_alert")}</label><input id="pr-low" value="${esc(p?p.low:"5")}" inputmode="numeric" ${ro}></div>
     ${p&&!expOn()?`<div class="field"><label for="pr-add">${t("add_received")}</label><input id="pr-add" inputmode="decimal" placeholder="0"></div>`:""}</div>
-    ${own&&catOn()&&window.__catImg?`<div class="field"><label>${lx("Photo (affichée sur ma page)","Photo (shown on my page)")}</label><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><img id="pr-prev" alt="" src="${esc(m.prev||(p&&p.img)||"")}" style="width:64px;height:64px;object-fit:cover;border-radius:12px;background:var(--line,#ddd);${(m.prev||(p&&p.img))&&!m.rmImg?"":"display:none"}"><label class="btn small" style="cursor:pointer;margin:0">${lx("Choisir une photo","Choose a photo")}<input type="file" id="pr-img" accept="image/*" style="display:none"></label><button type="button" class="btn small ghost" data-act="img-rm" ${(m.prev||(p&&p.img))&&!m.rmImg?"":"hidden"}>${lx("Retirer","Remove")}</button></div></div>`:""}
+    ${own&&catOn()&&window.__catImg?(phInit(m,p),`<div class="field"><label>${lx("Photos (affichées sur ma page)","Photos (shown on my page)")}</label><div id="pr-gal">${phHtml(m)}</div></div>`):""}
     ${own&&catOn()?`<label class="chk"><input type="checkbox" id="pr-show" ${p&&p.hide?"":"checked"}> ${lx("Afficher sur ma page en ligne","Show on my online page")}</label>
     <div class="grid2"><div class="field"><label for="pr-cat">${lx("Catégorie sur ma page","Category on my page")}</label><input id="pr-cat" list="pr-cats" maxlength="24" value="${esc(p&&p.cat||"")}" placeholder="${lx("ex. Boissons","e.g. Drinks")}" autocomplete="off"><datalist id="pr-cats">${[...new Set(S.products.map(x=>x.cat).filter(Boolean))].map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
     <label class="chk" style="align-self:end"><input type="checkbox" id="pr-pin" ${p&&p.pin?"checked":""}> ${lx("En haut, avec « Promo »","Top, with “Promo” tag")}</label></div>`:""}
@@ -1426,11 +1427,16 @@ function saveProduct(){
   }
   if(p&&!p.svc){ const ae=$("#pr-add"); const add=ae?parseAmt(ae.value):0; if(add>0) p.qty=Math.round((p.qty+add)*1000)/1000;
     if(own){ const bought=expOn()?Math.round((p.qty-ui._oq)*1000)/1000:add+(ui._new?p.qty-add:0); if(bought>0&&!nostock()){ p.ph=(p.ph||[]).concat([{d:todayKey(),q:bought,c:p.cost||0,s:p.sup||""}]).slice(-30); } } }
-  const job=p&&m.blob?{id:p.id,blob:m.blob,old:p.img}:null;
-  if(p&&m.rmImg&&!job){ if(p.img&&window.__catImgDel) window.__catImgDel(p.img); delete p.img; }
+  const ents=p&&m.ph?m.ph.slice(0,PHMAX):null;
+  if(ents){ const keep=ents.filter(e=>e.u).map(e=>e.u), had=[p.img].concat(p.more||[]).filter(Boolean);
+    had.filter(u=>!keep.includes(u)).forEach(u=>{ if(window.__catImgDel) window.__catImgDel(u); });
+    phSet(p,keep); }
   save(); ui.modal=null; render(); toast(t("product_saved"));
-  if(job&&window.__catImg){ toast(lx("Envoi de la photo…","Uploading photo…")); window.__catImg(job.blob,job.id,job.old).then(url=>{ const q=S.products.find(x=>x.id===job.id); if(q&&url){ q.img=url; save(); render(); toast(lx("Photo ajoutée","Photo added")); } else toast(lx("Photo non envoyée (pas d'internet ?). Réessayez.","Photo not sent (no internet?). Try again.")); }).catch(()=>toast(lx("Photo non envoyée. Réessayez.","Photo not sent. Try again."))); }
+  if(ents&&ents.some(e=>e.b)&&window.__catImg){ toast(lx("Envoi des photos…","Uploading photos…")); const pid=p.id;
+    Promise.all(ents.map(e=>e.u?Promise.resolve(e.u):window.__catImg(e.b,pid).catch(()=>null))).then(res=>{ const q=S.products.find(x=>x.id===pid), ok=res.filter(Boolean); if(q){ phSet(q,ok); save(); render(); } const bad=res.length-ok.length; toast(bad?lx(bad+" photo(s) non envoyée(s). Réessayez.",bad+" photo(s) not sent. Try again."):lx("Photos ajoutées","Photos added")); }); }
+  ents&&ents.forEach(e=>{ try{ if(e.pv) URL.revokeObjectURL(e.pv); }catch(_){} });
 }
+function phSet(q,list){ if(list[0]) q.img=list[0]; else delete q.img; if(list.length>1) q.more=list.slice(1); else delete q.more; }
 function resizeImg(file,max,cb,sq){
   const fr=new FileReader(); fr.onerror=()=>cb(null);
   fr.onload=()=>{ const im=new Image(); im.onerror=()=>cb(null); im.onload=()=>{ const k=Math.min(1,max/Math.max(im.width,im.height)), w=Math.max(1,Math.round(im.width*k)), h=Math.max(1,Math.round(im.height*k)); const c=document.createElement("canvas"); const g=c.getContext("2d");
@@ -1490,6 +1496,11 @@ function paySection(){
 /* ---------- online catalog ---------- */
 const catOn=()=>!!(window.__catPub&&!window.__member&&S.shop.cat&&S.shop.cat.on);
 const CATLAB={shop:["Produits","Products"],electronics:["Produits","Products"],pharmacy:["Médicaments","Medicines"],food:["Menu","Menu"],beauty:["Prestations","Services"],health:["Prestations","Services"],school:["Frais et services","Fees and services"],repair:["Services","Services"],travel:["Voyages et services","Trips and services"],services:["Services","Services"],rent:["Biens à louer","Properties for rent"],hotel:["Chambres","Rooms"]};
+const PHMAX=5, PHSHOP=40, PHGAL=8;
+function phInit(m,p){ if(!m.ph) m.ph=[p&&p.img].concat((p&&p.more)||[]).filter(Boolean).map(u=>({u})); }
+function phHtml(m){ const n=m.ph.length; return `<div class="phg">${m.ph.map((e,i)=>`<div class="pht"><img alt="" src="${esc(e.u||e.pv)}" ${i?`data-act="ph-first" data-i="${i}"`:""}><button type="button" class="phx" data-act="ph-del" data-i="${i}" aria-label="${lx("Retirer","Remove")}">×</button>${i?"":`<span class="phm">${lx("Principale","Main")}</span>`}</div>`).join("")}${n<PHMAX?`<label class="pht add"><span>+</span><small>${lx("Photo","Photo")}</small><input type="file" id="pr-img" accept="image/*" multiple style="display:none"></label>`:""}</div><small class="muted">${n>1?lx("Touchez une photo pour la mettre en premier.","Tap a photo to make it the first one."):lx("Jusqu'à 5 photos par article.","Up to 5 photos per item.")}</small>`; }
+function phTotal(skip){ return S.products.reduce((a,x)=>x.id===skip?a:a+(x.img?1:0)+((x.more||[]).length),0); }
+function phRefresh(){ const m=ui.modal, g=$("#pr-gal"); if(m&&g) g.innerHTML=phHtml(m); }
 const catSlugify=v=>String(v||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,30);
 const CATRES=["admin","administrator","support","help","official","security","verify","verified","bank","mtn","moov","celtiis","orange","wave","momo","mobilemoney","mobile-money","paypal","opay","paystack","flutterwave","kkiapay","fedapay","mpesa","airtel","www","api","app","login","market","shop","pay","payment","privacy","terms","install"];
 const catReserved=v=>CATRES.includes(v)||v.includes("ecrici");
@@ -1504,8 +1515,8 @@ function qrDraw(url){
 }
 window.__catData=function(){
   const c=S.shop.cat||{}, ns=nostock();
-  const items=S.products.filter(p=>!p.hide&&p.name).slice(0,300).map(p=>({n:String(p.name).slice(0,80),p:Number(p.price)||0,f:money(p.price),a:(p.svc||ns)?1:(sellable(p)>0?1:0),i:p.img||undefined,c:p.cat||undefined,x:p.pin?1:undefined}));
-  return {v:1,name:S.shop.name,biz:biz(),lang:L(),phone:intlPhone(c.phone||S.shop.phone||""),tag:String(c.tag||"").slice(0,120),addr:String(S.shop.address||"").slice(0,120),col:ACCENTS.includes(c.color)?c.color:accentOf(S.shop),logo:c.logo||undefined,cover:c.cover||undefined,hrs:String(c.hrs||"").slice(0,70),lab:CATLAB[biz()]||CATLAB.shop,cur:[C().sym,C().after?1:0,(C().sym==="FCFA"||C().dec===0)?0:2],items};
+  const items=S.products.filter(p=>!p.hide&&p.name).slice(0,300).map(p=>({n:String(p.name).slice(0,80),p:Number(p.price)||0,f:money(p.price),a:(p.svc||ns)?1:(sellable(p)>0?1:0),i:p.img||undefined,g:(p.more&&p.more.length)?p.more.slice(0,4):undefined,c:p.cat||undefined,x:p.pin?1:undefined}));
+  return {v:1,name:S.shop.name,biz:biz(),lang:L(),phone:intlPhone(c.phone||S.shop.phone||""),tag:String(c.tag||"").slice(0,120),addr:String(S.shop.address||"").slice(0,120),col:ACCENTS.includes(c.color)?c.color:accentOf(S.shop),logo:c.logo||undefined,cover:c.cover||undefined,gal:(c.gal&&c.gal.length)?c.gal.slice(0,PHGAL):undefined,hrs:String(c.hrs||"").slice(0,70),lab:CATLAB[biz()]||CATLAB.shop,cur:[C().sym,C().after?1:0,(C().sym==="FCFA"||C().dec===0)?0:2],items};
 };
 function catNote(){
   if(!catOn()||!isOwner()) return "";
@@ -1530,6 +1541,7 @@ function catSection(){
     <div class="field"><label for="c-phone">${lx("Numéro WhatsApp pour les commandes","WhatsApp number for orders")}</label><input id="c-phone" value="${esc(c.phone||S.shop.phone||"")}" inputmode="tel" autocomplete="off"></div>
     <div class="field"><label>${lx("Couleur de ma page","My page color")}</label><div class="sw">${ACCENTS.map(k=>`<button type="button" data-act="cat-col" data-c="${k}" aria-pressed="${col===k}" style="background:${k}" aria-label="${k}"></button>`).join("")}</div></div>
     ${imgF("logo",lx("Logo (rond)","Logo (round)"),56)}${imgF("cover",lx("Photo de couverture (facultatif)","Cover photo (optional)"),100)}
+    <div class="field"><label>${lx("Photos de votre lieu (jusqu'à 8)","Photos of your place (up to 8)")}</label><div class="phg">${(c0.gal||[]).map((u,i)=>`<div class="pht"><img alt="" src="${esc(u)}"><button type="button" class="phx" data-act="gal-del" data-i="${i}" aria-label="${lx("Retirer","Remove")}">×</button></div>`).join("")}${(c0.gal||[]).length<PHGAL?`<label class="pht add"><span>+</span><small>${lx("Photo","Photo")}</small><input type="file" id="c-gal" accept="image/*" multiple style="display:none"></label>`:""}</div><small class="muted">${lx("Bâtiment, accueil, piscine, salle… affichées en haut de votre page.","Building, reception, pool, lounge… shown at the top of your page.")}</small></div>
     <div class="field"><label for="c-hrs">${lx("Horaires (facultatif)","Opening hours (optional)")}</label><input id="c-hrs" value="${esc(c.hrs||"")}" maxlength="70" placeholder="${lx("ex. Lun-Sam 8h-19h","e.g. Mon-Sat 8am-7pm")}" autocomplete="off"></div>
     <label class="chk"><input type="checkbox" id="c-list" ${c.listed?"checked":""}> ${lx("Me lister dans Ecrici Market (les clients me trouvent)","List me in Ecrici Market (customers can find me)")}</label>
     ${window.__waAdmin&&window.__waAdmin("x")?`<p class="muted" style="margin:6px 0 0"><a href="${esc(window.__waAdmin(lx("Bonjour, je voudrais le badge Vérifié pour ma page Ecrici : ","Hello, I would like the Verified badge for my Ecrici page: ")+(c.slug||"")+" ("+S.shop.name+")"))}" target="_blank" rel="noopener">✔ ${lx("Demander le badge Vérifié (les clients vous font plus confiance)","Ask for the Verified badge (customers trust you more)")}</a></p>`:""}
@@ -2082,7 +2094,7 @@ document.addEventListener("click",e=>{
     case "add-batch": { const pe=btPending(); const er=$("#pr-err"); if(er) er.textContent=pe; break; }
     case "del-batch": ui.modal.bs.splice(+el.dataset.i,1); btDraw(); break;
     case "del-product": ui.modal={type:"delproduct",id}; renderModal(); break;
-    case "del-product-yes": S.products=S.products.filter(p=>p.id!==id); save(); ui.modal=null; render(); break;
+    case "del-product-yes": { const dp=S.products.find(p=>p.id===id); if(dp&&window.__catImgDel) [dp.img].concat(dp.more||[]).filter(Boolean).forEach(u=>window.__catImgDel(u)); } S.products=S.products.filter(p=>p.id!==id); save(); ui.modal=null; render(); break;
     case "add-person": ui.modal={type:"staff"}; renderModal(); break;
     case "save-staff": {
       const n=$("#st-name").value.trim(), pin=$("#st-pin").value.trim(), er=$("#st-err2");
@@ -2140,6 +2152,9 @@ document.addEventListener("click",e=>{
     case "logo-rm": delete S.shop.logoData; save(); render(); break;
     case "cat-col": catGrab(); catPatch({color:el.dataset.c}); break;
     case "cat-img-rm": { catGrab(); const k=el.dataset.k, old=(S.shop.cat||{})[k]; if(old&&window.__catImgDel) window.__catImgDel(old); const n=Object.assign({},S.shop.cat); delete n[k]; S.shop.cat=n; catPatch({}); break; }
+    case "ph-first": { const m=ui.modal, i=+el.dataset.i; if(m&&m.ph&&i>0){ m.ph.unshift(m.ph.splice(i,1)[0]); phRefresh(); } break; }
+    case "ph-del": { const m=ui.modal, i=+el.dataset.i; if(m&&m.ph){ const e=m.ph.splice(i,1)[0]; try{ if(e&&e.pv) URL.revokeObjectURL(e.pv); }catch(_){} phRefresh(); } break; }
+    case "gal-del": { catGrab(); const c=S.shop.cat||{}, g=(c.gal||[]).slice(), i=+el.dataset.i, u=g.splice(i,1)[0]; if(u&&window.__catImgDel) window.__catImgDel(u); catPatch({gal:g}); break; }
     case "img-rm": { const m=ui.modal; if(m){ m.rmImg=true; delete m.blob; m.prev=""; const im=$("#pr-prev"); if(im) im.style.display="none"; el.hidden=true; } break; }
     case "cat-qr": ui.modal={type:"catqr"}; renderModal(); break;
     case "cat-qr-print": { const im=$("#qr-img"); if(im) printHtml(S.shop.name,`<div style="text-align:center;font-family:system-ui,sans-serif;padding:24px"><div style="font-size:26px;font-weight:800">${esc(S.shop.name)}</div><div style="font-size:18px;margin:8px 0 18px">${lx("Scannez pour voir nos prix et commander","Scan to see our prices and order")}</div><img src="${im.src}" style="width:320px;height:320px"><div style="font-size:13px;color:#667;margin-top:14px">${esc(catUrl())}</div></div>`); break; }
@@ -2184,8 +2199,16 @@ document.addEventListener("input",e=>{
 document.addEventListener("change",e=>{
   const el=e.target;
   if(el.dataset&&el.dataset.bind==="cust"){ setBind("cust",el.value); }
-  if(el.id==="pr-img"&&el.files&&el.files[0]&&ui.modal&&ui.modal.type==="product"){ const m=ui.modal;
-    resizeImg(el.files[0],640,b=>{ if(!b||b.size>280000){ toast(lx("Photo illisible ou trop lourde. Essayez-en une autre.","Photo unreadable or too large. Try another.")); return; } m.blob=b; delete m.rmImg; try{ if(m.prev&&m.prev.startsWith("blob:")) URL.revokeObjectURL(m.prev); }catch(e){} m.prev=URL.createObjectURL(b); const im=$("#pr-prev"); if(im){ im.src=m.prev; im.style.display=""; } const rb=document.querySelector('[data-act="img-rm"]'); if(rb) rb.hidden=false; }); }
+  if(el.id==="pr-img"&&el.files&&el.files[0]&&ui.modal&&ui.modal.type==="product"){ const m=ui.modal, files=[...el.files]; el.value="";
+    const room=Math.min(PHMAX-m.ph.length, PHSHOP-phTotal(m.id)-m.ph.length); if(room<=0){ toast(lx("Limite de photos atteinte.","Photo limit reached.")); return; }
+    (async()=>{ let bad=0; for(const f of files.slice(0,room)){ await new Promise(r=>resizeImg(f,800,b=>{ if(!b||b.size>280000){ bad++; return r(); } m.ph.push({b,pv:URL.createObjectURL(b)}); r(); })); }
+      if(files.length>room) toast(lx("Seulement "+room+" photo(s) ajoutée(s) (limite).","Only "+room+" photo(s) added (limit)."));
+      else if(bad) toast(lx("Une photo était illisible ou trop lourde.","A photo was unreadable or too large."));
+      phRefresh(); })(); }
+  if(el.id==="c-gal"&&el.files&&el.files[0]){ const files=[...el.files]; el.value=""; catGrab(); const c=S.shop.cat||{}, g=(c.gal||[]).slice(), room=PHGAL-g.length; if(room<=0) return;
+    toast(lx("Envoi des photos…","Uploading photos…"));
+    (async()=>{ let bad=0; for(const f of files.slice(0,room)){ const b=await new Promise(r=>resizeImg(f,1000,r)); if(!b||b.size>280000){ bad++; continue; } const u=await (window.__catImg?window.__catImg(b,"g").catch(()=>null):null); if(u) g.push(u); else bad++; }
+      catPatch({gal:g}); if(bad) toast(lx(bad+" photo(s) non envoyée(s).",bad+" photo(s) not sent.")); })(); }
   if(el.id==="s-logo"&&el.files&&el.files[0]){ resizeImg(el.files[0],160,b=>{ if(!b||b.size>40000){ toast(lx("Photo illisible ou trop lourde.","Photo unreadable or too large.")); return; } const fr=new FileReader(); fr.onload=()=>{ S.shop.logoData=fr.result; save(); render(); toast(lx("Logo ajouté","Logo added")); }; fr.readAsDataURL(b); },true); }
   if((el.id==="c-logo"||el.id==="c-cover")&&el.files&&el.files[0]){ const k=el.id.slice(2); catGrab(); toast(lx("Envoi de la photo…","Uploading photo…"));
     resizeImg(el.files[0],k==="logo"?256:1000,b=>{ if(!b||b.size>280000){ toast(lx("Photo illisible ou trop lourde. Essayez-en une autre.","Photo unreadable or too large. Try another.")); return; }

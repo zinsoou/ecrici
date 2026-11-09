@@ -515,7 +515,7 @@ async function catImg(blob, pid, oldUrl) {
   if (!active || !sess || member || !blob) return null;
   const id = lid || shopId; if (!id) return null;
   try {
-    const tk = await token(), path = id + "/" + String(pid).replace(/[^a-z0-9_-]/gi, "") + "-" + Date.now().toString(36) + ".jpg";
+    const tk = await token(), path = id + "/" + String(pid).replace(/[^a-z0-9_-]/gi, "") + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + ".jpg";
     const r = await fetch(BASE + "/storage/v1/object/catalog/" + path, { method: "POST", headers: { apikey: CFG.key, Authorization: "Bearer " + tk, "Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000" }, body: blob });
     if (!r.ok) return null;
     if (oldUrl) catImgDel(oldUrl);
