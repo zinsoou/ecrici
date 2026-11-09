@@ -504,6 +504,7 @@ async function catPublish(force) {
   } catch (e) { return { ok: false, offline: !!e.offline }; }
 }
 window.__catPub = catPublish;
+window.__catInfo = async function () { if (!active || !sess || member) return null; const id = lid || shopId; if (!id) return null; try { const r = await api("/rest/v1/catalogs?shop_id=eq." + id + "&select=updated_at"); return r.ok && Array.isArray(r.json) ? (r.json[0] || null) : null; } catch (e) { return null; } };
 /* product photos: small public JPEGs in the "catalog" bucket, one folder per shop */
 async function catImg(blob, pid, oldUrl) {
   if (!active || !sess || member || !blob) return null;

@@ -901,6 +901,7 @@ function viewHome(){
       <div class="amt"><div class="num" style="color:var(--owed)">${money(x.b)}</div>
       <button class="btn small primary" data-act="remind" data-id="${x.c.id}" style="margin-top:6px">${t("remind")}</button></div></div>`).join("");
   h+=`</div></section>`;
+  h+=catNote();
   const lowp=S.products.filter(p=>!p.svc&&p.qty<=p.low).sort((a,b)=>a.qty-b.qty).slice(0,8);
   if(lowp.length){ h+=`<section class="sec"><h2>${t("low_stock_title")}<span>${lowp.length}</span></h2><div class="card flush">`+
     lowp.map(p=>`<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div></div><div class="amt"><span class="num">${p.qty}</span> ${p.qty<=0?`<span class="badge owed">${t("out")}</span>`:`<span class="badge late">${t("low")}</span>`}</div></button>`).join("")+`</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${[...new Set(S.products.filter(p=>!p.svc&&p.qty<=p.low).map(p=>p.sup||""))].sort().map(k=>`<button class="btn small" data-act="restock-wa" data-k="${esc(k)}">${k?lx("Envoyer à ","Send to ")+esc(k):lx("Envoyer la liste à mon fournisseur (WhatsApp)","Send this list to my supplier (WhatsApp)")}</button>`).join("")}</div></section>`; }
@@ -1504,6 +1505,16 @@ window.__catData=function(){
   const items=S.products.filter(p=>!p.hide&&p.name).slice(0,300).map(p=>({n:String(p.name).slice(0,80),p:Number(p.price)||0,f:money(p.price),a:(p.svc||ns)?1:(sellable(p)>0?1:0),i:p.img||undefined,c:p.cat||undefined,x:p.pin?1:undefined}));
   return {v:1,name:S.shop.name,biz:biz(),lang:L(),phone:intlPhone(c.phone||S.shop.phone||""),tag:String(c.tag||"").slice(0,120),addr:String(S.shop.address||"").slice(0,120),col:ACCENTS.includes(c.color)?c.color:accentOf(S.shop),logo:c.logo||undefined,cover:c.cover||undefined,hrs:String(c.hrs||"").slice(0,70),lab:CATLAB[biz()]||CATLAB.shop,cur:[C().sym,C().after?1:0,(C().sym==="FCFA"||C().dec===0)?0:2],items};
 };
+function catNote(){
+  if(!catOn()||!isOwner()) return "";
+  if(window.__catInfo&&!ui._ci){ ui._ci=1; window.__catInfo().then(r=>{ if(r&&r.updated_at){ ui.catAt=r.updated_at; if(ui.view==="home") render(); } }).catch(()=>{}); }
+  const ns=nostock(), out=S.products.filter(p=>!p.hide&&p.name&&!p.svc&&!ns&&sellable(p)<=0).length;
+  const days=ui.catAt?Math.floor((Date.now()-new Date(ui.catAt).getTime())/864e5):0, bits=[];
+  if(out) bits.push(lx(out+" article(s) affiché(s) « Épuisé » sur votre page. Réapprovisionnez ou cachez-les.",out+" item(s) show “Sold out” on your page. Restock or hide them."));
+  if(days>=14) bits.push(lx("Votre page n'a pas été mise à jour depuis "+days+" jours. Vérifiez vos prix.","Your page was last updated "+days+" days ago. Check your prices."));
+  if(!bits.length) return "";
+  return `<section class="sec"><div class="card" style="border-left:4px solid ${accentOf(S.shop)}"><b>${lx("Ma page en ligne","My online page")}</b>${bits.map(b=>`<p class="note" style="margin:6px 0 0">${b}</p>`).join("")}<button class="btn small" data-act="go-cat" style="margin-top:8px">${lx("Ouvrir ma page","Open my page settings")}</button></div></section>`;
+}
 function catSection(){
   if(!window.__catPub||!isOwner()) return "";
   shortCheck();
@@ -2119,6 +2130,7 @@ document.addEventListener("click",e=>{
       if(oldC!==s.country&&!$("#s-lang").dataset.touched) {}
       save(); render(); toast(t("saved_ok")); break; }
     case "save-cat": saveCat(); break;
+    case "go-cat": ui.view="set"; render(); setTimeout(()=>{ const b=$("#cat-box"); if(b) b.scrollIntoView({block:"start"}); },60); break;
     case "logo-rm": delete S.shop.logoData; save(); render(); break;
     case "cat-col": catGrab(); catPatch({color:el.dataset.c}); break;
     case "cat-img-rm": { catGrab(); const k=el.dataset.k, old=(S.shop.cat||{})[k]; if(old&&window.__catImgDel) window.__catImgDel(old); const n=Object.assign({},S.shop.cat); delete n[k]; S.shop.cat=n; catPatch({}); break; }
