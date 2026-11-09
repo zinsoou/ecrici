@@ -492,15 +492,17 @@ async function syncBiz() {
 async function catPublish(force) {
   if (!active || !sess || member || !window.__catData) return { skip: true };
   const c = S && S.shop && S.shop.cat, id = lid || shopId; if (!c || !c.slug || !id) return { skip: true };
-  const d = window.__catData(), sig = JSON.stringify([id, c.slug, !!c.on, d]);
+  const d = window.__catData(), sig = JSON.stringify([id, c.slug, !!c.on, !!c.listed, c.city || "", d]);
   if (!c.on && !lsGet("ecrici-cat-pub")) return { ok: true };
   if (!force && lsGet("ecrici-cat-pub") === sig) return { ok: true, same: true };
   try {
     const body = { slug: c.slug, data: d, active: !!c.on, updated_at: new Date().toISOString() };
+    const mk = !!c.listed || lsGet("ecrici-mk") === "1";
+    if (mk) { body.listed = !!(c.on && c.listed); body.country = String((S.shop && S.shop.country) || "").toUpperCase() || null; body.city = String(c.city || "").trim().slice(0, 40) || null; }
     let r = await api("/rest/v1/catalogs?shop_id=eq." + id, { method: "PATCH", headers: { Prefer: "return=representation" }, body });
     if (r.ok && Array.isArray(r.json) && !r.json.length) r = await api("/rest/v1/catalogs", { method: "POST", headers: { Prefer: "return=minimal" }, body: Object.assign({ shop_id: id }, body) });
     if (!r.ok) return { ok: false, taken: r.status === 409, status: r.status };
-    lsSet("ecrici-cat-pub", sig); return { ok: true };
+    lsSet("ecrici-cat-pub", sig); if (c.listed) lsSet("ecrici-mk", "1"); return { ok: true };
   } catch (e) { return { ok: false, offline: !!e.offline }; }
 }
 window.__catPub = catPublish;

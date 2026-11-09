@@ -97,7 +97,7 @@ async function load(){
   const rb=await api("/rest/v1/branches?select=*&order=created_at.asc"); branches=(rb.ok&&Array.isArray(rb.json))?rb.json:[];
   const rc=await api("/rest/v1/pay_claims?select=*&status=eq.pending&order=created_at.asc"); claims=(rc.ok&&Array.isArray(rc.json))?rc.json:[];
   const rr=await api("/rest/v1/catalog_reports?select=*&order=created_at.desc&limit=500"); reps=(rr.ok&&Array.isArray(rr.json))?rr.json:[];
-  const rp=await api("/rest/v1/catalogs?select=slug,shop_id,active,blocked,name:data->>name&limit=1000"); pages=(rp.ok&&Array.isArray(rp.json))?rp.json:[];
+  const rp=await api("/rest/v1/catalogs?select=slug,shop_id,active,blocked,listed,name:data->>name&limit=1000"); pages=(rp.ok&&Array.isArray(rp.json))?rp.json:[];
   draw();
 }
 function draw(){ draw0(); const sg=err+"|"+msg; if((err||msg)&&sg!==window.__sg) window.scrollTo(0,0); window.__sg=sg; }
@@ -132,7 +132,7 @@ function pageBox(){
   const blocked=pages.filter(p=>p.blocked&&!g[p.slug]).map(p=>({slug:p.slug,n:0,why:{}}));
   const rows=Object.values(g).sort((a,b)=>b.n-a.n).concat(blocked), live=pages.filter(p=>p.active&&!p.blocked).length;
   if(!pages.length&&!rows.length) return "";
-  return `<details class="card" ${rows.length?"open":""}><summary class="name">Online pages: ${live} live${Object.keys(g).length?` · <span style="color:#b91c1c">⚠ ${Object.keys(g).length} reported</span>`:""}</summary>${rows.map(r=>{ const p=pages.find(x=>x.slug===r.slug)||{}; const link="/shop.html?s="+encodeURIComponent(r.slug);
+  return `<details class="card" ${rows.length?"open":""}><summary class="name">Online pages: ${live} live · ${pages.filter(p=>p.listed&&p.active&&!p.blocked).length} in Market${Object.keys(g).length?` · <span style="color:#b91c1c">⚠ ${Object.keys(g).length} reported</span>`:""}</summary>${rows.map(r=>{ const p=pages.find(x=>x.slug===r.slug)||{}; const link="/shop.html?s="+encodeURIComponent(r.slug);
     return `<div class="muted"><b>${esc(p.name||r.slug)}</b> (${esc(r.slug)}) · ${r.n} report${r.n===1?"":"s"}${Object.keys(r.why).length?": "+Object.entries(r.why).map(([k,v])=>esc(k)+" ×"+v).join(", "):""}${p.blocked?" · <b>TURNED OFF</b>":""}<br><a href="${link}" target="_blank" rel="noopener">View page</a> <button class="p" data-pg="${p.blocked?"on":"off"}" data-slug="${esc(r.slug)}">${p.blocked?"Turn back on":"Turn off"}</button> ${r.n?`<button data-pg="clear" data-slug="${esc(r.slug)}">Dismiss reports</button>`:""}</div>`; }).join("")||`<div class="muted">No reports. Nothing to check.</div>`}</details>`;
 }
 async function pgAct(slug,a){

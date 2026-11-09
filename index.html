@@ -1529,22 +1529,24 @@ function catSection(){
     <div class="field"><label>${lx("Couleur de ma page","My page color")}</label><div class="sw">${ACCENTS.map(k=>`<button type="button" data-act="cat-col" data-c="${k}" aria-pressed="${col===k}" style="background:${k}" aria-label="${k}"></button>`).join("")}</div></div>
     ${imgF("logo",lx("Logo (rond)","Logo (round)"),56)}${imgF("cover",lx("Photo de couverture (facultatif)","Cover photo (optional)"),100)}
     <div class="field"><label for="c-hrs">${lx("Horaires (facultatif)","Opening hours (optional)")}</label><input id="c-hrs" value="${esc(c.hrs||"")}" maxlength="70" placeholder="${lx("ex. Lun-Sam 8h-19h","e.g. Mon-Sat 8am-7pm")}" autocomplete="off"></div>
+    <label class="chk"><input type="checkbox" id="c-list" ${c.listed?"checked":""}> ${lx("Me lister dans Ecrici Market (les clients me trouvent)","List me in Ecrici Market (customers can find me)")}</label>
+    <div class="field"><label for="c-city">${lx("Ma ville (pour le Market)","My city (for the Market)")}</label><input id="c-city" value="${esc(c.city||"")}" maxlength="40" placeholder="${lx("ex. Cotonou","e.g. Lagos")}" autocomplete="off"></div>
     <div class="field"><label for="c-tag">${lx("Petit message (facultatif)","Short message (optional)")}</label><input id="c-tag" value="${esc(c.tag||"")}" maxlength="120" placeholder="${lx("ex. Livraison à Cotonou et Calavi","e.g. Delivery in Lagos and Abuja")}" autocomplete="off"></div>
     <div class="err" id="c-err" role="alert">${esc(m)}</div>
     <button class="btn primary" data-act="save-cat">${lx("Enregistrer et publier","Save and publish")}</button>
     ${c.on&&url?`<div class="field"><label>${lx("Votre lien","Your link")}</label><input readonly value="${esc(url)}" onfocus="this.select()"></div>
-    <div class="actions"><button class="btn" data-act="cat-copy">${lx("Copier le lien","Copy link")}</button><button class="btn" data-act="cat-wa">${lx("Partager sur WhatsApp","Share on WhatsApp")}</button><button class="btn" data-act="cat-qr">${lx("Code QR","QR code")}</button><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">${lx("Voir ma page","View my page")}</a></div>
+    <div class="actions"><button class="btn" data-act="cat-copy">${lx("Copier le lien","Copy link")}</button><button class="btn" data-act="cat-wa">${lx("Partager sur WhatsApp","Share on WhatsApp")}</button>${c.listed?`<a class="btn" href="/market.html" target="_blank" rel="noopener">${lx("Voir Ecrici Market","See Ecrici Market")}</a>`:""}<button class="btn" data-act="cat-qr">${lx("Code QR","QR code")}</button><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">${lx("Voir ma page","View my page")}</a></div>
     <p class="note" style="margin:0">${lx("Dans chaque article, décochez « Afficher sur ma page » pour le cacher.","In each item, untick “Show on my online page” to hide it.")}</p>`:""}
   </div></section>`;
 }
-function catGrab(){ const g=id=>($("#"+id)||{}).value; if(!$("#c-slug")) return; ui.cd={slug:g("c-slug"),phone:g("c-phone"),tag:g("c-tag"),hrs:g("c-hrs")}; }
+function catGrab(){ const g=id=>($("#"+id)||{}).value; if(!$("#c-slug")) return; ui.cd={slug:g("c-slug"),phone:g("c-phone"),tag:g("c-tag"),hrs:g("c-hrs"),city:g("c-city"),listed:($("#c-list")||{}).checked}; }
 function catPatch(o){ S.shop.cat=Object.assign({},S.shop.cat||{},o); save(); window.__catPub&&S.shop.cat.slug&&S.shop.cat.on&&window.__catPub(true).catch(()=>{}); render(); }
 async function saveCat(){
-  const slug=catSlugify($("#c-slug").value), on=$("#c-on").checked, ph=$("#c-phone").value.trim(), tag=$("#c-tag").value.trim(), hrs=$("#c-hrs").value.trim();
+  const slug=catSlugify($("#c-slug").value), on=$("#c-on").checked, ph=$("#c-phone").value.trim(), tag=$("#c-tag").value.trim(), hrs=$("#c-hrs").value.trim(), listed=$("#c-list").checked, city=$("#c-city").value.trim().slice(0,40);
   const er=$("#c-err"); const fail=m=>{ ui.catMsg=m; er.textContent=m; };
   if(on){ if(!catSlugOk(slug)) return fail(lx("Le nom du lien doit avoir 3 à 30 lettres, chiffres ou tirets.","The link name needs 3 to 30 letters, numbers or dashes."));
     if(!intlPhone(ph)) return fail(lx("Entrez un numéro WhatsApp valide pour recevoir les commandes.","Enter a valid WhatsApp number to receive orders.")); }
-  const old=S.shop.cat||{}; S.shop.cat=Object.assign({},old,{on,slug:slug||old.slug||"",phone:ph,tag,hrs}); save(); ui.catMsg="";
+  const old=S.shop.cat||{}; S.shop.cat=Object.assign({},old,{on,slug:slug||old.slug||"",phone:ph,tag,hrs,listed:listed&&on,city}); save(); ui.catMsg="";
   const r=await window.__catPub(true).catch(()=>({ok:false,offline:true}));
   if(r&&r.ok){ ui.cd=null; render(); toast(on?lx("Page publiée","Page published"):lx("Page désactivée","Page turned off")); return; }
   S.shop.cat=old; save(); 

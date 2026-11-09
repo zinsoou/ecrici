@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="google" content="notranslate">
+<title>Ecrici Market</title>
+<meta name="description" content="Find shops, pharmacies, restaurants, hotels and services near you in Africa. See prices and order on WhatsApp.">
+<meta name="theme-color" content="#0E1A4F">
+<link rel="icon" href="/icon.svg">
+<style>
+:root{--bg:#F5F6FA;--card:#fff;--ink:#0E1A4F;--mut:#5B6385;--line:#E3E6F0;--acc:#2447D6;--hd:#0E1A4F}
+@media(prefers-color-scheme:dark){:root{--bg:#0B1030;--card:#141B45;--ink:#EEF1FF;--mut:#A3ABD3;--line:#252E63;--acc:#7C97FF}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+header{background:var(--hd);color:#fff;padding:22px 16px 18px}.w{max-width:680px;margin:0 auto;padding:0 16px}header .w{padding:0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1{margin:0;font-size:26px;letter-spacing:-.3px}.sub{margin:4px 0 14px;color:#C9D3F5;font-size:15px}
+.lg{background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:99px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.q{display:grid;gap:8px}.q input,.q select{width:100%;padding:12px 14px;border-radius:12px;border:0;font:inherit;background:#fff;color:#0E1A4F}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 16px 4px;scrollbar-width:none;max-width:680px;margin:0 auto}
+.chips button{flex:none;padding:8px 14px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:14px;cursor:pointer}
+.chips button[aria-pressed=true]{background:var(--hd);border-color:var(--hd);color:#fff}
+main{padding:10px 0 60px}
+.c{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;text-decoration:none;color:inherit}
+.av{width:52px;height:52px;border-radius:50%;flex:none;object-fit:cover;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;background:var(--hd)}
+.c b{display:block;overflow-wrap:anywhere}.c .m{color:var(--mut);font-size:14px}.c .t{color:var(--mut);font-size:13px;margin-top:2px}
+.mt{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.mt span{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:13px}
+.msg{text-align:center;padding:48px 16px;color:var(--mut)}.msg b{display:block;font-size:19px;color:var(--ink);margin-bottom:6px}
+.more{display:block;width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:650;cursor:pointer}
+.cta{display:inline-block;margin-top:12px;background:#E8A317;color:#0E1A4F;font-weight:800;border-radius:99px;padding:10px 20px;text-decoration:none}
+.ft{text-align:center;color:var(--mut);font-size:13px;padding:14px 0}.ft a{color:var(--acc);font-weight:700;text-decoration:none}
+</style>
+</head>
+<body>
+<header><div class="w"><div class="top"><h1>Ecrici Market</h1><button class="lg" id="lg">EN → FR</button></div><p class="sub" id="sb"></p>
+<div class="q"><input id="q" type="search" autocomplete="off" maxlength="60"><select id="co"></select></div></div></header>
+<div class="chips" id="ch"></div>
+<main class="w"><div id="r"></div><div id="mr"></div><div class="ft" id="ft"></div></main>
+<script src="/config.js"></script>
+<script>
+const $=i=>document.getElementById(i);const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const CO=[["BJ","Bénin","Benin"],["NG","Nigéria","Nigeria"],["GH","Ghana","Ghana"],["TG","Togo","Togo"],["CI","Côte d'Ivoire","Côte d'Ivoire"],["SN","Sénégal","Senegal"],["BF","Burkina Faso","Burkina Faso"],["ML","Mali","Mali"],["NE","Niger","Niger"],["CM","Cameroun","Cameroon"],["KE","Kenya","Kenya"],["ZA","Afrique du Sud","South Africa"],["RW","Rwanda","Rwanda"],["TZ","Tanzanie","Tanzania"],["UG","Ouganda","Uganda"]];
+const BZ=[["pharmacy","Pharmacies","Pharmacies"],["shop","Boutiques","Shops"],["electronics","Électronique","Electronics"],["food","Restaurants","Restaurants"],["beauty","Beauté","Beauty"],["health","Santé","Health"],["hotel","Hôtels","Hotels"],["school","Écoles","Schools"],["repair","Réparation","Repairs"],["travel","Voyages","Travel"],["rent","Location","Rentals"],["services","Services","Services"]];
+const T={fr:{sb:"Trouvez des boutiques et des services près de vous. Voyez les prix et commandez sur WhatsApp.",ph:"Chercher un produit, une boutique, une ville…",all:"Tous les pays",cat:"Tout",none:"Aucune boutique trouvée",nones:"Essayez un autre mot ou un autre pays. Les boutiques Ecrici peuvent s'inscrire gratuitement dans le Market.",more:"Voir plus",cta:"Inscrire ma boutique",ft:"Vous vendez ? Créez votre page en ligne avec",err:"Impossible de charger. Vérifiez votre connexion.",lg:"FR → EN"},
+ en:{sb:"Find shops and services near you. See prices and order on WhatsApp.",ph:"Search a product, shop or city…",all:"All countries",cat:"All",none:"No shops found",nones:"Try another word or country. Ecrici shops can list themselves in the Market for free.",more:"Show more",cta:"List my shop",ft:"Selling something? Make your online page with",err:"Could not load. Check your connection.",lg:"EN → FR"}};
+const sp=new URLSearchParams(location.search);
+let lg=sp.get("l")||(localStorage.getItem("ecrici-lang")||((navigator.language||"en").slice(0,2)==="fr"?"fr":"en"));lg=lg==="fr"?"fr":"en";
+let q=(sp.get("q")||"").slice(0,60),co=(sp.get("c")||"").toUpperCase(),bz=sp.get("b")||"",off=0,tm=null,seq=0;
+const tx=()=>T[lg],nm=a=>a[lg==="fr"?1:2];
+function chrome(){ document.documentElement.lang=lg; $("sb").textContent=tx().sb; $("q").placeholder=tx().ph; $("q").value=q; $("lg").textContent=tx().lg;
+  $("co").innerHTML=`<option value="">${esc(tx().all)}</option>`+CO.map(c=>`<option value="${c[0]}" ${c[0]===co?"selected":""}>${esc(nm(c))}</option>`).join("");
+  $("ch").innerHTML=`<button data-b="" aria-pressed="${bz===""}">${esc(tx().cat)}</button>`+BZ.map(b=>`<button data-b="${b[0]}" aria-pressed="${bz===b[0]}">${esc(nm(b))}</button>`).join("");
+  $("ft").innerHTML=`${esc(tx().ft)} <a href="https://ecrici.com/">Ecrici</a>`; }
+function url(p){ return "/shop.html?s="+encodeURIComponent(p); }
+function card(r){ const co2=CO.find(c=>c[0]===r.country), place=[r.city,co2?nm(co2):""].filter(Boolean).join(", "), bn=BZ.find(b=>b[0]===r.biz), col=/^#[0-9a-f]{6}$/i.test(r.col||"")?r.col:"#0E1A4F";
+  const av=/^https:\/\//.test(r.logo||"")?`<img class="av" alt="" loading="lazy" src="${esc(r.logo)}">`:`<div class="av" style="background:${col}">${esc((r.name||"?").trim().slice(0,2).toUpperCase())}</div>`;
+  return `<a class="c" href="${url(r.slug)}">${av}<div style="min-width:0"><b>${esc(r.name)}</b><div class="m">${esc([bn?nm(bn):"",place].filter(Boolean).join(" · "))}</div>${r.tag?`<div class="t">${esc(r.tag)}</div>`:""}${(r.matches||[]).length?`<div class="mt">${r.matches.map(m=>`<span>${esc(m.n)}${m.f?" · "+esc(m.f):""}</span>`).join("")}</div>`:""}</div></a>`; }
+async function load(more){ const my=++seq; if(!more){ off=0; $("r").innerHTML=`<div class="msg">…</div>`; $("mr").innerHTML=""; }
+  try{ const r=await fetch(String(ECRICI.url).replace(/\/+$/,"")+"/rest/v1/rpc/market_search",{method:"POST",headers:{apikey:ECRICI.key,"Content-Type":"application/json"},body:JSON.stringify({p_q:q,p_country:co||null,p_biz:bz||null,p_limit:24,p_offset:off})});
+    if(!r.ok) throw 0; const j=await r.json(); if(my!==seq) return;
+    if(!more) $("r").innerHTML=""; 
+    if(!j.length&&!more){ $("r").innerHTML=`<div class="msg"><b>${esc(tx().none)}</b>${esc(tx().nones)}<br><a class="cta" href="https://ecrici.com/">${esc(tx().cta)}</a></div>`; return; }
+    $("r").insertAdjacentHTML("beforeend",j.map(card).join("")); off+=j.length; $("mr").innerHTML=j.length>=24?`<button class="more" id="mb">${esc(tx().more)}</button>`:""; if($("mb")) $("mb").onclick=()=>load(true);
+  }catch(e){ if(my===seq) $("r").innerHTML=`<div class="msg">${esc(tx().err)}</div>`; } }
+function sync(){ const p=new URLSearchParams(); if(q)p.set("q",q); if(co)p.set("c",co); if(bz)p.set("b",bz); if(lg==="fr")p.set("l","fr"); history.replaceState(null,"",location.pathname+(p.toString()?"?"+p:"")); try{ localStorage.setItem("ecrici-market-co",co); }catch(e){} }
+$("q").addEventListener("input",e=>{ q=e.target.value.trim(); clearTimeout(tm); tm=setTimeout(()=>{ sync(); load(); },350); });
+$("co").addEventListener("change",e=>{ co=e.target.value; sync(); load(); });
+$("ch").addEventListener("click",e=>{ const b=e.target.closest("button[data-b]"); if(!b) return; bz=b.dataset.b; [...$("ch").children].forEach(x=>x.setAttribute("aria-pressed",x===b)); sync(); load(); });
+$("lg").onclick=()=>{ lg=lg==="fr"?"en":"fr"; try{ localStorage.setItem("ecrici-lang",lg); }catch(e){} chrome(); sync(); load(); };
+if(!co&&!sp.has("c")){ try{ co=localStorage.getItem("ecrici-market-co")||""; }catch(e){} }
+chrome(); load();
+</script>
+</body>
+</html>
