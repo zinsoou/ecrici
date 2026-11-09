@@ -33,7 +33,7 @@ h2{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);
 .msg{text-align:center;padding:64px 16px;color:var(--mut)}.msg b{display:block;font-size:20px;color:var(--ink);margin-bottom:6px}
 .im{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--line);flex:none;cursor:zoom-in}.lb{position:fixed;inset:0;background:rgba(5,8,25,.88);display:flex;align-items:center;justify-content:center;z-index:9;padding:16px}.lb img{max-width:100%;max-height:100%;border-radius:14px}
 .rp{text-align:center;font-size:12px;color:var(--mut);padding:0 0 10px}.rp button{background:none;border:0;color:var(--mut);text-decoration:underline;font:inherit;cursor:pointer;padding:4px}.rs{display:grid;gap:6px;max-width:320px;margin:8px auto}.rs button{padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;cursor:pointer;text-decoration:none}
-.pw{text-align:center;font-size:13px;color:var(--mut);padding:18px 0 4px}.pw a{color:var(--acc);font-weight:700;text-decoration:none}
+.pw{text-align:center;font-size:13px;color:var(--mut);padding:18px 0 4px}.pw a{color:var(--acc);font-weight:700;text-decoration:none}.pl{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 18px;margin-top:6px}.pl a{white-space:nowrap}.fm input,.fm select,.fm textarea{min-height:46px}
 </style>
 </head>
 <body>
@@ -76,7 +76,7 @@ function draw(){
   const its=D.items||[]; const lab=(D.lab||[])[lg==="fr"?0:1]||"";
   if(!its.length){ $("m").innerHTML=`<div class="msg">${esc(tx.empty)}</div>`; return; }
   $("m").innerHTML=`<h2>${esc(lab)}</h2><div class="tabs" id="tb" hidden></div>${its.length>8?`<input class="s" id="q" placeholder="${esc(tx.srch)}" autocomplete="off">`:""}<div id="l"></div><div class="sf">⚠ ${esc(tx.safe)}</div><div class="fm" id="fm"></div>
-  <div class="pw">${esc(tx.pw)} <a href="https://ecrici.com/" target="_blank" rel="noopener">Ecrici</a> · <a href="https://ecrici.com/" target="_blank" rel="noopener">${esc(tx.mk)}</a> · <a href="/market.html">${esc(tx.mkt)}</a></div>
+  <div class="pw">${esc(tx.pw)} <a href="https://ecrici.com/" target="_blank" rel="noopener">Ecrici</a><div class="pl"><a href="https://ecrici.com/" target="_blank" rel="noopener">${esc(tx.mk)}</a><a href="/market.html">${esc(tx.mkt)}</a></div></div>
   <div class="rp" id="rp"></div><div class="bar"><div class="w"><button class="go" id="go" disabled><span>${esc(tx.send)}</span><span id="tt"></span></button><p class="hint">${esc(tx.hint)}</p></div></div>`;
   const cats=[...new Set(its.map(x=>x.c).filter(Boolean))];
   if(cats.length){ const un=its.some(x=>!x.c); const all=[["",tx.all]].concat(cats.map(c=>[c,c])).concat(un?[["~other",tx.oth]]:[]); $("tb").hidden=false;
