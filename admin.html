@@ -177,7 +177,7 @@ function card(s){
   const info=s.paid_until?`Paid until ${s.paid_until}${dl!=null?` (${dl>=0?dl+" days left":Math.abs(dl)+" days ago"})`:""}`:"Not paid yet";
   return `<div class="card" data-shop="${esc(s.id)}"><div class="top"><div><div class="name">${esc(s.name||"(no name)")}</div><div class="muted">+${esc(s.phone)} · ${esc(s.country)} · ${esc(bizOf(s))}</div></div><span class="chip ${st}">${st}</span></div>
     <div class="muted">${esc(info)}</div>${refLine(s)}${shopsBlock(s)}
-    <div class="row">${st==="pending"?`<button class="p" data-id="${esc(s.id)}" data-a="trial">Approve · 14 days</button>`:""}
+    <div class="row">${st==="pending"?`<button class="p" data-id="${esc(s.id)}" data-a="trial">Approve · 7 days</button>`:""}
       <button data-id="${esc(s.id)}" data-a="m1">+1 month</button><button data-id="${esc(s.id)}" data-a="m3">+3 months</button><button data-id="${esc(s.id)}" data-a="m12">+12 months</button></div>
     <div class="row">${wa?`<a class="b" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`:""}
       <button data-id="${esc(s.id)}" data-a="pw">Reset password</button>
@@ -216,7 +216,7 @@ async function bact(id,a){
 }
 function addTo(base,a){
   const d=new Date(base+"T12:00:00Z");
-  if(a==="trial") d.setUTCDate(d.getUTCDate()+14); else d.setUTCMonth(d.getUTCMonth()+({m1:1,m3:3,m12:12}[a]));
+  if(a==="trial") d.setUTCDate(d.getUTCDate()+7); else d.setUTCMonth(d.getUTCMonth()+({m1:1,m3:3,m12:12}[a]));
   return d.toISOString().slice(0,10);
 }
 async function act(id,a,cid){
