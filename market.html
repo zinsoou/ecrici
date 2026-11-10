@@ -29,11 +29,12 @@ main{padding:10px 0 60px}
 .more{display:block;width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:650;cursor:pointer}
 .cta{display:inline-block;margin-top:12px;background:#E8A317;color:#0E1A4F;font-weight:800;border-radius:99px;padding:10px 20px;text-decoration:none}
 .ft{text-align:center;color:var(--mut);font-size:13px;padding:14px 0}.ft a{color:var(--acc);font-weight:700;text-decoration:none}
+.near{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}.near button,.near .nb{background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:99px;padding:8px 14px;font:inherit;font-size:14px;cursor:pointer}.near .nb{background:#fff;color:#0E1A4F;font-weight:700;cursor:default}.near select{flex:1;min-width:150px;padding:9px 12px;border-radius:12px;border:0;font:inherit;font-size:14px;background:#fff;color:#0E1A4F}.nm{font-size:13px;color:#C9D3F5;width:100%}.ny{display:inline-block;background:#FFF4D6;color:#7A5200;font-size:12px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;white-space:nowrap}
 </style>
 </head>
 <body>
 <header><div class="w"><div class="top"><h1>Ecrici Market</h1><button class="lg" id="lg">EN → FR</button></div><p class="sub" id="sb"></p>
-<div class="q"><input id="q" type="search" autocomplete="off" maxlength="60"><select id="co"></select></div></div></header>
+<div class="q"><input id="q" type="search" autocomplete="off" maxlength="60"><select id="co"></select></div><div class="near" id="nr"></div></div></header>
 <div class="chips" id="ch"></div>
 <main class="w"><div id="r"></div><div id="mr"></div><div class="ft" id="ft"></div></main>
 <script src="/config.js"></script>
@@ -41,11 +42,36 @@ main{padding:10px 0 60px}
 const $=i=>document.getElementById(i);const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const CO=[["BJ","Bénin","Benin"],["NG","Nigéria","Nigeria"],["GH","Ghana","Ghana"],["TG","Togo","Togo"],["CI","Côte d'Ivoire","Côte d'Ivoire"],["SN","Sénégal","Senegal"],["BF","Burkina Faso","Burkina Faso"],["ML","Mali","Mali"],["NE","Niger","Niger"],["CM","Cameroun","Cameroon"],["KE","Kenya","Kenya"],["ZA","Afrique du Sud","South Africa"],["RW","Rwanda","Rwanda"],["TZ","Tanzanie","Tanzania"],["UG","Ouganda","Uganda"]];
 const BZ=[["pharmacy","Pharmacies","Pharmacies"],["shop","Boutiques","Shops"],["electronics","Électronique","Electronics"],["food","Restaurants","Restaurants"],["beauty","Beauté","Beauty"],["health","Santé","Health"],["hotel","Hôtels","Hotels"],["school","Écoles","Schools"],["repair","Réparation","Repairs"],["travel","Voyages","Travel"],["rent","Location","Rentals"],["services","Services","Services"]];
-const T={fr:{sb:"Trouvez des boutiques et des services près de vous. Voyez les prix et commandez sur WhatsApp.",ph:"Chercher un produit, une boutique, une ville…",all:"Tous les pays",cat:"Tout",none:"Aucune boutique trouvée",nones:"Essayez un autre mot ou un autre pays. Les boutiques Ecrici peuvent s'inscrire gratuitement dans le Market.",more:"Voir plus",cta:"Inscrire ma boutique",ft:"Vous vendez ? Créez votre page en ligne avec",err:"Impossible de charger. Vérifiez votre connexion.",lg:"FR → EN"},
- en:{sb:"Find shops and services near you. See prices and order on WhatsApp.",ph:"Search a product, shop or city…",all:"All countries",cat:"All",none:"No shops found",nones:"Try another word or country. Ecrici shops can list themselves in the Market for free.",more:"Show more",cta:"List my shop",ft:"Selling something? Make your online page with",err:"Could not load. Check your connection.",lg:"EN → FR"}};
+const T={fr:{sb:"Trouvez des boutiques et des services près de vous. Voyez les prix et commandez sur WhatsApp.",ph:"Chercher un produit, une boutique, une ville…",all:"Tous les pays",cat:"Tout",none:"Aucune boutique trouvée",nones:"Essayez un autre mot ou un autre pays. Les boutiques Ecrici peuvent s'inscrire gratuitement dans le Market.",more:"Voir plus",cta:"Inscrire ma boutique",ft:"Vous vendez ? Créez votre page en ligne avec",err:"Impossible de charger. Vérifiez votre connexion.",lg:"FR → EN",near:"Près de",gps:"📍 Près de moi",pick:"Ou choisissez votre ville…",chg:"Changer",far:"Aucune ville Ecrici proche. Choisissez votre ville.",deny:"Position refusée. Choisissez votre ville.",ny:"📍 Près de vous"},
+ en:{sb:"Find shops and services near you. See prices and order on WhatsApp.",ph:"Search a product, shop or city…",all:"All countries",cat:"All",none:"No shops found",nones:"Try another word or country. Ecrici shops can list themselves in the Market for free.",more:"Show more",cta:"List my shop",ft:"Selling something? Make your online page with",err:"Could not load. Check your connection.",lg:"EN → FR",near:"Near",gps:"📍 Near me",pick:"Or choose your city…",chg:"Change",far:"No Ecrici city is close to you. Choose your city.",deny:"Location refused. Choose your city.",ny:"📍 Near you"}};
 const sp=new URLSearchParams(location.search);
 let lg=sp.get("l")||(localStorage.getItem("ecrici-lang")||((navigator.language||"en").slice(0,2)==="fr"?"fr":"en"));lg=lg==="fr"?"fr":"en";
 let q=(sp.get("q")||"").slice(0,60),co=(sp.get("c")||"").toUpperCase(),bz=sp.get("b")||"",off=0,tm=null,seq=0;
+const CT=[["BJ","Cotonou",6.37,2.43],["BJ","Porto-Novo",6.50,2.63],["BJ","Abomey-Calavi",6.45,2.35],["BJ","Parakou",9.34,2.63],["BJ","Bohicon",7.18,2.07],["BJ","Ouidah",6.36,2.09],["BJ","Djougou",9.71,1.67],["BJ","Natitingou",10.30,1.38],["BJ","Lokossa",6.64,1.72],["BJ","Kandi",11.13,2.94],
+["NG","Lagos",6.52,3.38],["NG","Abuja",9.06,7.49],["NG","Port Harcourt",4.82,7.05],["NG","Ibadan",7.38,3.95],["NG","Kano",12.00,8.52],["NG","Benin City",6.34,5.63],["NG","Enugu",6.46,7.55],["NG","Kaduna",10.52,7.44],["NG","Abeokuta",7.16,3.35],["NG","Warri",5.52,5.75],["NG","Owerri",5.48,7.03],["NG","Ilorin",8.50,4.55],
+["GH","Accra",5.60,-0.19],["GH","Kumasi",6.69,-1.62],["GH","Tamale",9.40,-0.84],["GH","Takoradi",4.90,-1.76],["GH","Cape Coast",5.11,-1.25],["GH","Tema",5.67,0.01],
+["KE","Nairobi",-1.29,36.82],["KE","Mombasa",-4.04,39.67],["KE","Kisumu",-0.09,34.77],["KE","Nakuru",-0.30,36.07],["KE","Eldoret",0.51,35.27],
+["TG","Lomé",6.14,1.21],["TG","Kara",9.55,1.19],["TG","Sokodé",8.98,1.15],["TG","Kpalimé",6.90,0.63],["TG","Atakpamé",7.53,1.13],
+["CI","Abidjan",5.36,-4.01],["CI","Bouaké",7.69,-5.03],["CI","Yamoussoukro",6.83,-5.29],["CI","San-Pédro",4.75,-6.64],["CI","Daloa",6.88,-6.45],["CI","Korhogo",9.46,-5.63],
+["SN","Dakar",14.72,-17.47],["SN","Thiès",14.79,-16.93],["SN","Saint-Louis",16.02,-16.49],["SN","Touba",14.85,-15.88],["SN","Kaolack",14.15,-16.08],["SN","Ziguinchor",12.56,-16.27],
+["BF","Ouagadougou",12.37,-1.52],["BF","Bobo-Dioulasso",11.18,-4.29],["ML","Bamako",12.64,-8.00],["ML","Sikasso",11.32,-5.67],["NE","Niamey",13.51,2.11],["NE","Zinder",13.81,8.99],
+["CM","Douala",4.05,9.77],["CM","Yaoundé",3.85,11.50],["CM","Garoua",9.30,13.40],["ZA","Johannesburg",-26.20,28.05],["ZA","Cape Town",-33.92,18.42],["ZA","Durban",-29.86,31.02],["ZA","Pretoria",-25.75,28.19],
+["RW","Kigali",-1.95,30.06],["TZ","Dar es Salaam",-6.79,39.21],["TZ","Dodoma",-6.16,35.75],["TZ","Arusha",-3.39,36.68],["UG","Kampala",0.35,32.58],["UG","Entebbe",0.05,32.46]];
+const TZ={"Africa/Porto-Novo":"BJ","Africa/Lagos":"NG","Africa/Accra":"GH","Africa/Lome":"TG","Africa/Abidjan":"CI","Africa/Dakar":"SN","Africa/Ouagadougou":"BF","Africa/Bamako":"ML","Africa/Niamey":"NE","Africa/Douala":"CM","Africa/Nairobi":"KE","Africa/Johannesburg":"ZA","Africa/Kigali":"RW","Africa/Dar_es_Salaam":"TZ","Africa/Kampala":"UG"};
+let cy="",nco="";try{ cy=localStorage.getItem("ecrici-market-city")||""; }catch(e){}
+try{ nco=TZ[Intl.DateTimeFormat().resolvedOptions().timeZone]||""; }catch(e){}
+const known=CT.find(x=>x[1]===cy); if(known) nco=known[0];
+let nmsg="";
+function near(){ const e=$("nr"); if(!e) return;
+  if(cy){ e.innerHTML=`<span class="nb">📍 ${esc(tx().near)} ${esc(cy)}</span><button id="cx" type="button">${esc(tx().chg)}</button>`; $("cx").onclick=()=>{ cy=""; try{ localStorage.removeItem("ecrici-market-city"); }catch(x){} near(); load(); }; return; }
+  const list=CT.filter(x=>!(co||nco)||x[0]===(co||nco)); 
+  e.innerHTML=`<button id="gps" type="button">${esc(tx().gps)}</button><select id="cy"><option value="">${esc(tx().pick)}</option>${(list.length?list:CT).map(x=>`<option>${esc(x[1])}</option>`).join("")}</select>${nmsg?`<div class="nm">${esc(nmsg)}</div>`:""}`;
+  $("cy").onchange=ev=>{ if(ev.target.value) setCity(ev.target.value); };
+  $("gps").onclick=()=>{ nmsg=""; if(!navigator.geolocation){ nmsg=tx().deny; near(); return; }
+    navigator.geolocation.getCurrentPosition(p=>{ const la=p.coords.latitude, lo=p.coords.longitude, R=Math.PI/180; let best=null,bd=1e9;
+      CT.forEach(x=>{ const a=Math.sin((x[2]-la)*R/2)**2+Math.cos(la*R)*Math.cos(x[2]*R)*Math.sin((x[3]-lo)*R/2)**2, d=12742*Math.asin(Math.sqrt(a)); if(d<bd){ bd=d; best=x; } });
+      if(best&&bd<=200) setCity(best[1]); else { nmsg=tx().far; near(); } },()=>{ nmsg=tx().deny; near(); },{timeout:8000,maximumAge:600000}); }; }
+function setCity(c){ cy=c; const k=CT.find(x=>x[1]===c); if(k) nco=k[0]; try{ localStorage.setItem("ecrici-market-city",c); }catch(e){} nmsg=""; near(); load(); }
 const tx=()=>T[lg],nm=a=>a[lg==="fr"?1:2];
 function chrome(){ document.documentElement.lang=lg; $("sb").textContent=tx().sb; $("q").placeholder=tx().ph; $("q").value=q; $("lg").textContent=tx().lg;
   $("co").innerHTML=`<option value="">${esc(tx().all)}</option>`+CO.map(c=>`<option value="${c[0]}" ${c[0]===co?"selected":""}>${esc(nm(c))}</option>`).join("");
@@ -54,9 +80,9 @@ function chrome(){ document.documentElement.lang=lg; $("sb").textContent=tx().sb
 function url(p){ return "/shop.html?s="+encodeURIComponent(p); }
 function card(r){ const co2=CO.find(c=>c[0]===r.country), place=[r.city,co2?nm(co2):""].filter(Boolean).join(", "), bn=BZ.find(b=>b[0]===r.biz), col=/^#[0-9a-f]{6}$/i.test(r.col||"")?r.col:"#0E1A4F";
   const av=/^https:\/\//.test(r.logo||"")?`<img class="av" alt="" loading="lazy" src="${esc(r.logo)}">`:`<div class="av" style="background:${col}">${esc((r.name||"?").trim().slice(0,2).toUpperCase())}</div>`;
-  return `<a class="c" href="${url(r.slug)}">${av}<div style="min-width:0"><b>${esc(r.name)}${r.verified?`<span class="vf" title="${lg==='fr'?'Vérifié par Ecrici':'Verified by Ecrici'}"> ✔ ${lg==='fr'?'Vérifié':'Verified'}</span>`:""}</b><div class="m">${esc([bn?nm(bn):"",place].filter(Boolean).join(" · "))}</div>${r.tag?`<div class="t">${esc(r.tag)}</div>`:""}${(r.matches||[]).length?`<div class="mt">${r.matches.map(m=>`<span>${esc(m.n)}${m.f?" · "+esc(m.f):""}</span>`).join("")}</div>`:""}</div></a>`; }
+  return `<a class="c" href="${url(r.slug)}">${av}<div style="min-width:0"><b>${esc(r.name)}${r.near===0?`<span class="ny">${esc(tx().ny)}</span>`:""}${r.verified?`<span class="vf" title="${lg==='fr'?'Vérifié par Ecrici':'Verified by Ecrici'}"> ✔ ${lg==='fr'?'Vérifié':'Verified'}</span>`:""}</b><div class="m">${esc([bn?nm(bn):"",place].filter(Boolean).join(" · "))}</div>${r.tag?`<div class="t">${esc(r.tag)}</div>`:""}${(r.matches||[]).length?`<div class="mt">${r.matches.map(m=>`<span>${esc(m.n)}${m.f?" · "+esc(m.f):""}</span>`).join("")}</div>`:""}</div></a>`; }
 async function load(more){ const my=++seq; if(!more){ off=0; $("r").innerHTML=`<div class="msg">…</div>`; $("mr").innerHTML=""; }
-  try{ const r=await fetch(String(ECRICI.url).replace(/\/+$/,"")+"/rest/v1/rpc/market_search",{method:"POST",headers:{apikey:ECRICI.key,"Content-Type":"application/json"},body:JSON.stringify({p_q:q,p_country:co||null,p_biz:bz||null,p_limit:24,p_offset:off})});
+  try{ const call=b=>fetch(String(ECRICI.url).replace(/\/+$/,"")+"/rest/v1/rpc/market_search",{method:"POST",headers:{apikey:ECRICI.key,"Content-Type":"application/json"},body:JSON.stringify(b)}); const base={p_q:q,p_country:co||null,p_biz:bz||null,p_limit:24,p_offset:off}; let r=await call(Object.assign({},base,{p_near_city:cy||null,p_near_country:(co||nco)||null})); if(!r.ok) r=await call(base);
     if(!r.ok) throw 0; const j=await r.json(); if(my!==seq) return;
     if(!more) $("r").innerHTML=""; 
     if(!j.length&&!more){ $("r").innerHTML=`<div class="msg"><b>${esc(tx().none)}</b>${esc(tx().nones)}<br><a class="cta" href="https://ecrici.com/">${esc(tx().cta)}</a></div>`; return; }
@@ -64,11 +90,11 @@ async function load(more){ const my=++seq; if(!more){ off=0; $("r").innerHTML=`<
   }catch(e){ if(my===seq) $("r").innerHTML=`<div class="msg">${esc(tx().err)}</div>`; } }
 function sync(){ const p=new URLSearchParams(); if(q)p.set("q",q); if(co)p.set("c",co); if(bz)p.set("b",bz); if(lg==="fr")p.set("l","fr"); history.replaceState(null,"",location.pathname+(p.toString()?"?"+p:"")); try{ localStorage.setItem("ecrici-market-co",co); }catch(e){} }
 $("q").addEventListener("input",e=>{ q=e.target.value.trim(); clearTimeout(tm); tm=setTimeout(()=>{ sync(); load(); },350); });
-$("co").addEventListener("change",e=>{ co=e.target.value; sync(); load(); });
+$("co").addEventListener("change",e=>{ co=e.target.value; sync(); near(); load(); });
 $("ch").addEventListener("click",e=>{ const b=e.target.closest("button[data-b]"); if(!b) return; bz=b.dataset.b; [...$("ch").children].forEach(x=>x.setAttribute("aria-pressed",x===b)); sync(); load(); });
-$("lg").onclick=()=>{ lg=lg==="fr"?"en":"fr"; try{ localStorage.setItem("ecrici-lang",lg); }catch(e){} chrome(); sync(); load(); };
+$("lg").onclick=()=>{ lg=lg==="fr"?"en":"fr"; try{ localStorage.setItem("ecrici-lang",lg); }catch(e){} chrome(); near(); sync(); load(); };
 if(!co&&!sp.has("c")){ try{ co=localStorage.getItem("ecrici-market-co")||""; }catch(e){} }
-chrome(); load();
+chrome(); near(); load();
 </script>
 </body>
 </html>
