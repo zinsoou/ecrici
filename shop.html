@@ -18,7 +18,7 @@ a{color:inherit}button{font:inherit;color:inherit}svg{width:18px;height:18px;fle
 #hd{height:148px;background-color:var(--hd,#0E1A4F);background-image:linear-gradient(135deg,var(--hd,#0E1A4F),#0E1A4F);background-size:cover;background-position:center;position:relative}
 #hd .w{display:flex;justify-content:space-between;padding-top:12px}
 .back,.sh{display:inline-flex;align-items:center;gap:6px;background:rgba(10,15,44,.45);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:99px;padding:7px 13px;font-size:13px;font-weight:650;text-decoration:none;cursor:pointer;backdrop-filter:blur(6px);min-height:36px}
-.sh[hidden]{display:none}
+.sh[hidden]{display:none}.hr{display:flex;gap:8px}
 .id{margin-top:-38px;position:relative}
 .lgw{width:80px;height:80px;border-radius:22px;border:4px solid var(--bg);overflow:hidden;background:var(--card);box-shadow:var(--sh)}
 .lg{width:100%;height:100%;object-fit:cover;display:block}.lgi{width:100%;height:100%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:26px;background:var(--hd,#2447D6)}
@@ -68,17 +68,18 @@ h2{font-size:18px;letter-spacing:-.3px;margin:18px 0 4px}
 </style>
 </head>
 <body>
-<header id="hd"><div class="w"><a class="back" href="/market.html">‹ Market</a><button class="sh" id="sh" type="button" hidden></button></div></header>
+<header id="hd"><div class="w"><a class="back" href="/market.html">‹ Market</a><span class="hr"><button class="sh" id="lgb" type="button"></button><button class="sh" id="sh" type="button" hidden></button></span></div></header>
 <section class="w id"><div class="lgw" id="lgw"><img class="lg" id="lgo" alt="" hidden><div class="lgi" id="lgi" hidden></div></div><h1 id="nm">&nbsp;</h1><p class="tag" id="tg" hidden></p><div class="qa" id="qa" hidden></div><div class="chp" id="chp"></div></section>
 <main class="w" id="m"><div class="pg"><div class="sk" style="aspect-ratio:3/4"></div><div class="sk" style="aspect-ratio:3/4"></div></div></main>
 <script src="/config.js"></script>
 <script>
 const $=i=>document.getElementById(i);const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const T={fr:{nf:"Page introuvable",nfs:"Ce lien n'existe pas ou a été désactivé.",srch:"Rechercher…",out:"Épuisé",name:"Votre nom (facultatif)",send:"Envoyer sur WhatsApp",total:"Total",pick:"Choisissez au moins un article",hi:"Bonjour",ask:"je voudrais commander :",nm:"Mon nom :",pw:"Page créée avec",mk:"Créez la vôtre, 7 jours gratuits",hint:"Vous enverrez votre commande directement au vendeur sur WhatsApp.",err:"Impossible de charger la page. Vérifiez votre connexion.",none:"Aucun article trouvé.",empty:"Cette page n'a pas encore d'articles.",book:"Réserver sur WhatsApp",askB:"je voudrais réserver :",det:"Vos informations",upd:"Prix mis à jour",td:"aujourd'hui",yd:"hier",dg:"il y a {n} jours",dm:"il y a {n} mois",e1:"Choisissez les dates d'arrivée et de départ (le départ après l'arrivée).",all:"Tout",oth:"Autres",promo:"Promo",hrsl:"Horaires",mkt:"Voir d'autres boutiques",rep:"Signaler cette page",why:"Pourquoi ?",r1:"Arnaque ou faux vendeur",r2:"Articles illégaux ou dangereux",r3:"Contenu choquant",r4:"Autre",thx:"Merci. Nous allons examiner cette page.",ver:"Vérifié par Ecrici",wa:"WhatsApp",call:"Appeler",add:"+ Ajouter",hi2:"Bonjour",share:"Partager",copied:"Lien copié",ph:"Photos",since:"Sur Ecrici depuis",safe:"Ecrici ne gère pas les paiements. Ne payez pas avant d'avoir vu l'article ou reçu le service, et méfiez-vous des vendeurs inconnus."},
-en:{nf:"Page not found",nfs:"This link does not exist or has been turned off.",srch:"Search…",out:"Sold out",name:"Your name (optional)",send:"Send on WhatsApp",total:"Total",pick:"Choose at least one item",hi:"Hello",ask:"I would like to order:",nm:"My name:",pw:"Page made with",mk:"Make yours, 7 days free",hint:"You will send your order straight to the seller on WhatsApp.",err:"Could not load the page. Check your connection.",none:"No items found.",empty:"This page has no items yet.",book:"Book on WhatsApp",askB:"I would like to book:",det:"Your details",upd:"Prices updated",td:"today",yd:"yesterday",dg:"{n} days ago",dm:"{n} months ago",e1:"Choose check-in and check-out dates (check-out after check-in).",all:"All",oth:"Other",promo:"Promo",hrsl:"Hours",mkt:"Browse more shops",rep:"Report this page",why:"Why?",r1:"Scam or fake seller",r2:"Illegal or dangerous items",r3:"Offensive content",r4:"Other",thx:"Thank you. We will review this page.",ver:"Verified by Ecrici",wa:"WhatsApp",call:"Call",add:"+ Add",hi2:"Hello",share:"Share",copied:"Link copied",ph:"Photos",since:"On Ecrici since",safe:"Ecrici does not handle payments. Don't pay before you see the item or get the service, and be careful with sellers you don't know."}};
+const T={fr:{nf:"Page introuvable",nfs:"Ce lien n'existe pas ou a été désactivé.",srch:"Rechercher…",out:"Épuisé",name:"Votre nom (facultatif)",send:"Envoyer sur WhatsApp",total:"Total",pick:"Choisissez au moins un article",hi:"Bonjour",ask:"je voudrais commander :",nm:"Mon nom :",pw:"Page créée avec",mk:"Créez la vôtre, 7 jours gratuits",hint:"Vous enverrez votre commande directement au vendeur sur WhatsApp.",err:"Impossible de charger la page. Vérifiez votre connexion.",none:"Aucun article trouvé.",empty:"Cette page n'a pas encore d'articles.",book:"Réserver sur WhatsApp",askB:"je voudrais réserver :",det:"Vos informations",upd:"Prix mis à jour",td:"aujourd'hui",yd:"hier",dg:"il y a {n} jours",dm:"il y a {n} mois",e1:"Choisissez les dates d'arrivée et de départ (le départ après l'arrivée).",all:"Tout",oth:"Autres",promo:"Promo",hrsl:"Horaires",mkt:"Voir d'autres boutiques",rep:"Signaler cette page",why:"Pourquoi ?",r1:"Arnaque ou faux vendeur",r2:"Articles illégaux ou dangereux",r3:"Contenu choquant",r4:"Autre",thx:"Merci. Nous allons examiner cette page.",ver:"Vérifié par Ecrici",wa:"WhatsApp",lgt:"English",call:"Appeler",add:"+ Ajouter",hi2:"Bonjour",share:"Partager",copied:"Lien copié",ph:"Photos",since:"Sur Ecrici depuis",safe:"Ecrici ne gère pas les paiements. Ne payez pas avant d'avoir vu l'article ou reçu le service, et méfiez-vous des vendeurs inconnus."},
+en:{nf:"Page not found",nfs:"This link does not exist or has been turned off.",srch:"Search…",out:"Sold out",name:"Your name (optional)",send:"Send on WhatsApp",total:"Total",pick:"Choose at least one item",hi:"Hello",ask:"I would like to order:",nm:"My name:",pw:"Page made with",mk:"Make yours, 7 days free",hint:"You will send your order straight to the seller on WhatsApp.",err:"Could not load the page. Check your connection.",none:"No items found.",empty:"This page has no items yet.",book:"Book on WhatsApp",askB:"I would like to book:",det:"Your details",upd:"Prices updated",td:"today",yd:"yesterday",dg:"{n} days ago",dm:"{n} months ago",e1:"Choose check-in and check-out dates (check-out after check-in).",all:"All",oth:"Other",promo:"Promo",hrsl:"Hours",mkt:"Browse more shops",rep:"Report this page",why:"Why?",r1:"Scam or fake seller",r2:"Illegal or dangerous items",r3:"Offensive content",r4:"Other",thx:"Thank you. We will review this page.",ver:"Verified by Ecrici",wa:"WhatsApp",lgt:"Français",call:"Call",add:"+ Add",hi2:"Hello",share:"Share",copied:"Link copied",ph:"Photos",since:"On Ecrici since",safe:"Ecrici does not handle payments. Don't pay before you see the item or get the service, and be careful with sellers you don't know."}};
 let D=null,Q={},lg="en",tx=T.en,cat="";
 const slug=((new URLSearchParams(location.search).get("s"))||((location.pathname.match(/^\/s\/([^\/]+)/)||[])[1])||"").toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0,30);
-const dl=(navigator.language||"en").slice(0,2)==="fr"?"fr":"en";
+let dl=(navigator.language||"en").slice(0,2)==="fr"?"fr":"en"; try{ const sv=localStorage.getItem("ecrici-lang"); if(sv==="fr"||sv==="en") dl=sv; }catch(e){}
+let sl="en"; /* the seller's language: the order message is written in it */
 const BASE=String(ECRICI.url).replace(/\/+$/,""), IMGP=BASE+"/storage/v1/object/public/catalog/";
 const okU=u=>typeof u==="string"&&u.indexOf(IMGP)===0&&u.length<400;
 const th=u=>/-f\.jpg$/.test(u)?u.replace(/-f\.jpg$/,"-t.jpg"):u;
@@ -94,7 +95,7 @@ async function load(){
     if(r.status===404){ const base=BASE+"/rest/v1/catalogs?slug=eq."+slug+"&active=eq.true&select="; r=await fetch(base+"data,updated_at,verified,created_at",{headers:H}); if(!r.ok) r=await fetch(base+"data,updated_at",{headers:H}); }
     if(!r.ok) throw 0; const j=await r.json();
     if(!j.length){ msg(tx.nf,tx.nfs); return; }
-    D=j[0].data; D._u=j[0].updated_at; D._v=j[0].verified===true; D._c=j[0].created_at||""; lg=D.lang==="fr"?"fr":"en"; tx=T[lg]; document.documentElement.lang=lg; draw();
+    D=j[0].data; D._u=j[0].updated_at; D._v=j[0].verified===true; D._c=j[0].created_at||""; sl=D.lang==="fr"?"fr":"en"; lg=dl; tx=T[lg]; document.documentElement.lang=lg; $("lgb").textContent=lg==="fr"?"FR → EN":"EN → FR"; $("lgb").title=tx.lgt; $("lgb").onclick=()=>{ dl=lg==="fr"?"en":"fr"; try{ localStorage.setItem("ecrici-lang",dl); }catch(e){} lg=dl; tx=T[lg]; document.documentElement.lang=lg; $("lgb").textContent=lg==="fr"?"FR → EN":"EN → FR"; $("lgb").title=tx.lgt; draw(); }; draw();
   }catch(e){ msg(tx.err); }
 }
 const imgs=x=>[x.i].concat(x.g||[]).filter(okU).slice(0,5);
@@ -165,7 +166,7 @@ function form(){
   const dl=$("f_dl"); if(dl) dl.onchange=()=>{ document.querySelectorAll("#fm [data-ifd]").forEach(e=>e.hidden=dl.value!=="1"); };
   $("go").firstElementChild.textContent=BOOK.includes(D.biz)?tx.book:tx.send;
 }
-function fm(n){ const c=D.cur||["",0,0]; const num=new Intl.NumberFormat(lg==="fr"?"fr-FR":"en-NG",{maximumFractionDigits:c[2]}).format(n).replace(/[\u00a0\u202f]/g," "); return c[1]?num+" "+c[0]:c[0]+" "+num; }
+function fm(n,l){ l=l||lg; const c=D.cur||["",0,0]; const num=new Intl.NumberFormat(l==="fr"?"fr-FR":"en-NG",{maximumFractionDigits:c[2]}).format(n).replace(/[\u00a0\u202f]/g," "); return c[1]?num+" "+c[0]:c[0]+" "+num; }
 function list(){
   const q=($("q")?$("q").value:"").trim().toLowerCase(); let g="",v="";
   const ord=D.items.map((x,i)=>i).sort((a,b)=>(D.items[b].x?1:0)-(D.items[a].x?1:0)||a-b);
@@ -180,14 +181,14 @@ function list(){
   $("go").disabled=!c; $("tt").textContent=c?(tot>0&&!NOTOT.includes(D.biz)?tx.total+" "+fm(tot):"×"+c):"";
 }
 function send(){
-  const ls=Object.keys(Q).map(k=>{const it=D.items[k];return "• "+Q[k]+" × "+it.n+(it.p>0&&!NOTOT.includes(D.biz)?" ("+fm(Q[k]*it.p)+")":"");});if(!ls.length)return;
+  const ls=Object.keys(Q).map(k=>{const it=D.items[k];return "• "+Q[k]+" × "+it.n+(it.p>0&&!NOTOT.includes(D.biz)?" ("+fm(Q[k]*it.p,sl)+")":"");});if(!ls.length)return;
   let tot=0;Object.keys(Q).forEach(k=>tot+=Q[k]*D.items[k].p);const nm=$("cn").value.trim(), fe=$("fe"); fe.hidden=true;
   const ex=[]; const dl=$("f_dl");
   for(const f of fields()){ const el=$("f_"+f.k); if(!el) continue; if(f.ifd&&dl&&dl.value!=="1") continue; let v=el.value.trim(); if(!v) continue;
-    if(f.t==="sel") v=f.o[+v][lg==="fr"?0:1]; if(f.t==="date") v=new Date(v+"T12:00").toLocaleDateString(lg==="fr"?"fr-FR":"en-GB",{day:"numeric",month:"short",year:"numeric"}); ex.push((lg==="fr"?f.fr:f.en).replace(/\s*\(.*\)$/,"")+": "+v); }
+    if(f.t==="sel") v=f.o[+v][sl==="fr"?0:1]; if(f.t==="date") v=new Date(v+"T12:00").toLocaleDateString(sl==="fr"?"fr-FR":"en-GB",{day:"numeric",month:"short",year:"numeric"}); ex.push((sl==="fr"?f.fr:f.en).replace(/\s*\(.*\)$/,"")+": "+v); }
   if(D.biz==="hotel"){ const a=$("f_d1").value, b=$("f_d2").value; if(!a||!b||b<=a){ fe.textContent=tx.e1; fe.hidden=false; $("fm").scrollIntoView({block:"center"}); return; } }
   const bk=BOOK.includes(D.biz);
-  const text=tx.hi+" "+D.name+", "+(bk?tx.askB:tx.ask)+"\n"+ls.join("\n")+(tot>0&&!NOTOT.includes(D.biz)?"\n"+tx.total+": "+fm(tot):"")+(ex.length?"\n"+ex.join("\n"):"")+(nm?"\n"+tx.nm+" "+nm:"");
+  const sx=T[sl]; const text=sx.hi+" "+D.name+", "+(bk?sx.askB:sx.ask)+"\n"+ls.join("\n")+(tot>0&&!NOTOT.includes(D.biz)?"\n"+sx.total+": "+fm(tot,sl):"")+(ex.length?"\n"+ex.join("\n"):"")+(nm?"\n"+sx.nm+" "+nm:"");
   location.href="https://wa.me/"+String(D.phone||"").replace(/\D/g,"")+"?text="+encodeURIComponent(text);
 }
 function report(){

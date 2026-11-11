@@ -290,17 +290,17 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;color:inherit}
 "use strict";
 /* ---------- constants ---------- */
 const COUNTRIES = {
-  BJ:{name:"Bénin",   sym:"FCFA", after:true,  cc:"229", lang:"fr", ph:"01 97 00 00 00"},
+  BJ:{name:"Bénin",   en:"Benin", sym:"FCFA", after:true,  cc:"229", lang:"fr", ph:"01 97 00 00 00"},
   NG:{name:"Nigeria", sym:"₦",    after:false, cc:"234", lang:"en", ph:"0803 000 0000"},
   GH:{name:"Ghana",   sym:"GH₵",  after:false, cc:"233", lang:"en", ph:"024 000 0000"},
   KE:{name:"Kenya",   sym:"KSh",  after:false, cc:"254", lang:"en", ph:"0712 000 000"},
   TG:{name:"Togo",           sym:"FCFA", after:true, cc:"228", lang:"fr", ph:"90 00 00 00"},
   CI:{name:"Côte d'Ivoire",  sym:"FCFA", after:true, cc:"225", lang:"fr", ph:"07 00 00 00 00", keep0:true},
-  SN:{name:"Sénégal",        sym:"FCFA", after:true, cc:"221", lang:"fr", ph:"77 000 00 00"},
+  SN:{name:"Sénégal",        en:"Senegal", sym:"FCFA", after:true, cc:"221", lang:"fr", ph:"77 000 00 00"},
   BF:{name:"Burkina Faso",   sym:"FCFA", after:true, cc:"226", lang:"fr", ph:"70 00 00 00"},
   ML:{name:"Mali",           sym:"FCFA", after:true, cc:"223", lang:"fr", ph:"70 00 00 00"},
   NE:{name:"Niger",          sym:"FCFA", after:true, cc:"227", lang:"fr", ph:"90 00 00 00"},
-  CM:{name:"Cameroun",       sym:"FCFA", after:true, cc:"237", lang:"fr", ph:"6 70 00 00 00"},
+  CM:{name:"Cameroun",       en:"Cameroon", sym:"FCFA", after:true, cc:"237", lang:"fr", ph:"6 70 00 00 00"},
   ZA:{name:"South Africa",   sym:"R",    after:false, cc:"27",  lang:"en", ph:"082 000 0000"},
   RW:{name:"Rwanda",         sym:"RWF",  after:true,  cc:"250", lang:"en", ph:"078 000 0000", dec:0},
   TZ:{name:"Tanzania",       sym:"TSh",  after:false, cc:"255", lang:"en", ph:"0712 000 000", dec:0},
@@ -532,6 +532,7 @@ const BIZ_LIST=["shop","electronics","pharmacy","food","beauty","health","school
 const BIZ_NAME={shop:["Boutique / supermarché / commerce","Shop / supermarket / general trade"],electronics:["Électronique (téléphones, ordinateurs, TV, groupes électrogènes)","Electronics (phones, laptops, TVs, generators)"],pharmacy:["Pharmacie","Pharmacy / chemist"],food:["Restaurant / bar / alimentation","Restaurant / bar / food"],beauty:["Salon / coiffure / beauté","Salon / barber / beauty"],health:["Clinique / hôpital / laboratoire","Clinic / hospital / lab"],school:["École / formation","School / training"],repair:["Atelier / garage / couture","Workshop / garage / tailoring"],travel:["Voyages & tourisme","Travel & tours"],services:["Autres services","Other services"],rent:["Location (propriétaire)","Rentals (landlord)"],hotel:["Hôtel / auberge","Hotel / guesthouse"]};
 const t = (k,...a) => { const o=BIZ[biz()]; if(o&&o[L()]&&o[L()][k]!=null) return o[L()][k]; const v=T[L()][k]; return typeof v==="function"?v(...a):(v==null?k:v); };
 const C = () => COUNTRIES[S.shop.country]||COUNTRIES.BJ;
+const cName = v => (L()==="en"&&v.en)?v.en:v.name;
 
 function money(n){
   n = Number(n)||0;
@@ -798,7 +799,7 @@ function render(){
   if((ui.view==="set"||ui.view==="rep")&&!isOwner()) ui.view="home";
   const v=ui.view;
   const who=(S.shop.staffOn||window.__member)?me():null;
-  let html=`<header class="top"><div class="brand"><h1>${esc(S.shop.name)}</h1><small>${esc(C().name)}${who?` · ${esc(who.name)}`:""} · <span id="status"></span></small></div>
+  let html=`<header class="top"><div class="brand"><h1>${esc(S.shop.name)}</h1><small>${esc(cName(C()))}${who?` · ${esc(who.name)}`:""} · <span id="status"></span></small></div>
     <div class="chips" style="flex-wrap:wrap;justify-content:flex-end">${isOwner()?`<button class="pill" data-act="tab" data-v="set" ${ui.view==="set"?'aria-pressed="true"':""}>${t("set_btn")}</button>`:""}${window.__shopChip?window.__shopChip():""}${who?`<button class="pill" data-act="lock">${window.__member?t("member_out"):t("lock")}</button>`:""}<button class="pill" data-act="lang" aria-label="${t("language")}">${L()==="fr"?"FR → EN":"EN → FR"}</button></div></header>`;
   if(v==="home") html+=viewHome();
   else if(v==="sale") html+=viewSale();
@@ -1597,7 +1598,7 @@ function viewSettings(){
     <div class="field"><label for="s-name">${t("shop_name")}</label><input id="s-name" value="${esc(s.name)}" autocomplete="off"></div>
     <div class="field"><label for="s-phone">${t("shop_phone")}</label><input id="s-phone" value="${esc(s.phone)}" inputmode="tel" autocomplete="off"></div>
     <div class="grid2">
-      <div class="field"><label for="s-country">${t("country")}</label><select id="s-country">${Object.entries(COUNTRIES).map(([k,v])=>`<option value="${k}" ${s.country===k?"selected":""}>${v.name} (${v.sym})</option>`).join("")}</select></div>
+      <div class="field"><label for="s-country">${t("country")}</label><select id="s-country">${Object.entries(COUNTRIES).map(([k,v])=>`<option value="${k}" ${s.country===k?"selected":""}>${cName(v)} (${v.sym})</option>`).join("")}</select></div>
       <div class="field"><label for="s-lang">${t("language")}</label><select id="s-lang"><option value="fr" ${s.lang==="fr"?"selected":""}>Français</option><option value="en" ${s.lang==="en"?"selected":""}>English</option></select></div>
     </div>
     <p class="note" style="margin:0">${t("country_note")}</p>
