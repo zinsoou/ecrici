@@ -511,19 +511,62 @@ window.__catPub = catPublish;
 window.__waAdmin = txt => waLink(txt);
 window.__catInfo = async function () { if (!active || !sess || member) return null; const id = lid || shopId; if (!id) return null; try { const r = await api("/rest/v1/catalogs?shop_id=eq." + id + "&select=updated_at"); return r.ok && Array.isArray(r.json) ? (r.json[0] || null) : null; } catch (e) { return null; } };
 /* product photos: small public JPEGs in the "catalog" bucket, one folder per shop */
+/* a small thumbnail (about 400 px) is saved next to every product photo so pages load fast on slow phones */
+function catThumb(blob) {
+  return new Promise(res => {
+    try {
+      const u = URL.createObjectURL(blob), im = new Image();
+      im.onload = () => {
+        try {
+          const k = Math.min(1, 400 / Math.max(im.width, im.height)), c = document.createElement("canvas");
+          c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k));
+          c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u);
+          c.toBlob(b => res(b && b.size < 120000 ? b : null), "image/jpeg", 0.72);
+        } catch (e) { res(null); }
+      };
+      im.onerror = () => { URL.revokeObjectURL(u); res(null); };
+      im.src = u;
+    } catch (e) { res(null); }
+  });
+}
 async function catImg(blob, pid, oldUrl) {
   if (!active || !sess || member || !blob) return null;
   const id = lid || shopId; if (!id) return null;
   try {
-    const tk = await token(), path = id + "/" + String(pid).replace(/[^a-z0-9_-]/gi, "") + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + ".jpg";
-    const r = await fetch(BASE + "/storage/v1/object/catalog/" + path, { method: "POST", headers: { apikey: CFG.key, Authorization: "Bearer " + tk, "Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000" }, body: blob });
-    if (!r.ok) return null;
+    const tk = await token(), kind = String(pid).replace(/[^a-z0-9_-]/gi, ""), small = kind === "logo" || kind === "cover";
+    const stem = id + "/" + kind + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const put = (path, b) => fetch(BASE + "/storage/v1/object/catalog/" + path, { method: "POST", headers: { apikey: CFG.key, Authorization: "Bearer " + tk, "Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000" }, body: b });
+    let path = stem + ".jpg";
+    if (!small) {
+      const t = await catThumb(blob);
+      if (t) { const rt = await put(stem + "-t.jpg", t); if (rt.ok) path = stem + "-f.jpg"; }
+    }
+    const r = await put(path, blob);
+    if (!r.ok) { if (/-f\.jpg$/.test(path)) catImgDel(BASE + "/storage/v1/object/public/catalog/" + stem + "-f.jpg"); return null; }
     if (oldUrl) catImgDel(oldUrl);
     return BASE + "/storage/v1/object/public/catalog/" + path;
   } catch (e) { return null; }
 }
 async function catImgDel(url) {
-  try { const m = String(url).split("/storage/v1/object/public/catalog/")[1]; if (!m || !active || !sess || member) return; const tk = await token(); await fetch(BASE + "/storage/v1/object/catalog/" + m, { method: "DELETE", headers: { apikey: CFG.key, Authorization: "Bearer " + tk } }); } catch (e) {}
+  try {
+    const m = String(url).split("/storage/v1/object/public/catalog/")[1]; if (!m || !active || !sess || member) return;
+    const tk = await token(), del = p => fetch(BASE + "/storage/v1/object/catalog/" + p, { method: "DELETE", headers: { apikey: CFG.key, Authorization: "Bearer " + tk } });
+    await del(m); if (/-f\.jpg$/.test(m)) await del(m.replace(/-f\.jpg$/, "-t.jpg"));
+  } catch (e) {}
+}
+/* before an account is erased, remove every photo file of its shops (thumbnails included) */
+async function catWipeAll() {
+  try {
+    const tk = await token(), ids = [shopId, lid].concat((branches || []).map(b => b.id)).filter((x, i, a) => x && a.indexOf(x) === i);
+    for (const id of ids) {
+      for (let n = 0; n < 5; n++) {
+        const r = await fetch(BASE + "/storage/v1/object/list/catalog", { method: "POST", headers: { apikey: CFG.key, Authorization: "Bearer " + tk, "Content-Type": "application/json" }, body: JSON.stringify({ prefix: id, limit: 100, offset: 0 }) });
+        if (!r.ok) break; const l = await r.json(); if (!Array.isArray(l) || !l.length) break;
+        const d = await fetch(BASE + "/storage/v1/object/catalog", { method: "DELETE", headers: { apikey: CFG.key, Authorization: "Bearer " + tk, "Content-Type": "application/json" }, body: JSON.stringify({ prefixes: l.map(x => id + "/" + x.name) }) });
+        if (!d.ok) break;
+      }
+    }
+  } catch (e) {}
 }
 window.__catImg = catImg; window.__catImgDel = catImgDel;
 window.pushCloud = async function () {
@@ -756,6 +799,7 @@ async function deleteAccount() {
     const a = shopRow(), who = a.phone || "";
     const v = await http("/auth/v1/token?grant_type=password", { method: "POST", body: { email: emailOf(who), password: pw } });
     if (!v.ok || !v.json || !v.json.access_token) { dl.busy = false; dl.err = v.status === 0 ? g("del_fail") : g("del_bad"); drawDel(); return; }
+    await catWipeAll();
     const r = await api("/rest/v1/rpc/delete_my_account", { method: "POST", body: {} });
     if (!r.ok) { dl.busy = false; dl.err = g("del_fail"); drawDel(); return; }
   } catch (e) { dl.busy = false; dl.err = g("del_fail"); drawDel(); return; }

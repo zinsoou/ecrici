@@ -9,44 +9,69 @@
 <meta name="theme-color" content="#0E1A4F">
 <link rel="icon" href="/icon.svg">
 <style>
-:root{--bg:#F5F6FA;--card:#fff;--ink:#0E1A4F;--mut:#5B6385;--line:#E3E6F0;--acc:#2447D6;--hd:#0E1A4F}
-@media(prefers-color-scheme:dark){:root{--bg:#0B1030;--card:#141B45;--ink:#EEF1FF;--mut:#A3ABD3;--line:#252E63;--acc:#7C97FF}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
-header{background:var(--hd);color:#fff;padding:22px 16px 18px}.w{max-width:680px;margin:0 auto;padding:0 16px}header .w{padding:0}
-.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
-h1{margin:0;font-size:26px;letter-spacing:-.3px}.sub{margin:4px 0 14px;color:#C9D3F5;font-size:15px}
-.lg{background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:99px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
-.q{display:grid;gap:8px}.q input,.q select{width:100%;padding:12px 14px;border-radius:12px;border:0;font:inherit;background:#fff;color:#0E1A4F}
-.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 16px 4px;scrollbar-width:none;max-width:680px;margin:0 auto}
-.chips button{flex:none;padding:8px 14px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:14px;cursor:pointer}
-.chips button[aria-pressed=true]{background:var(--hd);border-color:var(--hd);color:#fff}
-main{padding:10px 0 60px}
-.c{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;text-decoration:none;color:inherit}
-.av{width:52px;height:52px;border-radius:50%;flex:none;object-fit:cover;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;background:var(--hd)}
-.c b{display:block;overflow-wrap:anywhere}.vf{color:#067647;font-size:12px;font-weight:700;background:#ECFDF3;border-radius:99px;padding:1px 8px;margin-left:4px;white-space:nowrap}.c .m{color:var(--mut);font-size:14px}.c .t{color:var(--mut);font-size:13px;margin-top:2px}
-.mt{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.mt span{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:13px}
-.msg{text-align:center;padding:48px 16px;color:var(--mut)}.msg b{display:block;font-size:19px;color:var(--ink);margin-bottom:6px}
-.more{display:block;width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:650;cursor:pointer}
-.cta{display:inline-block;margin-top:12px;background:#E8A317;color:#0E1A4F;font-weight:800;border-radius:99px;padding:10px 20px;text-decoration:none}
-.ft{text-align:center;color:var(--mut);font-size:13px;padding:14px 0}.ft a{color:var(--acc);font-weight:700;text-decoration:none}
-.near{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}.near button,.near .nb{background:rgba(255,255,255,.16);border:0;color:#fff;border-radius:99px;padding:8px 14px;font:inherit;font-size:14px;cursor:pointer}.near .nb{background:#fff;color:#0E1A4F;font-weight:700;cursor:default}.near select{flex:1;min-width:150px;padding:9px 12px;border-radius:12px;border:0;font:inherit;font-size:14px;background:#fff;color:#0E1A4F}.nm{font-size:13px;color:#C9D3F5;width:100%}.ny{display:inline-block;background:#FFF4D6;color:#7A5200;font-size:12px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;white-space:nowrap}
+:root{--bg:#F6F7FB;--card:#fff;--ink:#0E1A4F;--mut:#5F6989;--line:#E4E8F2;--acc:#2447D6;--cta:#E8A317;--ctat:#0E1A4F;--on:#0E1A4F;--onf:#fff;--sh:0 1px 2px rgba(14,26,79,.06),0 8px 22px rgba(14,26,79,.07);--vf:#067647;--vfb:#ECFDF3;--ny:#FFF4D6;--nyt:#7A5200;--sk:#E9ECF5}
+@media(prefers-color-scheme:dark){:root{--bg:#0A0F2C;--card:#131B47;--ink:#F2F4FF;--mut:#AEB6DC;--line:#2B3672;--acc:#8FA6FF;--on:#EAF0FF;--onf:#0E1A4F;--sh:none;--vf:#6CE9A6;--vfb:#0E3B2A;--ny:#3A2D0B;--nyt:#F6D58A;--sk:#1B2558}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:inherit}button{font:inherit;color:inherit}svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.w{max-width:1080px;margin:0 auto;padding:0 16px}
+.bar{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}.bar .w{display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:18px;letter-spacing:-.3px;text-decoration:none}.brand img{width:30px;height:30px;border-radius:8px}.brand span{color:var(--mut);font-weight:600;font-size:15px}
+.pill{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:7px 13px;font-size:13px;font-weight:650;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:36px}
+.hero{padding:22px 0 6px}.hero h1{margin:0 0 6px;font-size:28px;line-height:1.12;letter-spacing:-.6px;max-width:560px}.hero p{margin:0 0 16px;color:var(--mut);max-width:560px}
+.search{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 14px;height:52px;box-shadow:var(--sh);max-width:640px}.search:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}.search svg{color:var(--mut)}
+.search input{flex:1;min-width:0;text-overflow:ellipsis;border:0;outline:0;background:none;font:inherit;font-size:16px;color:var(--ink);height:100%}
+.loc{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}.loc select{appearance:none;-webkit-appearance:none;border:1px solid var(--line);background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m1 1 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 12px center;color:var(--ink);border-radius:99px;padding:8px 32px 8px 14px;font:inherit;font-size:13px;font-weight:650;min-height:36px;max-width:100%}
+.pill.pri{background:var(--cta);border-color:var(--cta);color:var(--ctat)}.pill.on{background:var(--on);border-color:var(--on);color:var(--onf)}.nm{flex-basis:100%;color:var(--mut);font-size:13px}
+.cats{display:flex;gap:10px;overflow-x:auto;padding:16px 16px 6px;margin:0 -16px;scrollbar-width:none}.cats::-webkit-scrollbar{display:none}
+.cat{flex:none;width:72px;text-align:center;font-size:12px;font-weight:650;background:none;border:0;cursor:pointer;padding:0;color:var(--ink)}.cat b{display:grid;place-items:center;width:54px;height:54px;margin:0 auto 6px;border-radius:17px;background:var(--card);border:1px solid var(--line);font-size:24px;box-shadow:var(--sh)}.cat[aria-pressed=true] b{background:var(--on);border-color:var(--on)}
+h2{display:flex;align-items:baseline;justify-content:space-between;font-size:18px;letter-spacing:-.3px;margin:22px 0 12px}
+.pg{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}@media(min-width:640px){.pg{grid-template-columns:repeat(3,1fr)}}@media(min-width:900px){.pg{grid-template-columns:repeat(5,1fr)}}
+.pc{display:block;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;box-shadow:var(--sh);transition:transform .15s}.pc:active{transform:scale(.98)}@media(hover:hover){.pc:hover{transform:translateY(-2px)}}
+.pc .im{aspect-ratio:1;background:var(--sk);position:relative}.pc .im img{display:block;width:100%;height:100%;object-fit:cover}.pc .b{padding:10px 12px 12px}.pc .n{font-weight:650;font-size:14px;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:35px;overflow-wrap:anywhere}
+.pc .pr{font-size:17px;font-weight:800;letter-spacing:-.3px;margin-top:4px}.pc .sp{color:var(--mut);font-size:12px;margin-top:3px;display:flex;align-items:center;gap:4px;min-width:0}.pc .sp span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pc .sp svg{width:13px;height:13px}
+.sg{display:grid;gap:12px;grid-template-columns:1fr}@media(min-width:700px){.sg{grid-template-columns:1fr 1fr}}@media(min-width:1000px){.sg{grid-template-columns:1fr 1fr 1fr}}
+.sc{display:block;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;box-shadow:var(--sh)}.sc .cv{height:48px}.sc .r{display:flex;gap:12px;padding:0 14px 14px;margin-top:-20px}
+.av{width:56px;height:56px;border-radius:16px;border:3px solid var(--card);flex:none;object-fit:cover;display:grid;place-items:center;color:#fff;font-weight:800;font-size:18px;background:var(--ink)}
+.sc .t{padding-top:22px;min-width:0;flex:1}.sc b{font-size:16px;overflow-wrap:anywhere}.sc .m{color:var(--mut);font-size:13px;margin-top:1px}.sc .tg{color:var(--ink);font-size:13.5px;margin-top:6px;opacity:.85;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vf{color:var(--vf);background:var(--vfb);border-radius:99px;font-size:11px;font-weight:700;padding:2px 8px;margin-left:6px;white-space:nowrap;vertical-align:1px}.ny{background:var(--ny);color:var(--nyt);border-radius:99px;font-size:11px;font-weight:700;padding:2px 8px;margin-left:6px;white-space:nowrap;vertical-align:1px}
+.mt{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.mt span{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:12.5px}
+.go{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-weight:700;font-size:13px;color:var(--acc)}
+.sk{border-radius:16px;background:var(--sk);animation:p 1.2s ease-in-out infinite}.sk.p{aspect-ratio:3/4}.sk.s{height:120px}@keyframes p{50%{opacity:.55}}@media(prefers-reduced-motion:reduce){.sk{animation:none}.pc{transition:none}}
+.msg{text-align:center;padding:40px 16px;color:var(--mut);grid-column:1/-1}.msg i{display:block;font-style:normal;font-size:40px;margin-bottom:8px}.msg b{display:block;font-size:19px;color:var(--ink);margin-bottom:6px}
+.more{display:block;width:100%;max-width:320px;margin:16px auto 0;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:650;cursor:pointer}
+.cta{display:inline-block;margin-top:14px;background:var(--cta);color:var(--ctat);font-weight:800;border-radius:99px;padding:11px 22px;text-decoration:none}
+.ban{margin:30px 0 0;background:var(--on);color:var(--onf);border-radius:18px;padding:20px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}.ban b{font-size:17px;display:block}.ban span{opacity:.8;font-size:14px}.ban .cta{margin:0}
+.ft{text-align:center;color:var(--mut);font-size:13px;padding:22px 0 40px}.ft a{color:var(--acc);font-weight:700;text-decoration:none}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 </style>
 </head>
 <body>
-<header><div class="w"><div class="top"><h1>Ecrici Market</h1><button class="lg" id="lg">EN → FR</button></div><p class="sub" id="sb"></p>
-<div class="q"><input id="q" type="search" autocomplete="off" maxlength="60"><select id="co"></select></div><div class="near" id="nr"></div></div></header>
-<div class="chips" id="ch"></div>
-<main class="w"><div id="r"></div><div id="mr"></div><div class="ft" id="ft"></div></main>
+<div class="bar"><div class="w"><a class="brand" href="/"><img src="/icon.svg" alt="">Ecrici <span>Market</span></a><button class="pill" id="lg" type="button"></button></div></div>
+<div class="w">
+<section class="hero"><h1 id="hl"></h1><p id="sb"></p>
+<label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="q" type="search" autocomplete="off" maxlength="60" enterkeyhint="search"></label>
+<div class="loc"><span id="nr" style="display:contents"></span><select id="co" aria-label="Country"></select></div></section>
+<div class="cats" id="ch"></div>
+<div id="ps" hidden><h2 id="ph"></h2><div class="pg" id="pg"></div><div id="pm"></div></div>
+<h2 id="sh"></h2><div class="sg" id="r"></div><div id="mr"></div>
+<div class="ban"><div><b id="bt"></b><span id="bs"></span></div><a class="cta" id="bc" href="https://ecrici.com/"></a></div>
+<div class="ft" id="ft"></div>
+</div>
 <script src="/config.js"></script>
 <script>
 const $=i=>document.getElementById(i);const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const CO=[["BJ","Bénin","Benin"],["NG","Nigéria","Nigeria"],["GH","Ghana","Ghana"],["TG","Togo","Togo"],["CI","Côte d'Ivoire","Côte d'Ivoire"],["SN","Sénégal","Senegal"],["BF","Burkina Faso","Burkina Faso"],["ML","Mali","Mali"],["NE","Niger","Niger"],["CM","Cameroun","Cameroon"],["KE","Kenya","Kenya"],["ZA","Afrique du Sud","South Africa"],["RW","Rwanda","Rwanda"],["TZ","Tanzanie","Tanzania"],["UG","Ouganda","Uganda"]];
 const BZ=[["pharmacy","Pharmacies","Pharmacies"],["shop","Boutiques","Shops"],["electronics","Électronique","Electronics"],["food","Restaurants","Restaurants"],["beauty","Beauté","Beauty"],["health","Santé","Health"],["hotel","Hôtels","Hotels"],["school","Écoles","Schools"],["repair","Réparation","Repairs"],["travel","Voyages","Travel"],["rent","Location","Rentals"],["services","Services","Services"]];
-const T={fr:{sb:"Trouvez des boutiques et des services près de vous. Voyez les prix et commandez sur WhatsApp.",ph:"Chercher un produit, une boutique, une ville…",all:"Tous les pays",cat:"Tout",none:"Aucune boutique trouvée",nones:"Essayez un autre mot ou un autre pays. Les boutiques Ecrici peuvent s'inscrire gratuitement dans le Market.",more:"Voir plus",cta:"Inscrire ma boutique",ft:"Vous vendez ? Créez votre page en ligne avec",err:"Impossible de charger. Vérifiez votre connexion.",lg:"FR → EN",near:"Près de",gps:"📍 Près de moi",pick:"Ou choisissez votre ville…",chg:"Changer",far:"Aucune ville Ecrici proche. Choisissez votre ville.",deny:"Position refusée. Choisissez votre ville.",ny:"📍 Près de vous"},
- en:{sb:"Find shops and services near you. See prices and order on WhatsApp.",ph:"Search a product, shop or city…",all:"All countries",cat:"All",none:"No shops found",nones:"Try another word or country. Ecrici shops can list themselves in the Market for free.",more:"Show more",cta:"List my shop",ft:"Selling something? Make your online page with",err:"Could not load. Check your connection.",lg:"EN → FR",near:"Near",gps:"📍 Near me",pick:"Or choose your city…",chg:"Change",far:"No Ecrici city is close to you. Choose your city.",deny:"Location refused. Choose your city.",ny:"📍 Near you"}};
+const T={fr:{hl:"Trouvez-le près de chez vous. Commandez sur WhatsApp.",sb:"Boutiques, pharmacies, hôtels et services en Afrique.",ph:"Chercher un produit, une boutique, une ville",all:"Tous les pays",cat:"Tout",pop:"Produits populaires",shops:"Boutiques",none:"Rien trouvé",nones:"Essayez un autre mot ou un autre pays. Les boutiques Ecrici peuvent s'inscrire gratuitement dans le Market.",more:"Voir plus",cta:"Inscrire ma boutique",bt:"Vous vendez quelque chose ?",bs:"Créez votre page en ligne en quelques minutes. 7 jours gratuits.",ft:"Propulsé par",err:"Impossible de charger. Vérifiez votre connexion.",lg:"English",near:"Près de",gps:"Près de moi",pick:"Choisir ma ville",chg:"Changer",far:"Aucune ville Ecrici proche. Choisissez votre ville.",deny:"Position refusée. Choisissez votre ville.",ny:"Près de vous",vf:"Vérifié",vft:"Vérifié par Ecrici",visit:"Voir la boutique"},
+ en:{hl:"Find it near you. Order on WhatsApp.",sb:"Shops, pharmacies, hotels and services across Africa.",ph:"Search a product, shop or city",all:"All countries",cat:"All",pop:"Popular products",shops:"Shops",none:"Nothing found",nones:"Try another word or country. Ecrici shops can list themselves in the Market for free.",more:"Show more",cta:"List my shop",bt:"Selling something?",bs:"Make your online page in minutes. 7 days free.",ft:"Powered by",err:"Could not load. Check your connection.",lg:"Français",near:"Near",gps:"Near me",pick:"Choose my city",chg:"Change",far:"No Ecrici city is close to you. Choose your city.",deny:"Location refused. Choose your city.",ny:"Near you",vf:"Verified",vft:"Verified by Ecrici",visit:"Visit shop"}};
+const ICON={pharmacy:"💊",shop:"🏪",electronics:"📱",food:"🍲",beauty:"💇",health:"🩺",hotel:"🏨",school:"🎓",repair:"🔧",travel:"✈️",rent:"🏠",services:"🛠️"};
 const sp=new URLSearchParams(location.search);
 let lg=sp.get("l")||(localStorage.getItem("ecrici-lang")||((navigator.language||"en").slice(0,2)==="fr"?"fr":"en"));lg=lg==="fr"?"fr":"en";
-let q=(sp.get("q")||"").slice(0,60),co=(sp.get("c")||"").toUpperCase(),bz=sp.get("b")||"",off=0,tm=null,seq=0;
+let q=(sp.get("q")||"").slice(0,60),co=(sp.get("c")||"").toUpperCase(),bz=sp.get("b")||"",off=0,poff=0,tm=null,seq=0;
+const BASE=String(ECRICI.url).replace(/\/+$/,""), IMGP=BASE+"/storage/v1/object/public/catalog/";
+const okImg=u=>typeof u==="string"&&u.indexOf(IMGP)===0&&u.length<400;
+const th=u=>/-f\.jpg$/.test(u)?u.replace(/-f\.jpg$/,"-t.jpg"):u;
+const imgTag=(u,alt)=>`<img alt="${esc(alt||"")}" loading="lazy" decoding="async" src="${esc(th(u))}" data-f="${esc(u)}" onerror="if(this.dataset.f&&this.src!==this.dataset.f){this.src=this.dataset.f}else{this.style.display='none'}">`;
 const CT=[["BJ","Cotonou",6.37,2.43],["BJ","Porto-Novo",6.50,2.63],["BJ","Abomey-Calavi",6.45,2.35],["BJ","Parakou",9.34,2.63],["BJ","Bohicon",7.18,2.07],["BJ","Ouidah",6.36,2.09],["BJ","Djougou",9.71,1.67],["BJ","Natitingou",10.30,1.38],["BJ","Lokossa",6.64,1.72],["BJ","Kandi",11.13,2.94],
 ["NG","Lagos",6.52,3.38],["NG","Abuja",9.06,7.49],["NG","Port Harcourt",4.82,7.05],["NG","Ibadan",7.38,3.95],["NG","Kano",12.00,8.52],["NG","Benin City",6.34,5.63],["NG","Enugu",6.46,7.55],["NG","Kaduna",10.52,7.44],["NG","Abeokuta",7.16,3.35],["NG","Warri",5.52,5.75],["NG","Owerri",5.48,7.03],["NG","Ilorin",8.50,4.55],
 ["GH","Accra",5.60,-0.19],["GH","Kumasi",6.69,-1.62],["GH","Tamale",9.40,-0.84],["GH","Takoradi",4.90,-1.76],["GH","Cape Coast",5.11,-1.25],["GH","Tema",5.67,0.01],
@@ -62,32 +87,45 @@ let cy="",nco="";try{ cy=localStorage.getItem("ecrici-market-city")||""; }catch(
 try{ nco=TZ[Intl.DateTimeFormat().resolvedOptions().timeZone]||""; }catch(e){}
 const known=CT.find(x=>x[1]===cy); if(known) nco=known[0];
 let nmsg="";
+const tx=()=>T[lg],nm=a=>a[lg==="fr"?1:2];
+const PIN='<svg viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
 function near(){ const e=$("nr"); if(!e) return;
-  if(cy){ e.innerHTML=`<span class="nb">📍 ${esc(tx().near)} ${esc(cy)}</span><button id="cx" type="button">${esc(tx().chg)}</button>`; $("cx").onclick=()=>{ cy=""; try{ localStorage.removeItem("ecrici-market-city"); }catch(x){} near(); load(); }; return; }
-  const list=CT.filter(x=>!(co||nco)||x[0]===(co||nco)); 
-  e.innerHTML=`<button id="gps" type="button">${esc(tx().gps)}</button><select id="cy"><option value="">${esc(tx().pick)}</option>${(list.length?list:CT).map(x=>`<option>${esc(x[1])}</option>`).join("")}</select>${nmsg?`<div class="nm">${esc(nmsg)}</div>`:""}`;
+  if(cy){ e.innerHTML=`<span class="pill on">${PIN}${esc(tx().near)} ${esc(cy)}</span><button class="pill" id="cx" type="button">${esc(tx().chg)}</button>`; $("cx").onclick=()=>{ cy=""; try{ localStorage.removeItem("ecrici-market-city"); }catch(x){} near(); load(); }; return; }
+  const list=CT.filter(x=>!(co||nco)||x[0]===(co||nco));
+  e.innerHTML=`<button class="pill pri" id="gps" type="button">${PIN}${esc(tx().gps)}</button><select id="cy" aria-label="${esc(tx().pick)}"><option value="">${esc(tx().pick)}</option>${(list.length?list:CT).map(x=>`<option>${esc(x[1])}</option>`).join("")}</select>${nmsg?`<div class="nm">${esc(nmsg)}</div>`:""}`;
   $("cy").onchange=ev=>{ if(ev.target.value) setCity(ev.target.value); };
   $("gps").onclick=()=>{ nmsg=""; if(!navigator.geolocation){ nmsg=tx().deny; near(); return; }
     navigator.geolocation.getCurrentPosition(p=>{ const la=p.coords.latitude, lo=p.coords.longitude, R=Math.PI/180; let best=null,bd=1e9;
       CT.forEach(x=>{ const a=Math.sin((x[2]-la)*R/2)**2+Math.cos(la*R)*Math.cos(x[2]*R)*Math.sin((x[3]-lo)*R/2)**2, d=12742*Math.asin(Math.sqrt(a)); if(d<bd){ bd=d; best=x; } });
       if(best&&bd<=200) setCity(best[1]); else { nmsg=tx().far; near(); } },()=>{ nmsg=tx().deny; near(); },{timeout:8000,maximumAge:600000}); }; }
 function setCity(c){ cy=c; const k=CT.find(x=>x[1]===c); if(k) nco=k[0]; try{ localStorage.setItem("ecrici-market-city",c); }catch(e){} nmsg=""; near(); load(); }
-const tx=()=>T[lg],nm=a=>a[lg==="fr"?1:2];
-function chrome(){ document.documentElement.lang=lg; $("sb").textContent=tx().sb; $("q").placeholder=tx().ph; $("q").value=q; $("lg").textContent=tx().lg;
-  $("co").innerHTML=`<option value="">${esc(tx().all)}</option>`+CO.map(c=>`<option value="${c[0]}" ${c[0]===co?"selected":""}>${esc(nm(c))}</option>`).join("");
-  $("ch").innerHTML=`<button data-b="" aria-pressed="${bz===""}">${esc(tx().cat)}</button>`+BZ.map(b=>`<button data-b="${b[0]}" aria-pressed="${bz===b[0]}">${esc(nm(b))}</button>`).join("");
-  $("ft").innerHTML=`${esc(tx().ft)} <a href="https://ecrici.com/">Ecrici</a>`; }
-function url(p){ return "/shop.html?s="+encodeURIComponent(p); }
-function card(r){ const co2=CO.find(c=>c[0]===r.country), place=[r.city,co2?nm(co2):""].filter(Boolean).join(", "), bn=BZ.find(b=>b[0]===r.biz), col=/^#[0-9a-f]{6}$/i.test(r.col||"")?r.col:"#0E1A4F";
-  const av=/^https:\/\//.test(r.logo||"")?`<img class="av" alt="" loading="lazy" src="${esc(r.logo)}">`:`<div class="av" style="background:${col}">${esc((r.name||"?").trim().slice(0,2).toUpperCase())}</div>`;
-  return `<a class="c" href="${url(r.slug)}">${av}<div style="min-width:0"><b>${esc(r.name)}${r.near===0?`<span class="ny">${esc(tx().ny)}</span>`:""}${r.verified?`<span class="vf" title="${lg==='fr'?'Vérifié par Ecrici':'Verified by Ecrici'}"> ✔ ${lg==='fr'?'Vérifié':'Verified'}</span>`:""}</b><div class="m">${esc([bn?nm(bn):"",place].filter(Boolean).join(" · "))}</div>${r.tag?`<div class="t">${esc(r.tag)}</div>`:""}${(r.matches||[]).length?`<div class="mt">${r.matches.map(m=>`<span>${esc(m.n)}${m.f?" · "+esc(m.f):""}</span>`).join("")}</div>`:""}</div></a>`; }
-async function load(more){ const my=++seq; if(!more){ off=0; $("r").innerHTML=`<div class="msg">…</div>`; $("mr").innerHTML=""; }
-  try{ const call=b=>fetch(String(ECRICI.url).replace(/\/+$/,"")+"/rest/v1/rpc/market_search",{method:"POST",headers:{apikey:ECRICI.key,"Content-Type":"application/json"},body:JSON.stringify(b)}); const base={p_q:q,p_country:co||null,p_biz:bz||null,p_limit:24,p_offset:off}; let r=await call(Object.assign({},base,{p_near_city:cy||null,p_near_country:(co||nco)||null})); if(!r.ok) r=await call(base);
+function chrome(){ document.documentElement.lang=lg; const t=tx();
+  $("hl").textContent=t.hl; $("sb").textContent=t.sb; $("q").placeholder=t.ph; $("q").value=q; $("lg").textContent=t.lg; $("ph").textContent=t.pop; $("sh").textContent=t.shops; $("bt").textContent=t.bt; $("bs").textContent=t.bs; $("bc").textContent=t.cta;
+  $("co").innerHTML=`<option value="">${esc(t.all)}</option>`+CO.map(c=>`<option value="${c[0]}" ${c[0]===co?"selected":""}>${esc(nm(c))}</option>`).join("");
+  $("ch").innerHTML=`<button class="cat" data-b="" aria-pressed="${bz===""}"><b>✨</b>${esc(t.cat)}</button>`+BZ.map(b=>`<button class="cat" data-b="${b[0]}" aria-pressed="${bz===b[0]}"><b>${ICON[b[0]]||"🏪"}</b>${esc(nm(b))}</button>`).join("");
+  $("ft").innerHTML=`${esc(t.ft)} <a href="https://ecrici.com/">Ecrici</a>`; }
+const url=p=>"/shop.html?s="+encodeURIComponent(p);
+const place=r=>{ const c2=CO.find(c=>c[0]===r.country); return [r.city,c2?nm(c2):""].filter(Boolean).join(", "); };
+function pcard(r){ return `<a class="pc" href="${url(r.slug)}"><div class="im">${okImg(r.i)?imgTag(r.i,r.n):""}</div><div class="b"><div class="n">${esc(r.n)}</div>${r.f?`<div class="pr">${esc(r.f)}</div>`:""}<div class="sp">${PIN}<span>${esc(r.shop)}${r.city?" · "+esc(r.city):""}</span></div></div></a>`; }
+function card(r){ const bn=BZ.find(b=>b[0]===r.biz), col=/^#[0-9a-f]{6}$/i.test(r.col||"")?r.col:"#0E1A4F";
+  const av=okImg(r.logo)?`<img class="av" alt="" loading="lazy" decoding="async" src="${esc(r.logo)}">`:`<div class="av" style="background:${col}">${esc((r.name||"?").trim().slice(0,2).toUpperCase())}</div>`;
+  return `<a class="sc" href="${url(r.slug)}"><div class="cv" style="background:linear-gradient(135deg,${col},#0E1A4F)"></div><div class="r">${av}<div class="t"><b>${esc(r.name)}</b>${r.verified?`<span class="vf" title="${esc(tx().vft)}">✔ ${esc(tx().vf)}</span>`:""}${r.near===0?`<span class="ny">${esc(tx().ny)}</span>`:""}<div class="m">${esc([bn?nm(bn):"",place(r)].filter(Boolean).join(" · "))}</div>${r.tag?`<div class="tg">${esc(r.tag)}</div>`:""}${(r.matches||[]).length?`<div class="mt">${r.matches.map(m=>`<span>${esc(m.n)}${m.f?" · "+esc(m.f):""}</span>`).join("")}</div>`:""}<span class="go">${esc(tx().visit)} →</span></div></div></a>`; }
+const rpc=(fn,b)=>fetch(BASE+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:ECRICI.key,"Content-Type":"application/json"},body:JSON.stringify(b)});
+const withNear=b=>Object.assign({},b,{p_near_city:cy||null,p_near_country:(co||nco)||null});
+async function call(fn,base){ let r=await rpc(fn,withNear(base)); if(!r.ok&&fn==="market_search") r=await rpc(fn,base); return r; }
+async function loadProducts(more,my){
+  try{ const r=await call("market_products",{p_q:q,p_country:co||null,p_biz:bz||null,p_limit:10,p_offset:poff}); if(!r.ok) throw 0; const j=await r.json(); if(my!==seq) return;
+    const ok=j.filter(x=>okImg(x.i)); if(!more){ $("pg").innerHTML=""; $("ps").hidden=!ok.length; }
+    $("pg").insertAdjacentHTML("beforeend",ok.map(pcard).join("")); poff+=j.length; $("pm").innerHTML=j.length>=10?`<button class="more" id="pmb" type="button">${esc(tx().more)}</button>`:""; if($("pmb")) $("pmb").onclick=()=>loadProducts(true,seq);
+  }catch(e){ if(!more) $("ps").hidden=true; } }
+async function load(more){ const my=++seq;
+  if(!more){ off=0; poff=0; $("r").innerHTML='<div class="sk s"></div><div class="sk s"></div><div class="sk s"></div>'; $("mr").innerHTML=""; $("pg").innerHTML='<div class="sk p"></div><div class="sk p"></div>'; $("ps").hidden=false; loadProducts(false,my); }
+  try{ const r=await call("market_search",{p_q:q,p_country:co||null,p_biz:bz||null,p_limit:24,p_offset:off});
     if(!r.ok) throw 0; const j=await r.json(); if(my!==seq) return;
-    if(!more) $("r").innerHTML=""; 
-    if(!j.length&&!more){ $("r").innerHTML=`<div class="msg"><b>${esc(tx().none)}</b>${esc(tx().nones)}<br><a class="cta" href="https://ecrici.com/">${esc(tx().cta)}</a></div>`; return; }
-    $("r").insertAdjacentHTML("beforeend",j.map(card).join("")); off+=j.length; $("mr").innerHTML=j.length>=24?`<button class="more" id="mb">${esc(tx().more)}</button>`:""; if($("mb")) $("mb").onclick=()=>load(true);
-  }catch(e){ if(my===seq) $("r").innerHTML=`<div class="msg">${esc(tx().err)}</div>`; } }
+    if(!more) $("r").innerHTML="";
+    if(!j.length&&!more){ $("r").innerHTML=`<div class="msg"><i>🔎</i><b>${esc(tx().none)}</b>${esc(tx().nones)}<br><a class="cta" href="https://ecrici.com/">${esc(tx().cta)}</a></div>`; return; }
+    $("r").insertAdjacentHTML("beforeend",j.map(card).join("")); off+=j.length; $("mr").innerHTML=j.length>=24?`<button class="more" id="mb" type="button">${esc(tx().more)}</button>`:""; if($("mb")) $("mb").onclick=()=>load(true);
+  }catch(e){ if(my===seq){ $("r").innerHTML=`<div class="msg"><i>📡</i>${esc(tx().err)}</div>`; $("ps").hidden=true; } } }
 function sync(){ const p=new URLSearchParams(); if(q)p.set("q",q); if(co)p.set("c",co); if(bz)p.set("b",bz); if(lg==="fr")p.set("l","fr"); history.replaceState(null,"",location.pathname+(p.toString()?"?"+p:"")); try{ localStorage.setItem("ecrici-market-co",co); }catch(e){} }
 $("q").addEventListener("input",e=>{ q=e.target.value.trim(); clearTimeout(tm); tm=setTimeout(()=>{ sync(); load(); },350); });
 $("co").addEventListener("change",e=>{ co=e.target.value; sync(); near(); load(); });
