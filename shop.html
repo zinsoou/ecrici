@@ -95,7 +95,7 @@ async function load(){
     if(r.status===404){ const base=BASE+"/rest/v1/catalogs?slug=eq."+slug+"&active=eq.true&select="; r=await fetch(base+"data,updated_at,verified,created_at",{headers:H}); if(!r.ok) r=await fetch(base+"data,updated_at",{headers:H}); }
     if(!r.ok) throw 0; const j=await r.json();
     if(!j.length){ msg(tx.nf,tx.nfs); return; }
-    D=j[0].data; D._u=j[0].updated_at; D._v=j[0].verified===true; D._c=j[0].created_at||""; sl=D.lang==="fr"?"fr":"en"; lg=dl; tx=T[lg]; document.documentElement.lang=lg; $("lgb").textContent=lg==="fr"?"FR → EN":"EN → FR"; $("lgb").title=tx.lgt; $("lgb").onclick=()=>{ dl=lg==="fr"?"en":"fr"; try{ localStorage.setItem("ecrici-lang",dl); }catch(e){} lg=dl; tx=T[lg]; document.documentElement.lang=lg; $("lgb").textContent=lg==="fr"?"FR → EN":"EN → FR"; $("lgb").title=tx.lgt; draw(); }; draw();
+    D=j[0].data; D._u=j[0].updated_at; D._v=j[0].verified===true; D._c=j[0].created_at||""; sl=D.lang==="fr"?"fr":"en"; lg=dl; tx=T[lg]; document.documentElement.lang=lg; $("lgb").textContent=tx.lgt; $("lgb").onclick=()=>{ dl=lg==="fr"?"en":"fr"; try{ localStorage.setItem("ecrici-lang",dl); }catch(e){} lg=dl; tx=T[lg]; document.documentElement.lang=lg; $("lgb").textContent=tx.lgt; draw(); }; draw();
   }catch(e){ msg(tx.err); }
 }
 const imgs=x=>[x.i].concat(x.g||[]).filter(okU).slice(0,5);

@@ -100,7 +100,7 @@ function near(){ const e=$("nr"); if(!e) return;
       if(best&&bd<=200) setCity(best[1]); else { nmsg=tx().far; near(); } },()=>{ nmsg=tx().deny; near(); },{timeout:8000,maximumAge:600000}); }; }
 function setCity(c){ cy=c; const k=CT.find(x=>x[1]===c); if(k) nco=k[0]; try{ localStorage.setItem("ecrici-market-city",c); }catch(e){} nmsg=""; near(); load(); }
 function chrome(){ document.documentElement.lang=lg; const t=tx();
-  $("hl").textContent=t.hl; $("sb").textContent=t.sb; $("q").placeholder=t.ph; $("q").value=q; $("lg").textContent=lg==="fr"?"FR → EN":"EN → FR"; $("lg").title=t.lg; $("ph").textContent=t.pop; $("sh").textContent=t.shops; $("bt").textContent=t.bt; $("bs").textContent=t.bs; $("bc").textContent=t.cta;
+  $("hl").textContent=t.hl; $("sb").textContent=t.sb; $("q").placeholder=t.ph; $("q").value=q; $("lg").textContent=t.lg; $("ph").textContent=t.pop; $("sh").textContent=t.shops; $("bt").textContent=t.bt; $("bs").textContent=t.bs; $("bc").textContent=t.cta;
   $("co").innerHTML=`<option value="">${esc(t.all)}</option>`+CO.map(c=>`<option value="${c[0]}" ${c[0]===co?"selected":""}>${esc(nm(c))}</option>`).join("");
   $("ch").innerHTML=`<button class="cat" data-b="" aria-pressed="${bz===""}"><b>✨</b>${esc(t.cat)}</button>`+BZ.map(b=>`<button class="cat" data-b="${b[0]}" aria-pressed="${bz===b[0]}"><b>${ICON[b[0]]||"🏪"}</b>${esc(nm(b))}</button>`).join("");
   $("ft").innerHTML=`${esc(t.ft)} <a href="https://ecrici.com/">Ecrici</a>`; }
