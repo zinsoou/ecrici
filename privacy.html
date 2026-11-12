@@ -137,7 +137,7 @@ ul{padding-left:20px;margin:6px 0}
 (function(){
   var fr=document.getElementById("fr"), en=document.getElementById("en"), btn=document.getElementById("sw"), lang="fr";
   try{ var s=JSON.parse(localStorage.getItem("cahier-boutique-v1")||"null"); if(s&&s.shop&&s.shop.lang==="en") lang="en"; else if(!s&&/^en/i.test(navigator.language||"")) lang="en"; }catch(e){}
-  function show(){ fr.hidden=lang!=="fr"; en.hidden=lang!=="en"; btn.textContent=lang==="fr"?"FR → EN":"EN → FR"; document.documentElement.lang=lang; }
+  function show(){ fr.hidden=lang!=="fr"; en.hidden=lang!=="en"; btn.textContent=lang==="fr"?"English":"Français"; document.documentElement.lang=lang; }
   btn.onclick=function(){ lang=lang==="fr"?"en":"fr"; show(); };
   var n=(window.ECRICI&&window.ECRICI.adminWhatsapp)?String(window.ECRICI.adminWhatsapp).replace(/\D/g,""):"";
   ["wa-fr","wa-en"].forEach(function(id){ var a=document.getElementById(id); if(n) a.href="https://wa.me/"+n; else a.removeAttribute("href"); });
