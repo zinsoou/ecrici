@@ -582,7 +582,7 @@ function seed(){
 const EXN={
  food:[["Plat du jour","Dish of the day",2500],["Boisson","Drink",500],["Brochettes","Skewers",1500]],
  electronics:[["Téléphone Tecno","Tecno phone",85000],["Chargeur","Charger",3500],["Écouteurs","Earphones",5000]],
- pharmacy:[["Paracétamol 500 mg","Paracetamol 500 mg",800],["Amoxicilline 500 mg","Amoxicillin 500 mg",2500],["Sirop contre la toux","Cough syrup",1800]],
+ pharmacy:[["Paracétamol 500 mg","Paracetamol 500 mg",800],["Gel hydroalcoolique 250 ml","Hand sanitizer 250 ml",1500],["Sirop contre la toux","Cough syrup",1800]],
  beauty:[["Coiffure","Haircut",3000],["Tresses","Braids",8000],["Manucure","Manicure",4000]],
  health:[["Consultation","Consultation",5000],["Analyse de sang","Blood test",6000],["Pansement","Dressing",2000]],
  school:[["Frais de scolarité","Tuition fee",45000],["Inscription","Registration",15000],["Cantine","Canteen",8000]],
@@ -1115,6 +1115,7 @@ function rentCard(){
   return `<div class="banner"><span>${lx("Loyers de ","Rent for ")}${esc(monthName(k))} : ${lx(n+" locataire(s) pas encore facturé(s).",n+" tenant(s) not charged yet.")}</span><button class="btn small primary" data-act="rent-open">${lx("Facturer","Charge now")}</button></div>`;
 }
 const memoOn=()=>["health","beauty"].includes(biz());
+const memoNote=()=>biz()==="health"?`<p class="note" style="margin:4px 0 0">${lx("Ces notes peuvent contenir des informations de santé sensibles. N'écrivez que ce qui est nécessaire. Elles ne sont jamais affichées sur votre page publique, vos reçus ou vos messages groupés.","These notes can hold sensitive health information. Only write what is necessary. They are never shown on your public page, receipts or bulk messages.")}</p>`:"";
 const memoLab=()=>biz()==="health"?lx("Notes (allergies, antécédents)","Notes (allergies, medical history)"):lx("Notes (préférences, allergies)","Notes (preferences, allergies)");
 function viewCustomers(){
   const q=ui.search.trim().toLowerCase();
@@ -1377,8 +1378,8 @@ function productModal(m){
     <div class="actions"><button class="btn primary" data-act="save-product">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button>
     ${p&&own?`<button class="btn danger" data-act="del-product" data-id="${p.id}">${t("delete")}</button>`:""}</div></div>`;
 }
-const BEX={shop:["Sandals, 8000, 12","Sneakers, 25000, 5","Delivery, 1000, service"],electronics:["Tecno Spark 20, 85000, 4","Charger, 3500, 20","Screen repair, 12000, service"],pharmacy:["Paracetamol 500 mg, 800, 100, 03/2028, B2231","Amoxicillin 500 mg, 2500, 40, 11/2027, A771","Consultation, 2000, service"],food:["Rice and chicken, 2500","Water 1.5 L, 300, 24","Grilled fish, 3500"],repair:["Phone screen, 12000, 5","Oil change, 8000, service","Battery, 7000, 3"],beauty:["Haircut, 3000","Braids, 8000","Manicure, 4000"],health:["Consultation, 5000","Blood test, 6000","Dressing, 2000"],school:["Tuition fee, 45000","Registration, 15000","Canteen, 8000"],services:["Printing, 50","Delivery, 1500","Installation, 5000"],travel:["Ticket Cotonou-Lagos, 25000","Hotel booking, 30000","Visa, 40000"],rent:["Studio 1, 45000","Studio 2, 50000","Shop unit A, 80000"],hotel:["Standard room, 15000, 3","AC room, 25000, 2","Suite, 45000, 1"]};
-const BEXF={shop:["Sandales, 8000, 12","Baskets, 25000, 5","Livraison, 1000, service"],electronics:["Tecno Spark 20, 85000, 4","Chargeur, 3500, 20","Réparation d'écran, 12000, service"],pharmacy:["Paracétamol 500 mg, 800, 100, 03/2028, B2231","Amoxicilline 500 mg, 2500, 40, 11/2027, A771","Consultation, 2000, service"],food:["Riz au poulet, 2500","Eau 1,5 L, 300, 24","Poisson braisé, 3500"],repair:["Écran de téléphone, 12000, 5","Vidange, 8000, service","Batterie, 7000, 3"],beauty:["Coiffure, 3000","Tresses, 8000","Manucure, 4000"],health:["Consultation, 5000","Analyse de sang, 6000","Pansement, 2000"],school:["Frais de scolarité, 45000","Inscription, 15000","Cantine, 8000"],services:["Impression, 50","Livraison, 1500","Installation, 5000"],travel:["Billet Cotonou-Lagos, 25000","Réservation d'hôtel, 30000","Visa, 40000"],rent:["Studio 1, 45000","Studio 2, 50000","Local commercial A, 80000"],hotel:["Chambre standard, 15000, 3","Chambre climatisée, 25000, 2","Suite, 45000, 1"]};
+const BEX={shop:["Sandals, 8000, 12","Sneakers, 25000, 5","Delivery, 1000, service"],electronics:["Tecno Spark 20, 85000, 4","Charger, 3500, 20","Screen repair, 12000, service"],pharmacy:["Paracetamol 500 mg, 800, 100, 03/2028, B2231","Hand sanitizer 250 ml, 1500, 40, 11/2027, A771","Consultation, 2000, service"],food:["Rice and chicken, 2500","Water 1.5 L, 300, 24","Grilled fish, 3500"],repair:["Phone screen, 12000, 5","Oil change, 8000, service","Battery, 7000, 3"],beauty:["Haircut, 3000","Braids, 8000","Manicure, 4000"],health:["Consultation, 5000","Blood test, 6000","Dressing, 2000"],school:["Tuition fee, 45000","Registration, 15000","Canteen, 8000"],services:["Printing, 50","Delivery, 1500","Installation, 5000"],travel:["Ticket Cotonou-Lagos, 25000","Hotel booking, 30000","Visa, 40000"],rent:["Studio 1, 45000","Studio 2, 50000","Shop unit A, 80000"],hotel:["Standard room, 15000, 3","AC room, 25000, 2","Suite, 45000, 1"]};
+const BEXF={shop:["Sandales, 8000, 12","Baskets, 25000, 5","Livraison, 1000, service"],electronics:["Tecno Spark 20, 85000, 4","Chargeur, 3500, 20","Réparation d'écran, 12000, service"],pharmacy:["Paracétamol 500 mg, 800, 100, 03/2028, B2231","Gel hydroalcoolique 250 ml, 1500, 40, 11/2027, A771","Consultation, 2000, service"],food:["Riz au poulet, 2500","Eau 1,5 L, 300, 24","Poisson braisé, 3500"],repair:["Écran de téléphone, 12000, 5","Vidange, 8000, service","Batterie, 7000, 3"],beauty:["Coiffure, 3000","Tresses, 8000","Manucure, 4000"],health:["Consultation, 5000","Analyse de sang, 6000","Pansement, 2000"],school:["Frais de scolarité, 45000","Inscription, 15000","Cantine, 8000"],services:["Impression, 50","Livraison, 1500","Installation, 5000"],travel:["Billet Cotonou-Lagos, 25000","Réservation d'hôtel, 30000","Visa, 40000"],rent:["Studio 1, 45000","Studio 2, 50000","Local commercial A, 80000"],hotel:["Chambre standard, 15000, 3","Chambre climatisée, 25000, 2","Suite, 45000, 1"]};
 function bulkPh(){ return ((L()==="fr"?BEXF:BEX)[biz()]||BEX.shop).join("\n"); }
 function bulkHelp(){ const k=biz(), fr=L()==="fr";
   if(k==="hotel") return fr?"Une chambre par ligne : nom, prix par nuit, nombre de chambres de ce type. Le nombre est facultatif (1 par défaut).":"One room type per line: name, price per night, number of rooms of this type. The number is optional (1 if empty).";
@@ -1498,7 +1499,7 @@ function paySection(){
     <div class="actions"><button class="btn primary" data-act="save-pay">${t("save")}</button></div><p class="note" style="margin:0">${t("pay_hint")}</p></div></section>`;
 }
 /* ---------- online catalog ---------- */
-const catOn=()=>!!(window.__catPub&&!window.__member&&S.shop.cat&&S.shop.cat.on);
+const catOn=()=>!!(window.__catPub&&!window.__member&&S.shop.cat&&S.shop.cat.on&&biz()!=="pharmacy");
 const CATLAB={shop:["Produits","Products"],electronics:["Produits","Products"],pharmacy:["Médicaments","Medicines"],food:["Menu","Menu"],beauty:["Prestations","Services"],health:["Prestations","Services"],school:["Frais et services","Fees and services"],repair:["Services","Services"],travel:["Voyages et services","Trips and services"],services:["Services","Services"],rent:["Biens à louer","Properties for rent"],hotel:["Chambres","Rooms"]};
 const DT={hotel:[["ac","Clim","AC"],["wifi","Wi-Fi","Wi-Fi"],["bf","Petit-déjeuner","Breakfast"],["tv","TV","TV"],["hw","Eau chaude","Hot water"],["gen","Groupe électrogène","Generator"],["pk","Parking","Parking"],["kt","Cuisine","Kitchen"],["pool","Piscine","Pool"]],
 rent:[["fence","Clôturé","Fenced"],["wat","Eau","Water"],["mtr","Compteur personnel","Own meter"],["pk","Parking","Parking"],["sec","Gardien","Security"],["til","Carrelé","Tiled"],["fur","Meublé","Furnished"],["gen","Groupe électrogène","Generator"]],
@@ -1554,6 +1555,7 @@ function catNote(){
 }
 function catSection(){
   if(!window.__catPub||!isOwner()) return "";
+  if(biz()==="pharmacy") return `<section class="sec" id="cat-box"><h2>${lx("Ma page en ligne","My online page")}</h2><div class="card"><p class="note" style="margin:0">${lx("Les pharmacies n'ont pas de page publique ni de place dans Ecrici Market. Votre cahier (stock, lots, dates de péremption, ventes) reste privé et complet.","Pharmacies do not get a public page or a place in Ecrici Market. Your ledger (stock, batches, expiry dates, sales) stays private and complete.")}</p></div></section>`;
   shortCheck();
   const c0=S.shop.cat||{}, d=ui.cd||{}, c=Object.assign({},c0,d), url=catUrl(), m=ui.catMsg||"";
   const col=ACCENTS.includes(c0.color)?c0.color:accentOf(S.shop);
@@ -1873,7 +1875,7 @@ function renderModal(){
       <div class="field"><label for="c-phone">${t("phone")}</label><input id="c-phone" inputmode="tel" placeholder="${esc(C().ph)}" autocomplete="off"></div>
       <p class="note" style="margin:0">${t("phone_hint")}</p>
       ${biz()==="school"?`<div class="field"><label for="c-cls">${lx("Classe","Class")}</label><input id="c-cls" autocomplete="off" placeholder="${lx("ex. CM2, 6e A","e.g. Grade 5, JSS 1A")}"></div>`:""}
-      ${memoOn()?`<div class="field"><label for="c-memo">${memoLab()}</label><textarea id="c-memo" rows="2" autocomplete="off" placeholder="${lx("Facultatif","Optional")}"></textarea></div>`:""}
+      ${memoOn()?`<div class="field"><label for="c-memo">${memoLab()}</label><textarea id="c-memo" rows="2" autocomplete="off" placeholder="${lx("Facultatif","Optional")}"></textarea>${memoNote()}</div>`:""}
       ${biz()==="rent"?`<div class="grid2"><div class="field"><label for="c-unit">${lx("Logement","Unit")}</label><input id="c-unit" autocomplete="off" placeholder="${lx("Ex. Chambre 3","e.g. Flat 3B")}"></div><div class="field"><label for="c-rent">${lx("Loyer par mois","Rent per month")}</label><input id="c-rent" inputmode="decimal" placeholder="${esc(ph("price"))}" autocomplete="off"></div></div>`:""}
       <div class="err" id="c-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-cust">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
@@ -1945,7 +1947,7 @@ function renderModal(){
       <div class="field"><label for="ec-phone">${t("phone")}</label><input id="ec-phone" value="${esc(c.phone||"")}" inputmode="tel" autocomplete="off"></div>
       <p class="note" style="margin:0">${t("phone_hint")}</p>
       ${biz()==="school"?`<div class="field"><label for="ec-cls">${lx("Classe","Class")}</label><input id="ec-cls" value="${esc(c.cls||"")}" autocomplete="off"></div>`:""}
-      ${memoOn()?`<div class="field"><label for="ec-memo">${memoLab()}</label><textarea id="ec-memo" rows="2" autocomplete="off">${esc(c.memo||"")}</textarea></div>`:""}
+      ${memoOn()?`<div class="field"><label for="ec-memo">${memoLab()}</label><textarea id="ec-memo" rows="2" autocomplete="off">${esc(c.memo||"")}</textarea>${memoNote()}</div>`:""}
       ${biz()==="rent"?`<div class="grid2"><div class="field"><label for="ec-unit">${lx("Logement","Unit")}</label><input id="ec-unit" value="${esc(c.unit||"")}" autocomplete="off"></div><div class="field"><label for="ec-rent">${lx("Loyer par mois","Rent per month")}</label><input id="ec-rent" value="${esc(c.rent||"")}" placeholder="${esc(ph("price"))}" inputmode="decimal" autocomplete="off"></div></div>`:""}
       <div class="err" id="ec-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-ecust" data-id="${c.id}">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
