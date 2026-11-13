@@ -165,7 +165,7 @@ function refBox(){
   const tot={}; due.forEach(s=>{ const c=P(s.country).cur; tot[c]=(tot[c]||0)+rew(s.country); });
   return `<div class="card"><div class="name">Rewards to pay (${due.length})</div>${due.map(s=>`<div class="muted">${esc(s.referred_by)} · ${esc(fmtAmt(rew(s.country),s.country))} · for ${esc(s.name||s.phone)} <button class="p" data-id="${esc(s.id)}" data-a="refpaid">Mark paid</button></div>`).join("")}</div>`;
 }
-const BIZN={shop:"Shop / general trade",electronics:"Electronics",pharmacy:"Pharmacy",food:"Restaurant / food",beauty:"Salon / beauty",health:"Clinic / lab",school:"School / training",repair:"Workshop / tailoring",travel:"Travel & tours",services:"Other services",rent:"Rentals",hotel:"Hotel / guesthouse"};
+const BIZN={shop:"Shop / general trade",electronics:"Electronics",pharmacy:"Pharmacy",food:"Restaurant / food",beauty:"Salon / beauty",health:"Clinic / lab",school:"School / training",repair:"Artisans & repairs",travel:"Travel & tours",services:"Other services",rent:"Rentals",hotel:"Hotel / guesthouse"};
 const bizOf=s=>BIZN[s.biz]||"Not chosen yet";
 function bizSummary(){
   const c={}; shops.forEach(s=>{ const k=bizOf(s); c[k]=(c[k]||0)+1; });
@@ -176,9 +176,10 @@ function card(s){
   const st=state(s), dl=daysLeft(s), wa=s.phone?`https://wa.me/${String(s.phone).replace(/\D/g,"")}`:"";
   const info=s.paid_until?`Paid until ${s.paid_until}${dl!=null?` (${dl>=0?dl+" days left":Math.abs(dl)+" days ago"})`:""}`:"Not paid yet";
   return `<div class="card" data-shop="${esc(s.id)}"><div class="top"><div><div class="name">${esc(s.name||"(no name)")}</div><div class="muted">+${esc(s.phone)} · ${esc(s.country)} · ${esc(bizOf(s))}</div></div><span class="chip ${st}">${st}</span></div>
-    <div class="muted">${esc(info)}</div>${refLine(s)}${shopsBlock(s)}
+    <div class="muted">${esc(info)}</div>${s.market_ok===false?`<div class="muted"><b>Public page: ${s.market_asked?"WAITING for you":"not allowed yet"}</b></div>`:""}${refLine(s)}${shopsBlock(s)}
     <div class="row">${st==="pending"?`<button class="p" data-id="${esc(s.id)}" data-a="trial">Approve · 7 days</button>`:""}
       <button data-id="${esc(s.id)}" data-a="m1">+1 month</button><button data-id="${esc(s.id)}" data-a="m3">+3 months</button><button data-id="${esc(s.id)}" data-a="m12">+12 months</button></div>
+    <div class="row">${s.market_ok===false?`<button class="p" data-id="${esc(s.id)}" data-a="mkt-on">Allow public page</button>`:`<button data-id="${esc(s.id)}" data-a="mkt-off">Stop public page</button>`}</div>
     <div class="row">${wa?`<a class="b" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`:""}
       <button data-id="${esc(s.id)}" data-a="pw">Reset password</button>
       ${s.status==="suspended"?`<button data-id="${esc(s.id)}" data-a="react">Reactivate</button>`:`<button class="d" data-id="${esc(s.id)}" data-a="susp">Suspend</button>`}
@@ -258,6 +259,8 @@ async function act(id,a,cid){
   if(a==="susp"){ if(!confirm("Suspend "+(s.name||s.phone)+"?")) return; body={status:"suspended"}; }
   else if(a==="react"){ body={status:"active"}; }
   else if(a==="refpaid"){ body={ref_status:"paid"}; }
+  else if(a==="mkt-on"){ body={market_ok:true}; }
+  else if(a==="mkt-off"){ if(!confirm("Stop the public page and Market listing for "+(s.name||s.phone)+"?")) return; body={market_ok:false}; }
   else { const base=(s.status==="active"&&s.paid_until&&s.paid_until>today())?s.paid_until:today(); body={status:"active",paid_until:addTo(base,a)}; if(s.referred_by&&!s.ref_status&&a!=="trial") body.ref_status="due"; }
   err=""; msg=""; msgLink="";
   const r=await api("/rest/v1/shops?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{Prefer:"return=representation"},body});

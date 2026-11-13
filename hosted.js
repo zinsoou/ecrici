@@ -342,7 +342,9 @@ let active = false, lastSynced = Number(lsGet(K.sync)) || 0, busyPush = false, d
 async function getShop() {
   const r = await api("/rest/v1/shops?id=eq." + (shopId || sess.uid) + "&select=*");
   if (!r.ok) throw httpErr(r);
-  return (r.json && r.json[0]) || null;
+  const sh = (r.json && r.json[0]) || null;
+  window.__mkt = !sh || sh.market_ok !== false; /* false = public page still waiting for approval */
+  return sh;
 }
 async function loadMe() {
   const r = await api("/rest/v1/rpc/me_info", { method: "POST", body: {} });
@@ -505,7 +507,9 @@ async function catPublish(force) {
     let r = await api("/rest/v1/catalogs?shop_id=eq." + id, { method: "PATCH", headers: { Prefer: "return=representation" }, body });
     if (r.ok && Array.isArray(r.json) && !r.json.length) r = await api("/rest/v1/catalogs", { method: "POST", headers: { Prefer: "return=minimal" }, body: Object.assign({ shop_id: id }, body) });
     if (!r.ok) return { ok: false, taken: r.status === 409, reserved: r.status === 400 && /reserved_name/.test(JSON.stringify(r.json || "")), status: r.status };
-    lsSet("ecrici-cat-pub", sig); if (c.listed) lsSet("ecrici-mk", "1"); return { ok: true };
+    lsSet("ecrici-cat-pub", sig); if (c.listed) lsSet("ecrici-mk", "1");
+    if (c.on && window.__mkt === false && lsGet("ecrici-mkt-ask") !== String(sess.uid)) { api("/rest/v1/rpc/request_market", { method: "POST", body: {} }).then(q => { if (q && q.ok) lsSet("ecrici-mkt-ask", String(sess.uid)); }).catch(() => {}); }
+    return { ok: true };
   } catch (e) { return { ok: false, offline: !!e.offline }; }
 }
 window.__catPub = catPublish;
