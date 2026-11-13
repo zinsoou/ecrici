@@ -485,8 +485,8 @@ Object.assign(BIZ,{
        en:{tab_cust:"Patients",customers:"Patients",customer:"Patient",add_customer:"Add patient",new_customer:"+ New patient",no_customers:"No patients yet.",tab_stock:"Services",stock:"Services",add_product:"Add a service",item:"Service",product_name:"Service name (e.g. consultation)"}},
  school:{fr:{tab_cust:"Élèves",customers:"Élèves",customer:"Élève",add_customer:"Ajouter un élève",new_customer:"+ Nouvel élève",no_customers:"Aucun élève pour l'instant.",phone:"Téléphone du parent",tab_stock:"Frais",stock:"Frais",add_product:"Ajouter des frais",tab_sale:"Frais",new_sale:"Nouveau paiement de frais",item:"Frais",product_name:"Nom des frais (ex. scolarité)",unit_price:"Montant"},
        en:{tab_cust:"Students",customers:"Students",customer:"Student",add_customer:"Add student",new_customer:"+ New student",no_customers:"No students yet.",tab_stock:"Fees",stock:"Fees",add_product:"Add a fee",tab_sale:"Fees",new_sale:"New fee",item:"Fee",product_name:"Fee name (e.g. tuition)",unit_price:"Amount"}},
- repair:{fr:{tab_stock:"Travaux",stock:"Travaux",add_product:"Ajouter un travail",item:"Travail / pièce",product_name:"Nom du travail"},
-       en:{tab_stock:"Jobs",stock:"Jobs",add_product:"Add a job",item:"Job / part",product_name:"Job name"}},
+ repair:{fr:{tab_stock:"Tarifs",stock:"Tarifs",add_product:"Ajouter un tarif ou une pièce",item:"Service / pièce",product_name:"Nom du service ou de la pièce"},
+       en:{tab_stock:"Prices",stock:"Prices",add_product:"Add a service or part",item:"Service / part",product_name:"Service or part name"}},
  services:{fr:{tab_stock:"Services",stock:"Services",add_product:"Ajouter un service",item:"Service",product_name:"Nom du service"},
        en:{tab_stock:"Services",stock:"Services",add_product:"Add a service",item:"Service",product_name:"Service name"}}
 });
@@ -500,7 +500,7 @@ const VOC={
  services:{w:["clients","clients"],pick:["Services","Services"],pq:["Search services…","Rechercher un service…"],oth:["Other service (type it)","Autre service (écrivez-le)"],wk:["Walk-in client","Client de passage"],top:["Most requested services","Services les plus demandés"],bulk:["Add many services","Ajouter plusieurs services"],cnt:["Number of jobs","Nombre de prestations"],billed:1},
  food:{w:["customers","clients"],pick:["Menu","Menu"],pq:["Search the menu…","Rechercher au menu…"],oth:["Other dish or drink (type it)","Autre plat ou boisson (écrivez-le)"],top:["Best-selling dishes","Plats les plus vendus"],bulk:["Add many to the menu","Ajouter plusieurs au menu"]},
  health:{w:["patients","patients"],pick:["Services","Soins"],pq:["Search services…","Rechercher un soin…"],oth:["Other service (type it)","Autre acte (écrivez-le)"],wk:["Walk-in patient","Patient de passage"],top:["Most frequent services","Soins les plus fréquents"],bulk:["Add many services","Ajouter plusieurs soins"],cnt:["Number of visits","Nombre de visites"],billed:1},
- repair:{w:["customers","clients"],pick:["Jobs and parts","Travaux et pièces"],pq:["Search jobs or parts…","Rechercher un travail ou une pièce…"],oth:["Other job or part (type it)","Autre travail ou pièce (écrivez-le)"],top:["Most frequent jobs","Travaux les plus fréquents"],bulk:["Add many jobs","Ajouter plusieurs travaux"],cnt:["Number of jobs","Nombre de travaux"]}};
+ repair:{w:["customers","clients"],pick:["Services and parts","Services et pièces"],pq:["Search services or parts…","Rechercher un service ou une pièce…"],oth:["Other service or part (type it)","Autre service ou pièce (écrivez-le)"],top:["Most frequent services","Services les plus fréquents"],bulk:["Add many prices","Ajouter plusieurs tarifs"],cnt:["Number of prices","Nombre de tarifs"]}};
 Object.keys(VOC).forEach(k=>{ const v=VOC[k], B=BIZ[k]; [["en",0],["fr",1]].forEach(([l,i])=>{ const o=B[l]; const w=v.w[i], W=w.charAt(0).toUpperCase()+w.slice(1);
   if(v.pick) o.pick_lab=v.pick[i]; if(v.pq) o.pick_q=v.pq[i]; if(v.oth) o.item_other=v.oth[i]; if(v.wk){ o.walkin=v.wk[i]; o.walk=k==="rent"?(l==="en"?"No tenant":"Sans locataire"):v.wk[i]; }
   if(v.top) o.rep_top_products=v.top[i]; if(v.bulk) o.bulk_t=v.bulk[i]; if(v.cnt) o.rep_count=v.cnt[i];
@@ -731,7 +731,7 @@ async function initCloud(){
   }catch(e){ cloud=null; storeMode="device"; updateStatus(); }
 }
 function migrate(p){
-  p.products=p.products||[]; p.appts=p.appts||[]; p.staff=p.staff||[]; p.expenses=p.expenses||[]; p.expRules=p.expRules||[]; p.shop.staffOn=!!p.shop.staffOn; p.shop.recovery=p.shop.recovery||""; p.shop.lastBackup=p.shop.lastBackup||"";
+  p.products=p.products||[]; p.appts=p.appts||[]; p.jobs=p.jobs||[]; p.staff=p.staff||[]; p.expenses=p.expenses||[]; p.expRules=p.expRules||[]; p.shop.staffOn=!!p.shop.staffOn; p.shop.recovery=p.shop.recovery||""; p.shop.lastBackup=p.shop.lastBackup||"";
   if(p.shop.staffOn&&!p.staff.length) p.shop.staffOn=false;
   p.txs.forEach(x=>{ if(x.type==="sale") x.lines.forEach(l=>{ if(!("pid" in l)) l.pid=null; if(x.example&&l.c===undefined) l.c=EX_COST[l.d]||0; }); });
   p.products.forEach(q=>{ if(q.cost===undefined) q.cost=q.example?(EX_COST[q.name]||0):0; });
@@ -889,7 +889,7 @@ function viewHome(){
   if(isOwner()&&canInstall()) h+=`<div class="banner"><span>${t("inst_txt")}</span><span style="display:flex;gap:6px">${deferredInstall?`<button class="btn small primary" data-act="install-app">${t("inst_btn")}</button>`:""}<button class="btn small" data-act="install-off">${t("inst_later")}</button></span></div>`;
   const startOn=false;
   if(biz()==="shop"&&!startOn&&!S.customers.length&&!S.txs.length&&!S.products.length) h+=`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`;
-  h+=homeGuide()+rentCard()+hotelCard()+apptCard()+expiryCard();
+  h+=homeGuide()+rentCard()+hotelCard()+apptCard()+jobCard()+expiryCard();
   h+=`<section class="sec"><h2>${t("today")}<span>${new Date().toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{weekday:"long",day:"numeric",month:"long"})}</span></h2>
     <div class="sum">
       <div class="card"><div class="lbl">${t("sold")}</div><div class="val num">${money(sold)}</div></div>
@@ -1083,6 +1083,20 @@ const wdLabel=k=>{ const t0=todayKey(); if(k===t0) return lx("Aujourd'hui","Toda
 function apptList(){ const t0=todayKey(); return (S.appts||[]).filter(a=>!a.done&&!a.gone&&a.date>=t0).sort((a,b)=>(a.date+(a.time||"99:99")).localeCompare(b.date+(b.time||"99:99"))); }
 function apptMsg(a){ const c=a.cust&&custById(a.cust), nm=c?c.name:a.name; return lx(`Bonjour ${nm}, rappel de votre rendez-vous chez ${S.shop.name} : ${wdLabel(a.date)} (${fmtDay(a.date)})${a.time?" à "+a.time:""}. Merci de nous prévenir en cas d'empêchement.`,`Hello ${nm}, a reminder of your appointment at ${S.shop.name}: ${wdLabel(a.date)} (${fmtDay(a.date)})${a.time?" at "+a.time:""}. Please let us know if you cannot make it.`); }
 function remindList(){ const tm=dayAdd(todayKey(),1); return (S.appts||[]).filter(a=>!a.done&&!a.gone&&a.date===tm&&(()=>{ const c=a.cust&&custById(a.cust); return c&&c.phone; })()); }
+/* ---------- jobs (Artisans and Services only) ---------- */
+const jobsOn=()=>["repair","services"].includes(biz());
+const jobSale=j=>{ const x=j.sale&&S.txs.find(y=>y.id===j.sale); return x&&!x.void?x:null; };
+const jobState=j=>jobSale(j)?"done":(j.st==="quote"?"quote":"prog");
+const jobCosts=j=>(S.expenses||[]).filter(e=>e.job===j.id).reduce((a,e)=>a+e.amount,0);
+function jobCard(){
+  if(!jobsOn()||!isOwner()) return "";
+  const all=(S.jobs||[]).filter(j=>!j.gone), open=all.filter(j=>jobState(j)!=="done").sort((a,b)=>String(b.created).localeCompare(String(a.created))), done=all.filter(j=>jobState(j)==="done").sort((a,b)=>String(b.created).localeCompare(String(a.created))).slice(0,5);
+  const row=j=>{ const c=j.cust&&custById(j.cust), st=jobState(j), cost=jobCosts(j), sx=jobSale(j), rev=sx?sx.total:(+j.price||0), net=rev-cost;
+    const chip={quote:lx("Devis","Quote"),prog:lx("En cours","In progress"),done:lx("Terminé","Done")}[st];
+    return `<div class="row" style="cursor:default;align-items:flex-start"><div class="main"><div class="name">${esc(j.title)} <span class="note" style="margin:0">· ${chip}</span></div><div class="sub">${esc(c?c.name:"")}${c&&(+j.price>0||sx)?" · ":""}${sx||+j.price>0?money(rev):""}${cost>0?" · "+lx("Coûts ","Costs ")+money(cost):""}${(sx||+j.price>0)&&(cost>0||sx)?" · "+lx("Gain ","Profit ")+`<b style="color:${net>=0?"var(--paid)":"var(--owed)"}">${money(net)}</b>`:""}</div>
+      ${st==="done"?"":`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${st==="quote"?`<button class="btn small primary" data-act="job-start" data-id="${j.id}">${lx("Devis accepté","Quote accepted")}</button>`:`<button class="btn small primary" data-act="job-done" data-id="${j.id}">${lx("Terminé et paiement","Done and payment")}</button>`}<button class="btn small" data-act="job-cost" data-id="${j.id}">${lx("+ Coût","+ Cost")}</button><button class="btn small danger" data-act="job-del" data-id="${j.id}" aria-label="${lx("Supprimer ce chantier","Delete this job")}">×</button></div>`}</div></div>`; };
+  return `<section class="sec"><h2>${lx("Mes chantiers","My jobs")}<span>${open.length||""}</span></h2><div class="card flush">${open.length?open.slice(0,10).map(row).join(""):`<div class="row" style="cursor:default"><div class="main"><div class="sub">${lx("Aucun chantier en cours. Ajoutez un devis ou un travail.","No open jobs. Add a quote or a job.")}</div></div></div>`}${done.length?`<div class="note" style="margin:8px 14px 2px">${lx("Terminés récemment","Recently done")}</div>`+done.map(row).join(""):""}</div><div class="actions" style="margin-top:8px"><button class="btn primary" data-act="job-new">${lx("+ Nouveau chantier","+ New job")}</button></div></section>`;
+}
 function apptCard(){
   if(!apptOn()) return "";
   const L2=apptList(), t0=todayKey(), nT=L2.filter(a=>a.date===t0).length;
@@ -1883,6 +1897,22 @@ function renderModal(){
       ${biz()==="rent"?`<div class="grid2"><div class="field"><label for="c-unit">${lx("Logement","Unit")}</label><input id="c-unit" autocomplete="off" placeholder="${lx("Ex. Chambre 3","e.g. Flat 3B")}"></div><div class="field"><label for="c-rent">${lx("Loyer par mois","Rent per month")}</label><input id="c-rent" inputmode="decimal" placeholder="${esc(ph("price"))}" autocomplete="off"></div></div>`:""}
       <div class="err" id="c-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-cust">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="job"){
+    inner=`<div class="dlg form"><h2>${lx("Nouveau chantier","New job")}</h2>
+      <div class="field"><label for="jb-title">${lx("Travail à faire","Work to do")}</label><input id="jb-title" autocomplete="off" maxlength="80" placeholder="${lx("ex. Réparation fuite d'eau","e.g. Fix water leak")}"></div>
+      <div class="field"><label for="jb-cust">${lx("Client","Customer")}</label><select id="jb-cust"><option value="">${lx("— Nouveau (écrivez le nom) —","— New (type the name) —")}</option>${S.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select></div>
+      <div class="grid2"><div class="field"><label for="jb-name">${lx("Nom (si nouveau)","Name (if new)")}</label><input id="jb-name" autocomplete="off"></div><div class="field"><label for="jb-phone">${lx("Téléphone","Phone")}</label><input id="jb-phone" inputmode="tel" autocomplete="off"></div></div>
+      <div class="grid2"><div class="field"><label for="jb-price">${lx("Prix convenu (facultatif)","Agreed price (optional)")}</label><input id="jb-price" inputmode="decimal" autocomplete="off"></div><div class="field"><label for="jb-st">${lx("État","Status")}</label><select id="jb-st"><option value="prog">${lx("En cours","In progress")}</option><option value="quote">${lx("Devis envoyé","Quote sent")}</option></select></div></div>
+      <div class="err" id="jb-err" role="alert"></div>
+      <div class="actions"><button class="btn primary" data-act="job-save">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="jobcost"){
+    const j=(S.jobs||[]).find(z=>z.id===m.id);
+    if(!j){ ui.modal=null; layer.innerHTML=""; return; }
+    inner=`<div class="dlg form"><h2>${lx("Coût du chantier","Job cost")}</h2><p class="note" style="margin:0">${esc(j.title)}</p>
+      <div class="field"><label for="jc-label">${lx("Quoi ? (matériel, pièces, transport…)","What? (materials, parts, transport…)")}</label><input id="jc-label" autocomplete="off" maxlength="60"></div>
+      <div class="field"><label for="jc-amt">${lx("Montant","Amount")}</label><input id="jc-amt" inputmode="decimal" autocomplete="off"></div>
+      <div class="err" id="jc-err" role="alert"></div>
+      <div class="actions"><button class="btn primary" data-act="jobcost-save" data-id="${j.id}">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
   }else if(m.type==="appt"){
     inner=`<div class="dlg form"><h2>${lx("Nouveau rendez-vous","New appointment")}</h2>
       <div class="field"><label for="ap-cust">${lx("Client","Client")}</label><select id="ap-cust"><option value="">${lx("— Nouveau (écrivez le nom) —","— New (type the name) —")}</option>${S.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select></div>
@@ -2016,6 +2046,7 @@ function saveSale(kind){
   for(const pid in need){ const pr=S.products.find(y=>y.id===pid); if(pr&&!pr.svc) pr.qty=Math.round((pr.qty-need[pid])*1000)/1000; }
   if(expOn()) x.lines.forEach(l=>{ const pr=l.pid&&S.products.find(y=>y.id===l.pid); if(!pr||pr.svc) return; const bt=takeBatches(pr,l.q); if(bt.length){ l.bt=bt; const ns=[...new Set(bt.map(b=>b.n).filter(Boolean))]; if(ns.length) l.sn=ns.join(", "); else delete l.sn; const es=bt.map(b=>b.e).filter(Boolean).sort(); if(es.length) l.w=fmtExp(es[0]); else delete l.w; } });
   if(x.method) S.shop.lastMethod=x.method;
+  if(d.job){ const jb=(S.jobs||[]).find(z=>z.id===d.job&&!z.gone); if(jb){ x.job=jb.id; jb.sale=x.id; jb.st="prog"; jb.u=Date.now(); } }
   S.txs.push(x); save();
   ui.draft=null; ui.modal={type:"receipt",id:x.id,kind:kind==="invoice"?"invoice":"receipt"}; ui.view="home"; render(); toast(t("created"));
 }
@@ -2063,6 +2094,21 @@ document.addEventListener("click",e=>{
       save(); ui.modal=null; render(); toast(t("cust_saved")); break; }
     case "cls-filter": ui.search=(ui.search.trim().toLowerCase()===el.dataset.k.toLowerCase())?"":el.dataset.k; render(); break;
     case "remind-open": ui.modal={type:"apptremind"}; renderModal(); break;
+    case "job-new": ui.modal={type:"job"}; renderModal(); break;
+    case "job-save": { const er=$("#jb-err"), title=$("#jb-title").value.trim(); let cid=$("#jb-cust").value; const nm=$("#jb-name").value.trim(), ph=$("#jb-phone").value.trim(), price=parseAmt($("#jb-price").value)||0;
+      if(!title){ er.textContent=lx("Écrivez le travail à faire.","Write the work to do."); break; }
+      if(!cid&&!nm){ er.textContent=lx("Choisissez un client ou écrivez son nom.","Choose a customer or type their name."); break; }
+      if(phoneBad(ph)){ er.textContent=PHBAD(); break; }
+      if(!cid){ const c={id:uid(),name:nm,phone:ph,created:new Date().toISOString()}; S.customers.push(c); cid=c.id; }
+      (S.jobs=S.jobs||[]).push({id:uid(),cust:cid,title:title.slice(0,80),price,st:$("#jb-st").value==="quote"?"quote":"prog",created:new Date().toISOString(),u:Date.now()}); save(); ui.modal=null; render(); toast(t("created")); break; }
+    case "job-start": { const j=(S.jobs||[]).find(z=>z.id===id); if(j){ j.st="prog"; j.u=Date.now(); save(); render(); } break; }
+    case "job-cost": ui.modal={type:"jobcost",id}; renderModal(); break;
+    case "jobcost-save": { const j=(S.jobs||[]).find(z=>z.id===id), er=$("#jc-err"), lab=$("#jc-label").value.trim(), amt=parseAmt($("#jc-amt").value);
+      if(!j){ ui.modal=null; render(); break; }
+      if(!lab||!(amt>0)){ er.textContent=t("err_exp"); break; }
+      (S.expenses=S.expenses||[]).push({id:uid(),date:new Date().toISOString(),amount:amt,label:(j.title+" - "+lab).slice(0,100),job:j.id}); j.u=Date.now(); save(); ui.modal=null; render(); toast(t("created")); break; }
+    case "job-done": { const j=(S.jobs||[]).find(z=>z.id===id); if(!j) break; ui.draft=newDraft(j.cust); ui.draft.lines=[{d:j.title,q:"1",p:(+j.price>0?String(j.price):""),pid:null,auto:false}]; ui.draft.job=j.id; ui.view="sale"; ui.custId=null; render(); window.scrollTo(0,0); break; }
+    case "job-del": { const j=(S.jobs||[]).find(z=>z.id===id); if(j&&confirm(lx("Supprimer ce chantier ? Les coûts déjà notés restent dans vos dépenses.","Delete this job? Costs already recorded stay in your expenses."))){ j.gone=true; j.u=Date.now(); save(); render(); } break; }
     case "appt-new": ui.modal={type:"appt"}; renderModal(); break;
     case "appt-save": { const er=$("#ap-err"); let cid=$("#ap-cust").value, nm=$("#ap-name").value.trim(), ph=$("#ap-phone").value.trim(), dt=$("#ap-date").value;
       if(!cid&&!nm){ er.textContent=lx("Choisissez un client ou écrivez son nom.","Choose a client or type their name."); break; }
