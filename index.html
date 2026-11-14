@@ -531,7 +531,22 @@ const nostock = () => NOSTOCK.includes(biz());
 const svcDef = () => nostock() || biz()==="food"; /* new dish/drink: no stock counting unless unticked */
 const BIZ_LIST=["shop","electronics","pharmacy","food","beauty","health","school","repair","travel","services","rent","hotel"];
 const BIZ_NAME={shop:["Boutique / supermarché / commerce","Shop / supermarket / general trade"],electronics:["Électronique (téléphones, ordinateurs, TV, groupes électrogènes)","Electronics (phones, laptops, TVs, generators)"],pharmacy:["Pharmacie","Pharmacy / chemist"],food:["Restaurant / bar / alimentation","Restaurant / bar / food"],beauty:["Salon / coiffure / beauté","Salon / barber / beauty"],health:["Clinique / hôpital / laboratoire","Clinic / hospital / lab"],school:["École / formation","School / training"],repair:["Artisans et réparations (plombier, électricien, garage, couture…)","Artisans & repairs (plumber, electrician, garage, tailoring…)"],travel:["Voyages & tourisme","Travel & tours"],services:["Autres services","Other services"],rent:["Location (propriétaire)","Rentals (landlord)"],hotel:["Hôtel / auberge","Hotel / guesthouse"]};
-const t = (k,...a) => { const o=BIZ[biz()]; if(o&&o[L()]&&o[L()][k]!=null) return o[L()][k]; const v=T[L()][k]; return typeof v==="function"?v(...a):(v==null?k:v); };
+function trKey(){ try{ return (["repair","services"].includes(biz())&&S.shop&&S.shop.cat&&S.shop.cat.tr)||""; }catch(e){ return ""; } }
+const TRV={
+ agent:{fr:{tab_stock:"Maisons",stock:"Maisons",add_product:"Ajouter une maison ou une chambre",item:"Logement",product_name:"Nom du logement",unit_price:"Loyer par mois"},
+        en:{tab_stock:"Houses",stock:"Houses",add_product:"Add a house or room",item:"House",product_name:"House name",unit_price:"Rent per month"},
+        lab:["Logements disponibles","Available houses"],ph:{name:["ex. 2 chambres salon, Akpakpa","e.g. 2-bedroom flat, Akpakpa"],price:["ex. 50000","e.g. 50000"]}},
+ tailor:{fr:{tab_stock:"Modèles",stock:"Modèles",add_product:"Ajouter un modèle ou une tenue",item:"Modèle",product_name:"Nom du modèle",unit_price:"Prix à partir de"},
+        en:{tab_stock:"Styles",stock:"Styles",add_product:"Add a style or outfit",item:"Style",product_name:"Style name",unit_price:"Price from"},
+        lab:["Modèles et prix","Styles and prices"],ph:{name:["ex. Robe en pagne","e.g. Ankara dress"]}},
+ photo:{fr:{tab_stock:"Formules",stock:"Formules",add_product:"Ajouter une formule",item:"Formule",product_name:"Nom de la formule",unit_price:"Prix"},
+        en:{tab_stock:"Packages",stock:"Packages",add_product:"Add a package",item:"Package",product_name:"Package name",unit_price:"Price"},
+        lab:["Formules","Packages"],ph:{name:["ex. Mariage, 6 heures","e.g. Wedding, 6 hours"]}},
+ caterer:{fr:{tab_stock:"Formules",stock:"Formules",add_product:"Ajouter une formule",item:"Formule",product_name:"Nom de la formule",unit_price:"Prix"},
+        en:{tab_stock:"Packages",stock:"Packages",add_product:"Add a package",item:"Package",product_name:"Package name",unit_price:"Price"},
+        lab:["Formules","Packages"],ph:{name:["ex. Buffet pour 50 personnes","e.g. Buffet for 50 people"]}}
+};
+const t = (k,...a) => { const tv=TRV[trKey()]; if(tv&&tv[L()]&&tv[L()][k]!=null) return tv[L()][k]; const o=BIZ[biz()]; if(o&&o[L()]&&o[L()][k]!=null) return o[L()][k]; const v=T[L()][k]; return typeof v==="function"?v(...a):(v==null?k:v); };
 const C = () => COUNTRIES[S.shop.country]||COUNTRIES.BJ;
 const cName = v => (L()==="en"&&v.en)?v.en:v.name;
 
@@ -967,7 +982,7 @@ const PH={
  name:{shop:["ex. Riz 50 kg","e.g. Rice 50kg"],electronics:["ex. iPhone 13 128 Go","e.g. iPhone 13 128GB"],pharmacy:["ex. Paracétamol 500 mg","e.g. Paracetamol 500mg"],food:["ex. Riz sauce poulet","e.g. Jollof rice with chicken"],beauty:["ex. Tresses","e.g. Braids"],health:["ex. Consultation","e.g. Consultation"],school:["ex. Scolarité 1er trimestre","e.g. Term 1 tuition"],repair:["ex. Remplacement d'écran","e.g. Screen replacement"],travel:["ex. Séjour Dubaï 5 jours","e.g. Dubai 5-day package"],services:["ex. Nettoyage de bureau","e.g. Office cleaning"],rent:["ex. Studio 3","e.g. Flat 3B"],hotel:["ex. Chambre climatisée","e.g. Deluxe room"]},
  price:{shop:["ex. 5000","e.g. 5000"],electronics:["ex. 185000","e.g. 420000"],pharmacy:["ex. 1500","e.g. 1500"],food:["ex. 2500","e.g. 2500"],beauty:["ex. 8000","e.g. 8000"],health:["ex. 5000","e.g. 5000"],school:["ex. 60000","e.g. 60000"],repair:["ex. 15000","e.g. 15000"],travel:["ex. 850000","e.g. 850000"],services:["ex. 20000","e.g. 20000"],rent:["ex. 150000","e.g. 150000"],hotel:["ex. 35000","e.g. 35000"]},
  exp:{shop:["ex. Transport, électricité, salaire","e.g. Transport, electricity, salary"],rent:["ex. Réparation plomberie","e.g. Plumbing repair"],hotel:["ex. Lessive, électricité, salaire","e.g. Laundry, electricity, salary"],school:["ex. Salaire des enseignants","e.g. Teachers' salaries"],travel:["ex. Billets d'avion, hôtel","e.g. Flight tickets, hotel"],food:["ex. Ingrédients, gaz, salaire","e.g. Ingredients, gas, salary"],pharmacy:["ex. Loyer, électricité, salaire","e.g. Rent, electricity, salary"]}};
-function ph(k){ const o=PH[k]; const v=o[biz()]||o.shop; return v[L()==="fr"?0:1]; }
+function ph(k){ const tv=TRV[trKey()]; if(tv&&tv.ph&&tv.ph[k]) return tv.ph[k][L()==="fr"?0:1]; const o=PH[k]; const v=o[biz()]||o.shop; return v[L()==="fr"?0:1]; }
 const expOn=()=>biz()==="pharmacy";
 const dayAdd=(k,n)=>{ const [y,m,d]=k.split("-").map(Number); return dkey(new Date(y,m-1,d+n)); };
 const daysBetween=(a,b)=>{ const A=a.split("-").map(Number),B=b.split("-").map(Number); return Math.round((new Date(B[0],B[1]-1,B[2])-new Date(A[0],A[1]-1,A[2]))/864e5); };
@@ -1541,8 +1556,10 @@ function phInit(m,p){ if(!m.ph) m.ph=[p&&p.img].concat((p&&p.more)||[]).filter(B
 function phHtml(m){ const n=m.ph.length; return `<div class="phg">${m.ph.map((e,i)=>`<div class="pht"><img alt="" src="${esc(e.u||e.pv)}" ${i?`data-act="ph-first" data-i="${i}"`:""}><button type="button" class="phx" data-act="ph-del" data-i="${i}" aria-label="${lx("Retirer","Remove")}">×</button>${i?"":`<span class="phm">${lx("Principale","Main")}</span>`}</div>`).join("")}${n<PHMAX?`<label class="pht add"><span>+</span><small>${lx("Photo","Photo")}</small><input type="file" id="pr-img" accept="image/*" multiple style="display:none"></label>`:""}</div><small class="muted">${n>1?lx("Touchez une photo pour la mettre en premier.","Tap a photo to make it the first one."):lx("Jusqu'à 5 photos par article.","Up to 5 photos per item.")}</small>`; }
 function phTotal(skip){ return S.products.reduce((a,x)=>x.id===skip?a:a+(x.img?1:0)+((x.more||[]).length),0); }
 function phRefresh(){ const m=ui.modal, g=$("#pr-gal"); if(m&&g) g.innerHTML=phHtml(m); }
-const TRADES=[["plumber","Plombier","Plumber"],["electrician","Électricien","Electrician"],["carpenter","Menuisier","Carpenter"],["mason","Maçon","Mason"],["painter","Peintre","Painter"],["welder","Soudeur","Welder"],["mechanic","Mécanicien","Mechanic"],["ac","Technicien clim / froid","AC / fridge technician"],["tiler","Carreleur","Tiler"],["tailor","Couturier / couturière","Tailor"],["cleaner","Nettoyage","Cleaning"],["agent","Démarcheur (logement)","House agent","estate agent property agent broker courtier agent immobilier"],["other","Autre métier","Other trade"]];
+const TRADES=[["plumber","Plombier","Plumber"],["electrician","Électricien","Electrician"],["carpenter","Menuisier","Carpenter"],["mason","Maçon","Mason"],["painter","Peintre","Painter"],["welder","Soudeur","Welder"],["mechanic","Mécanicien","Mechanic"],["ac","Technicien clim / froid","AC / fridge technician"],["tiler","Carreleur","Tiler"],["tailor","Couturier / couturière","Tailor"],["cleaner","Nettoyage","Cleaning"],["agent","Démarcheur (logement)","House agent","estate agent property agent broker courtier agent immobilier"],["photo","Photographe","Photographer"],["caterer","Traiteur / cuisine événementielle","Caterer"],["other","Autre métier","Other trade"]];
 const tradeOn=()=>["repair","services"].includes(biz());
+function askTrade(){ try{ if(!tradeOn()||!isOwner()) return; S.shop.cat=S.shop.cat||{}; const c=S.shop.cat; if(c.tr||c.trAsked) return; c.trAsked=1; save(); ui.modal={type:"trade"}; renderModal(); }catch(e){} }
+function closeModalSafe(){ ui.modal=null; renderModal(); render(); }
 const trLab=k=>{ const r=TRADES.find(x=>x[0]===k); return r?lx(r[1],r[2]):""; };
 const catSlugify=v=>String(v||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,30);
 const CATRES=["admin","administrator","support","help","official","security","verify","verified","bank","mtn","moov","celtiis","orange","wave","momo","mobilemoney","mobile-money","paypal","opay","paystack","flutterwave","kkiapay","fedapay","mpesa","airtel","www","api","app","login","market","shop","pay","payment","privacy","terms","install"];
@@ -1559,7 +1576,7 @@ function qrDraw(url){
 window.__catData=function(){
   const c=S.shop.cat||{}, ns=nostock();
   const items=S.products.filter(p=>!p.hide&&p.name).slice(0,300).map(p=>({n:String(p.name).slice(0,80),p:Number(p.price)||0,f:money(p.price),a:(p.svc||ns)?1:(sellable(p)>0?1:0),d:descOf(p)||undefined,i:p.img||undefined,g:(p.more&&p.more.length)?p.more.slice(0,4):undefined,c:p.cat||undefined,x:p.pin?1:undefined}));
-  return {v:1,name:S.shop.name,biz:biz(),lang:L(),phone:intlPhone(c.phone||S.shop.phone||""),tag:String(c.tag||"").slice(0,120),addr:String(S.shop.address||"").slice(0,120),col:ACCENTS.includes(c.color)?c.color:accentOf(S.shop),logo:c.logo||undefined,cover:c.cover||undefined,gal:(c.gal&&c.gal.length)?c.gal.slice(0,PHGAL):undefined,hrs:String(c.hrs||"").slice(0,70),tr:(tradeOn()&&TRADES.some(x=>x[0]===c.tr))?c.tr:undefined,trl:(tradeOn()&&TRADES.some(x=>x[0]===c.tr&&x[0]!=="other"))?(()=>{ const r=TRADES.find(x=>x[0]===c.tr); return r[1]+" "+r[2]+(r[3]?" "+r[3]:""); })():undefined,lab:CATLAB[biz()]||CATLAB.shop,cur:[C().sym,C().after?1:0,(C().sym==="FCFA"||C().dec===0)?0:2],items};
+  return {v:1,name:S.shop.name,biz:biz(),lang:L(),phone:intlPhone(c.phone||S.shop.phone||""),tag:String(c.tag||"").slice(0,120),addr:String(S.shop.address||"").slice(0,120),col:ACCENTS.includes(c.color)?c.color:accentOf(S.shop),logo:c.logo||undefined,cover:c.cover||undefined,gal:(c.gal&&c.gal.length)?c.gal.slice(0,PHGAL):undefined,hrs:String(c.hrs||"").slice(0,70),tr:(tradeOn()&&TRADES.some(x=>x[0]===c.tr))?c.tr:undefined,trl:(tradeOn()&&TRADES.some(x=>x[0]===c.tr&&x[0]!=="other"))?(()=>{ const r=TRADES.find(x=>x[0]===c.tr); return r[1]+" "+r[2]+(r[3]?" "+r[3]:""); })():undefined,lab:(TRV[trKey()]&&TRV[trKey()].lab)||CATLAB[biz()]||CATLAB.shop,cur:[C().sym,C().after?1:0,(C().sym==="FCFA"||C().dec===0)?0:2],items};
 };
 function catNote(){
   if(!catOn()||!isOwner()) return "";
@@ -1601,7 +1618,7 @@ function catSection(){
     <p class="note" style="margin:0">${lx("Dans chaque article, décochez « Afficher sur ma page » pour le cacher.","In each item, untick “Show on my online page” to hide it.")}</p>`:""}
   </div></section>`;
 }
-function catGrab(){ const g=id=>($("#"+id)||{}).value; if(!$("#c-slug")) return; ui.cd={slug:g("c-slug"),phone:g("c-phone"),tag:g("c-tag"),hrs:g("c-hrs"),tr:g("c-trade"),city:g("c-city"),listed:($("#c-list")||{}).checked}; }
+function catGrab(){ const g=id=>($("#"+id)||{}).value; if(!$("#c-slug")) return; ui.cd={slug:g("c-slug"),phone:g("c-phone"),tag:g("c-tag"),hrs:g("c-hrs"),tr:g("c-trade"),city:g("c-city"),on:($("#c-on")||{}).checked,listed:($("#c-list")||{}).checked}; }
 function catPatch(o){ S.shop.cat=Object.assign({},S.shop.cat||{},o); save(); window.__catPub&&S.shop.cat.slug&&S.shop.cat.on&&window.__catPub(true).catch(()=>{}); render(); }
 async function saveCat(){
   const slug=catSlugify($("#c-slug").value), on=$("#c-on").checked, ph=$("#c-phone").value.trim(), tag=$("#c-tag").value.trim(), hrs=$("#c-hrs").value.trim(), listed=$("#c-list").checked, city=cityCanon($("#c-city").value).slice(0,40), tr=($("#c-trade")||{}).value||"";
@@ -1900,6 +1917,11 @@ function renderModal(){
       ${biz()==="rent"?`<div class="grid2"><div class="field"><label for="c-unit">${lx("Logement","Unit")}</label><input id="c-unit" autocomplete="off" placeholder="${lx("Ex. Chambre 3","e.g. Flat 3B")}"></div><div class="field"><label for="c-rent">${lx("Loyer par mois","Rent per month")}</label><input id="c-rent" inputmode="decimal" placeholder="${esc(ph("price"))}" autocomplete="off"></div></div>`:""}
       <div class="err" id="c-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-cust">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="trade"){
+    inner=`<div class="dlg form"><h2>${lx("Quel est votre métier ?","What is your trade?")}</h2>
+      <p class="muted" style="margin:0 0 10px">${lx("Les mots de l'application s'adaptent à votre métier, et les clients vous trouvent plus facilement.","The app wording adapts to your trade, and customers find you more easily.")}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${TRADES.map(x=>`<button class="btn" data-act="trade-pick" data-k="${x[0]}">${esc(L()==="fr"?x[1]:x[2])}</button>`).join("")}</div>
+      <div class="actions"><button class="btn" data-act="trade-later">${lx("Plus tard","Later")}</button></div></div>`;
   }else if(m.type==="job"){
     inner=`<div class="dlg form"><h2>${lx("Nouveau chantier","New job")}</h2>
       <div class="field"><label for="jb-title">${lx("Travail à faire","Work to do")}</label><input id="jb-title" autocomplete="off" maxlength="80" placeholder="${lx("ex. Réparation fuite d'eau","e.g. Fix water leak")}"></div>
@@ -2075,7 +2097,9 @@ document.addEventListener("click",e=>{
   const a=el.dataset.act, id=el.dataset.id;
   if(a==="veil"){ if(e.target===el){ ui.modal=null; renderModal(); } return; }
   switch(a){
-    case "tab": ui.view=el.dataset.v; ui.custId=null; if(ui.view!=="sale") {} render(); window.scrollTo(0,0); break;
+    case "tab": ui.view=el.dataset.v; ui.custId=null; if(ui.view!=="sale") {} render(); window.scrollTo(0,0); if(ui.view==="stock") askTrade(); break;
+    case "trade-pick": { const k=el.dataset.k; if(k&&TRADES.some(x=>x[0]===k)){ S.shop.cat=S.shop.cat||{}; S.shop.cat.tr=k; save(); } ui.modal=null; closeModalSafe(); break; }
+    case "trade-later": ui.modal=null; closeModalSafe(); break;
     case "lang": S.shop.lang=L()==="fr"?"en":"fr"; save(); render(); break;
     case "clear-examples":
       S.customers=S.customers.filter(c=>!c.example); S.txs=S.txs.filter(x=>!x.example); S.products=S.products.filter(p=>!p.example);
