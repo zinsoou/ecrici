@@ -528,10 +528,10 @@ BIZ.rent.fr.tab_stock="Biens"; BIZ.rent.fr.stock="Biens"; BIZ.rent.fr.add_produc
 const biz = () => (S&&S.shop&&BIZ[S.shop.biz])?S.shop.biz:"shop";
 const NOSTOCK=["rent","hotel","beauty","school","services","travel","health"];
 const nostock = () => NOSTOCK.includes(biz());
-const svcDef = () => nostock() || biz()==="food"; /* new dish/drink: no stock counting unless unticked */
+const svcDef = () => nostock() || biz()==="food" || biz()==="repair"; /* new dish/drink: no stock counting unless unticked */
 const BIZ_LIST=["shop","electronics","pharmacy","food","beauty","health","school","repair","travel","services","rent","hotel"];
 const BIZ_NAME={shop:["Boutique / supermarché / commerce","Shop / supermarket / general trade"],electronics:["Électronique (téléphones, ordinateurs, TV, groupes électrogènes)","Electronics (phones, laptops, TVs, generators)"],pharmacy:["Pharmacie","Pharmacy / chemist"],food:["Restaurant / bar / alimentation","Restaurant / bar / food"],beauty:["Salon / coiffure / beauté","Salon / barber / beauty"],health:["Clinique / hôpital / laboratoire","Clinic / hospital / lab"],school:["École / formation","School / training"],repair:["Artisans et réparations (plombier, électricien, garage, couture…)","Artisans & repairs (plumber, electrician, garage, tailoring…)"],travel:["Voyages & tourisme","Travel & tours"],services:["Autres services","Other services"],rent:["Location (propriétaire)","Rentals (landlord)"],hotel:["Hôtel / auberge","Hotel / guesthouse"]};
-function trKey(){ try{ return (["repair","services"].includes(biz())&&S.shop&&S.shop.cat&&S.shop.cat.tr)||""; }catch(e){ return ""; } }
+function trKey(){ try{ return (["repair","services","beauty","shop","electronics"].includes(biz())&&S.shop&&S.shop.cat&&S.shop.cat.tr)||""; }catch(e){ return ""; } }
 const TRV={
  agent:{fr:{tab_stock:"Maisons",stock:"Maisons",add_product:"Ajouter une maison ou une chambre",item:"Logement",product_name:"Nom du logement",unit_price:"Loyer par mois"},
         en:{tab_stock:"Houses",stock:"Houses",add_product:"Add a house or room",item:"House",product_name:"House name",unit_price:"Rent per month"},
@@ -544,8 +544,30 @@ const TRV={
         lab:["Formules","Packages"],ph:{name:["ex. Mariage, 6 heures","e.g. Wedding, 6 hours"]}},
  caterer:{fr:{tab_stock:"Formules",stock:"Formules",add_product:"Ajouter une formule",item:"Formule",product_name:"Nom de la formule",unit_price:"Prix"},
         en:{tab_stock:"Packages",stock:"Packages",add_product:"Add a package",item:"Package",product_name:"Package name",unit_price:"Price"},
-        lab:["Formules","Packages"],ph:{name:["ex. Buffet pour 50 personnes","e.g. Buffet for 50 people"]}}
+        lab:["Formules","Packages"],ph:{name:["ex. Buffet pour 50 personnes","e.g. Buffet for 50 people"]}},
+ hairdresser:{fr:{tab_stock:"Coiffures",stock:"Coiffures",add_product:"Ajouter une coiffure",item:"Coiffure",product_name:"Nom de la coiffure",unit_price:"Prix"},
+        en:{tab_stock:"Hairstyles",stock:"Hairstyles",add_product:"Add a hairstyle",item:"Hairstyle",product_name:"Hairstyle name",unit_price:"Price"},
+        lab:["Coiffures et tarifs","Hairstyles and prices"],ph:{name:["ex. Tresses africaines","e.g. Box braids"]}},
+ barber:{fr:{tab_stock:"Coupes",stock:"Coupes",add_product:"Ajouter une coupe",item:"Coupe",product_name:"Nom de la coupe",unit_price:"Prix"},
+        en:{tab_stock:"Cuts",stock:"Cuts",add_product:"Add a haircut",item:"Haircut",product_name:"Haircut name",unit_price:"Price"},
+        lab:["Coupes et tarifs","Haircuts and prices"],ph:{name:["ex. Coupe et barbe","e.g. Haircut and beard"]}},
+ makeup:{fr:{tab_stock:"Maquillage",stock:"Maquillage",add_product:"Ajouter un maquillage",item:"Maquillage",product_name:"Nom du maquillage",unit_price:"Prix"},
+        en:{tab_stock:"Makeup",stock:"Makeup",add_product:"Add a makeup service",item:"Makeup",product_name:"Makeup service name",unit_price:"Price"},
+        lab:["Maquillage et tarifs","Makeup and prices"],ph:{name:["ex. Maquillage mariée","e.g. Bridal makeup"]}},
+ nails:{fr:{tab_stock:"Ongles",stock:"Ongles",add_product:"Ajouter une pose ou un soin",item:"Prestation",product_name:"Nom de la prestation",unit_price:"Prix"},
+        en:{tab_stock:"Nails",stock:"Nails",add_product:"Add a nail service",item:"Nail service",product_name:"Nail service name",unit_price:"Price"},
+        lab:["Ongles et tarifs","Nails and prices"],ph:{name:["ex. Gel, pose complète","e.g. Gel full set"]}},
+ spa:{fr:{tab_stock:"Soins",stock:"Soins",add_product:"Ajouter un soin",item:"Soin",product_name:"Nom du soin",unit_price:"Prix"},
+        en:{tab_stock:"Treatments",stock:"Treatments",add_product:"Add a treatment",item:"Treatment",product_name:"Treatment name",unit_price:"Price"},
+        lab:["Soins et tarifs","Treatments and prices"],ph:{name:["ex. Massage 1 heure","e.g. 1-hour massage"]}},
+ driver:{fr:{tab_stock:"Trajets",stock:"Trajets",add_product:"Ajouter un trajet ou un service",item:"Trajet",product_name:"Nom du trajet",unit_price:"Prix"},
+        en:{tab_stock:"Rides",stock:"Rides",add_product:"Add a ride or service",item:"Ride",product_name:"Ride name",unit_price:"Price"},
+        lab:["Trajets et tarifs","Rides and prices"],ph:{name:["ex. Aéroport – centre-ville","e.g. Airport to city centre"]}},
+ tutor:{fr:{tab_stock:"Cours",stock:"Cours",add_product:"Ajouter un cours",item:"Cours",product_name:"Nom du cours",unit_price:"Prix par heure"},
+        en:{tab_stock:"Lessons",stock:"Lessons",add_product:"Add a lesson",item:"Lesson",product_name:"Lesson name",unit_price:"Price per hour"},
+        lab:["Cours et tarifs","Lessons and prices"],ph:{name:["ex. Maths, classe de terminale","e.g. Maths, senior class"]}}
 };
+TRV.decorator=TRV.dj=TRV.photo;
 const t = (k,...a) => { const tv=TRV[trKey()]; if(tv&&tv[L()]&&tv[L()][k]!=null) return tv[L()][k]; const o=BIZ[biz()]; if(o&&o[L()]&&o[L()][k]!=null) return o[L()][k]; const v=T[L()][k]; return typeof v==="function"?v(...a):(v==null?k:v); };
 const C = () => COUNTRIES[S.shop.country]||COUNTRIES.BJ;
 const cName = v => (L()==="en"&&v.en)?v.en:v.name;
@@ -1427,7 +1449,7 @@ function saveBulk(){
     const name=parts[0], price=parseAmt(parts[1]);
     if(!name||!(price>0)){ bad.push(ln); continue; }
     if(names.has(name.toLowerCase())){ dup++; continue; }
-    const q=(parts[2]||"").toLowerCase(), svc=nostock()||/^(service|svc|s)$/.test(q)||(biz()==="food"&&!(parts[2]||"").trim());
+    const q=(parts[2]||"").toLowerCase(), svc=nostock()||/^(service|svc|s)$/.test(q)||((biz()==="food"||biz()==="repair")&&!(parts[2]||"").trim());
     if(biz()==="hotel"){ const rooms=Math.max(1,Math.round(parseAmt(parts[2]))||1); S.products.push({id:uid(),name,price,qty:0,low:0,cost:0,svc:true,rooms}); names.add(name.toLowerCase()); added++; continue; }
     if(biz()==="pharmacy"&&!svc){ const qty=Math.max(0,parseAmt(parts[2])), ex=(parts[3]||"").trim(), e=ex?parseExp(ex):"";
       if(e===null||(e&&bState({e}).s==="expired")){ bad.push(ln); continue; }
@@ -1556,10 +1578,16 @@ function phInit(m,p){ if(!m.ph) m.ph=[p&&p.img].concat((p&&p.more)||[]).filter(B
 function phHtml(m){ const n=m.ph.length; return `<div class="phg">${m.ph.map((e,i)=>`<div class="pht"><img alt="" src="${esc(e.u||e.pv)}" ${i?`data-act="ph-first" data-i="${i}"`:""}><button type="button" class="phx" data-act="ph-del" data-i="${i}" aria-label="${lx("Retirer","Remove")}">×</button>${i?"":`<span class="phm">${lx("Principale","Main")}</span>`}</div>`).join("")}${n<PHMAX?`<label class="pht add"><span>+</span><small>${lx("Photo","Photo")}</small><input type="file" id="pr-img" accept="image/*" multiple style="display:none"></label>`:""}</div><small class="muted">${n>1?lx("Touchez une photo pour la mettre en premier.","Tap a photo to make it the first one."):lx("Jusqu'à 5 photos par article.","Up to 5 photos per item.")}</small>`; }
 function phTotal(skip){ return S.products.reduce((a,x)=>x.id===skip?a:a+(x.img?1:0)+((x.more||[]).length),0); }
 function phRefresh(){ const m=ui.modal, g=$("#pr-gal"); if(m&&g) g.innerHTML=phHtml(m); }
-const TRADES=[["plumber","Plombier","Plumber"],["electrician","Électricien","Electrician"],["carpenter","Menuisier","Carpenter"],["mason","Maçon","Mason"],["painter","Peintre","Painter"],["welder","Soudeur","Welder"],["mechanic","Mécanicien","Mechanic"],["ac","Technicien clim / froid","AC / fridge technician"],["tiler","Carreleur","Tiler"],["tailor","Couturier / couturière","Tailor"],["cleaner","Nettoyage","Cleaning"],["agent","Démarcheur (logement)","House agent","estate agent property agent broker courtier agent immobilier"],["photo","Photographe","Photographer"],["caterer","Traiteur / cuisine événementielle","Caterer"],["other","Autre métier","Other trade"]];
-const tradeOn=()=>["repair","services"].includes(biz());
-function askTrade(){ try{ if(!tradeOn()||!isOwner()) return; S.shop.cat=S.shop.cat||{}; const c=S.shop.cat; if(c.tr||c.trAsked) return; c.trAsked=1; save(); ui.modal={type:"trade"}; renderModal(); }catch(e){} }
+const TRADES=[["plumber", "Plombier", "Plumber"],["electrician", "Électricien", "Electrician"],["carpenter", "Menuisier", "Carpenter"],["mason", "Maçon", "Mason"],["painter", "Peintre", "Painter"],["welder", "Soudeur", "Welder"],["mechanic", "Mécanicien", "Mechanic"],["ac", "Technicien clim / froid", "AC / fridge technician"],["tiler", "Carreleur", "Tiler"],["tailor", "Couturier / couturière", "Tailor"],["cleaner", "Nettoyage", "Cleaning"],["agent", "Démarcheur (logement)", "House agent", "estate agent property agent broker courtier agent immobilier"],["photo", "Photographe", "Photographer"],["caterer", "Traiteur / cuisine événementielle", "Caterer"],["decorator", "Décorateur événementiel", "Event decorator", "decoration decor"],["dj", "DJ / sonorisation", "DJ / sound", "sono music musique"],["driver", "Chauffeur / taxi", "Driver / taxi", "taxi zem moto chauffeur"],["tutor", "Cours particuliers", "Tutor / lessons", "teacher répétiteur lessons"],["mover", "Déménagement", "Moving", "movers transport"],["gardener", "Jardinier", "Gardener", "jardin garden"],["security", "Gardiennage / sécurité", "Security guard", "vigile guard"],["phonefix", "Réparation de téléphones", "Phone repair", "téléphone phone screen écran"],["genfix", "Réparation de groupes électrogènes", "Generator repair", "groupe électrogène generator"],["hairdresser", "Coiffeur / coiffeuse", "Hairdresser", "hair salon coiffure braids tresses"],["barber", "Barbier", "Barber", "haircut coupe"],["makeup", "Maquilleuse", "Makeup artist", "maquillage make-up mua"],["nails", "Ongles / manucure", "Nails / manicure", "manicure pedicure"],["spa", "Spa et massage", "Spa and massage", "massage"],["clothes", "Vêtements et chaussures", "Clothes and shoes", "clothing shoes fashion"],["provisions", "Alimentation et provisions", "Groceries and provisions", "supermarket alimentation"],["drinks", "Boissons", "Drinks", "boisson bar"],["cosmetics", "Cosmétiques et beauté", "Cosmetics and beauty", "beauty"],["building", "Matériaux de construction", "Building materials", "ciment cement"],["hardware", "Quincaillerie", "Hardware"],["furniture", "Meubles et déco", "Furniture and decor", "meuble"],["autoparts", "Pièces auto et moto", "Auto and motorbike parts", "spare parts"],["stationery", "Papeterie et livres", "Stationery and books", "livres books"],["phones", "Téléphones et accessoires", "Phones and accessories", "phone téléphone"],["computers", "Ordinateurs", "Computers", "laptop pc"],["tv", "TV et audio", "TV and audio", "télé télévision speaker"],["generators", "Groupes électrogènes et solaire", "Generators and solar", "generator solar solaire"],["appliances", "Électroménager", "Home appliances", "fridge frigo"],["other", "Autre métier", "Other trade"]];
+const GROUPS={work:["plumber","electrician","carpenter","mason","painter","welder","mechanic","ac","tiler","tailor","cleaner","agent","photo","caterer","decorator","dj","driver","tutor","mover","gardener","security","phonefix","genfix"],beauty:["hairdresser","barber","makeup","nails","spa"],shop:["clothes","provisions","drinks","cosmetics","building","hardware","furniture","autoparts","stationery","phones"],elec:["phones","computers","tv","generators","appliances"]};
+const grpOf=()=>({repair:"work",services:"work",beauty:"beauty",shop:"shop",electronics:"elec"})[biz()]||"";
+const sellGrp=()=>grpOf()==="shop"||grpOf()==="elec";
+const tradesFor=()=>{ const g=GROUPS[grpOf()]||[]; return TRADES.filter(x=>g.includes(x[0])||x[0]==="other").map(x=>(x[0]==="other"&&sellGrp())?["other","Autre","Other"]:x); };
+const tradeOn=()=>!!grpOf();
+function askTrade(){ try{ if(!tradeOn()||!isOwner()) return; S.shop.cat=S.shop.cat||{}; const c=S.shop.cat; if(c.tr||(c.trs&&c.trs.length)||c.trAsked) return; c.trAsked=1; save(); ui.trSel=[]; ui.modal={type:"trade"}; renderModal(); }catch(e){} }
 function closeModalSafe(){ ui.modal=null; renderModal(); render(); }
+const trSel=c=>{ c=c||{}; const a=(Array.isArray(c.trs)&&c.trs.length)?c.trs:(c.tr?[c.tr]:[]); return a.filter(k=>TRADES.some(x=>x[0]===k)).slice(0,3); };
+function trsGrab(){ const c0=S.shop.cat||{}; const prev=trSel(Object.assign({},c0,ui.cd&&ui.cd.trs?{trs:ui.cd.trs}:{})); if(!$("#c-trs")) return prev; const el=[...document.querySelectorAll("#c-trs input:checked")].map(i=>i.value); const keep=prev.filter(k=>el.includes(k)); return keep.concat(el.filter(k=>!keep.includes(k))).slice(0,3); }
 const trLab=k=>{ const r=TRADES.find(x=>x[0]===k); return r?lx(r[1],r[2]):""; };
 const catSlugify=v=>String(v||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,30);
 const CATRES=["admin","administrator","support","help","official","security","verify","verified","bank","mtn","moov","celtiis","orange","wave","momo","mobilemoney","mobile-money","paypal","opay","paystack","flutterwave","kkiapay","fedapay","mpesa","airtel","www","api","app","login","market","shop","pay","payment","privacy","terms","install"];
@@ -1576,7 +1604,7 @@ function qrDraw(url){
 window.__catData=function(){
   const c=S.shop.cat||{}, ns=nostock();
   const items=S.products.filter(p=>!p.hide&&p.name).slice(0,300).map(p=>({n:String(p.name).slice(0,80),p:Number(p.price)||0,f:money(p.price),a:(p.svc||ns)?1:(sellable(p)>0?1:0),d:descOf(p)||undefined,i:p.img||undefined,g:(p.more&&p.more.length)?p.more.slice(0,4):undefined,c:p.cat||undefined,x:p.pin?1:undefined}));
-  return {v:1,name:S.shop.name,biz:biz(),lang:L(),phone:intlPhone(c.phone||S.shop.phone||""),tag:String(c.tag||"").slice(0,120),addr:String(S.shop.address||"").slice(0,120),col:ACCENTS.includes(c.color)?c.color:accentOf(S.shop),logo:c.logo||undefined,cover:c.cover||undefined,gal:(c.gal&&c.gal.length)?c.gal.slice(0,PHGAL):undefined,hrs:String(c.hrs||"").slice(0,70),tr:(tradeOn()&&TRADES.some(x=>x[0]===c.tr))?c.tr:undefined,trl:(tradeOn()&&TRADES.some(x=>x[0]===c.tr&&x[0]!=="other"))?(()=>{ const r=TRADES.find(x=>x[0]===c.tr); return r[1]+" "+r[2]+(r[3]?" "+r[3]:""); })():undefined,lab:(TRV[trKey()]&&TRV[trKey()].lab)||CATLAB[biz()]||CATLAB.shop,cur:[C().sym,C().after?1:0,(C().sym==="FCFA"||C().dec===0)?0:2],items};
+  return {v:1,name:S.shop.name,biz:biz(),lang:L(),phone:intlPhone(c.phone||S.shop.phone||""),tag:String(c.tag||"").slice(0,120),addr:String(S.shop.address||"").slice(0,120),col:ACCENTS.includes(c.color)?c.color:accentOf(S.shop),logo:c.logo||undefined,cover:c.cover||undefined,gal:(c.gal&&c.gal.length)?c.gal.slice(0,PHGAL):undefined,hrs:String(c.hrs||"").slice(0,70),tr:(tradeOn()&&trSel(c)[0])||undefined,trl:(tradeOn()?(()=>{ const t=trSel(c).filter(k=>k!=="other").map(k=>{ const r=TRADES.find(x=>x[0]===k); return r[1]+" "+r[2]+(r[3]?" "+r[3]:""); }); return t.length?t.join(" · "):undefined; })():undefined),lab:(TRV[trKey()]&&TRV[trKey()].lab)||CATLAB[biz()]||CATLAB.shop,cur:[C().sym,C().after?1:0,(C().sym==="FCFA"||C().dec===0)?0:2],items};
 };
 function catNote(){
   if(!catOn()||!isOwner()) return "";
@@ -1609,7 +1637,7 @@ function catSection(){
     <label class="chk"><input type="checkbox" id="c-list" ${c.listed?"checked":""}> ${lx("Me lister dans Ecrici Market (les clients me trouvent)","List me in Ecrici Market (customers can find me)")}</label>
     ${window.__waAdmin&&window.__waAdmin("x")?`<p class="muted" style="margin:6px 0 0"><a href="${esc(window.__waAdmin(lx("Bonjour, je voudrais le badge Vérifié pour ma page Ecrici : ","Hello, I would like the Verified badge for my Ecrici page: ")+(c.slug||"")+" ("+S.shop.name+")"))}" target="_blank" rel="noopener">✔ ${lx("Demander le badge Vérifié (les clients vous font plus confiance)","Ask for the Verified badge (customers trust you more)")}</a></p>`:""}
     <div class="field"><label for="c-cityp">${lx("Ma ville (pour le Market)","My city (for the Market)")}</label>${(()=>{ const L=CITIES[S.shop.country]||[], cc=cityCanon(c.city||""), inL=!!cc&&L.includes(cc); return `<select id="c-cityp"><option value="">${lx("Choisir…","Choose…")}</option>${L.map(x=>`<option ${inL&&cc===x?"selected":""}>${esc(x)}</option>`).join("")}<option value="~" ${cc&&!inL?"selected":""}>${lx("Autre ville…","Other city…")}</option></select><input id="c-city" value="${esc(c.city||"")}" maxlength="40" placeholder="${lx("ex. Cotonou","e.g. Lagos")}" autocomplete="off" style="margin-top:8px;${cc&&!inL||!L.length?"":"display:none"}">`; })()}</div>
-    ${tradeOn()?`<div class="field"><label for="c-trade">${lx("Mon métier (pour être trouvé)","My trade (so people can find you)")}</label><select id="c-trade"><option value="">${lx("Choisir…","Choose…")}</option>${TRADES.map(r=>`<option value="${r[0]}" ${c.tr===r[0]?"selected":""}>${esc(lx(r[1],r[2]))}</option>`).join("")}</select></div>`:""}
+    ${tradeOn()?`<div class="field"><label>${sellGrp()?lx("Ce que je vends (pour être trouvé)","What I sell (so people can find you)"):lx("Mon métier (pour être trouvé)","My trade (so people can find you)")} · ${lx("jusqu'à 3","up to 3")}</label><div id="c-trs" style="display:flex;flex-wrap:wrap;gap:6px 14px">${tradesFor().map(r=>`<label class="chk" style="margin:0"><input type="checkbox" value="${r[0]}" ${trSel(c).includes(r[0])?"checked":""} onchange="if(document.querySelectorAll('#c-trs input:checked').length>3){this.checked=false}"> ${esc(lx(r[1],r[2]))}</label>`).join("")}</div></div>`:""}
     <div class="field"><label for="c-tag">${lx("Petit message (facultatif)","Short message (optional)")}</label><input id="c-tag" value="${esc(c.tag||"")}" maxlength="120" placeholder="${lx("ex. Livraison à Cotonou et Calavi","e.g. Delivery in Lagos and Abuja")}" autocomplete="off"><div class="dtg" style="margin-top:8px">${TAGS_().map(x=>`<button type="button" data-act="tagfill" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</div></div>
     <div class="err" id="c-err" role="alert">${esc(m)}</div>
     <button class="btn primary" data-act="save-cat">${lx("Enregistrer et publier","Save and publish")}</button>
@@ -1618,15 +1646,15 @@ function catSection(){
     <p class="note" style="margin:0">${lx("Dans chaque article, décochez « Afficher sur ma page » pour le cacher.","In each item, untick “Show on my online page” to hide it.")}</p>`:""}
   </div></section>`;
 }
-function catGrab(){ const g=id=>($("#"+id)||{}).value; if(!$("#c-slug")) return; ui.cd={slug:g("c-slug"),phone:g("c-phone"),tag:g("c-tag"),hrs:g("c-hrs"),tr:g("c-trade"),city:g("c-city"),on:($("#c-on")||{}).checked,listed:($("#c-list")||{}).checked}; }
+function catGrab(){ const g=id=>($("#"+id)||{}).value; if(!$("#c-slug")) return; ui.cd={slug:g("c-slug"),phone:g("c-phone"),tag:g("c-tag"),hrs:g("c-hrs"),trs:trsGrab(),tr:(trsGrab()[0]||""),city:g("c-city"),on:($("#c-on")||{}).checked,listed:($("#c-list")||{}).checked}; }
 function catPatch(o){ S.shop.cat=Object.assign({},S.shop.cat||{},o); save(); window.__catPub&&S.shop.cat.slug&&S.shop.cat.on&&window.__catPub(true).catch(()=>{}); render(); }
 async function saveCat(){
-  const slug=catSlugify($("#c-slug").value), on=$("#c-on").checked, ph=$("#c-phone").value.trim(), tag=$("#c-tag").value.trim(), hrs=$("#c-hrs").value.trim(), listed=$("#c-list").checked, city=cityCanon($("#c-city").value).slice(0,40), tr=($("#c-trade")||{}).value||"";
+  const slug=catSlugify($("#c-slug").value), on=$("#c-on").checked, ph=$("#c-phone").value.trim(), tag=$("#c-tag").value.trim(), hrs=$("#c-hrs").value.trim(), listed=$("#c-list").checked, city=cityCanon($("#c-city").value).slice(0,40), trs=trsGrab(), tr=trs[0]||"";
   const er=$("#c-err"); const fail=m=>{ ui.catMsg=m; er.textContent=m; };
   if(on){ if(!catSlugOk(slug)) return fail(lx("Le nom du lien doit avoir 3 à 30 lettres, chiffres ou tirets.","The link name needs 3 to 30 letters, numbers or dashes."));
     if(catReserved(slug)) return fail(lx("Ce nom de lien est réservé. Choisissez le nom de votre boutique.","That link name is reserved. Use your shop name instead."));
     if(!intlPhone(ph)) return fail(lx("Entrez un numéro WhatsApp valide pour recevoir les commandes.","Enter a valid WhatsApp number to receive orders.")); }
-  const old=S.shop.cat||{}; S.shop.cat=Object.assign({},old,{on,slug:slug||old.slug||"",phone:ph,tag,hrs,tr,listed:listed&&on,city}); save(); ui.catMsg="";
+  const old=S.shop.cat||{}; S.shop.cat=Object.assign({},old,{on,slug:slug||old.slug||"",phone:ph,tag,hrs,tr,trs,listed:listed&&on,city}); save(); ui.catMsg="";
   const r=await window.__catPub(true).catch(()=>({ok:false,offline:true}));
   if(r&&r.ok){ ui.cd=null; render(); toast(on?lx("Page publiée","Page published"):lx("Page désactivée","Page turned off")); return; }
   S.shop.cat=old; save(); 
@@ -1918,10 +1946,11 @@ function renderModal(){
       <div class="err" id="c-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-cust">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
   }else if(m.type==="trade"){
-    inner=`<div class="dlg form"><h2>${lx("Quel est votre métier ?","What is your trade?")}</h2>
-      <p class="muted" style="margin:0 0 10px">${lx("Les mots de l'application s'adaptent à votre métier, et les clients vous trouvent plus facilement.","The app wording adapts to your trade, and customers find you more easily.")}</p>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">${TRADES.map(x=>`<button class="btn" data-act="trade-pick" data-k="${x[0]}">${esc(L()==="fr"?x[1]:x[2])}</button>`).join("")}</div>
-      <div class="actions"><button class="btn" data-act="trade-later">${lx("Plus tard","Later")}</button></div></div>`;
+    inner=`<div class="dlg form"><h2>${sellGrp()?lx("Que vendez-vous surtout ?","What do you mainly sell?"):lx("Quel est votre métier ?","What is your trade?")}</h2>
+      <p class="muted" style="margin:0 0 10px">${sellGrp()?lx("Les clients pourront vous trouver plus facilement dans le Market.","Customers will find you more easily in the Market."):lx("Les mots de l'application s'adaptent à votre métier, et les clients vous trouvent plus facilement.","The app wording adapts to your trade, and customers find you more easily.")}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${tradesFor().map(x=>{ const on=(ui.trSel||[]).includes(x[0]); return `<button class="btn ${on?"primary":""}" data-act="trade-toggle" data-k="${x[0]}" aria-pressed="${on}">${on?"✓ ":""}${esc(L()==="fr"?x[1]:x[2])}</button>`; }).join("")}</div>
+      <p class="muted" style="margin:10px 0 0">${lx("Choisissez jusqu'à 3. Le premier compte pour les mots de l'application.","Pick up to 3. The first one sets the wording in the app.")}</p>
+      <div class="actions"><button class="btn primary" data-act="trade-done">${lx("Terminé","Done")}</button><button class="btn" data-act="trade-later">${lx("Plus tard","Later")}</button></div></div>`;
   }else if(m.type==="job"){
     inner=`<div class="dlg form"><h2>${lx("Nouveau chantier","New job")}</h2>
       <div class="field"><label for="jb-title">${lx("Travail à faire","Work to do")}</label><input id="jb-title" autocomplete="off" maxlength="80" placeholder="${lx("ex. Réparation fuite d'eau","e.g. Fix water leak")}"></div>
@@ -2098,8 +2127,9 @@ document.addEventListener("click",e=>{
   if(a==="veil"){ if(e.target===el){ ui.modal=null; renderModal(); } return; }
   switch(a){
     case "tab": ui.view=el.dataset.v; ui.custId=null; if(ui.view!=="sale") {} render(); window.scrollTo(0,0); if(ui.view==="stock") askTrade(); break;
-    case "trade-pick": { const k=el.dataset.k; if(k&&TRADES.some(x=>x[0]===k)){ S.shop.cat=S.shop.cat||{}; S.shop.cat.tr=k; save(); } ui.modal=null; closeModalSafe(); break; }
-    case "trade-later": ui.modal=null; closeModalSafe(); break;
+    case "trade-toggle": { const k=el.dataset.k, a=(ui.trSel=ui.trSel||[]); const i=a.indexOf(k); if(i>=0) a.splice(i,1); else if(a.length<3) a.push(k); else toast(lx("3 choix maximum","3 choices maximum")); renderModal(); break; }
+    case "trade-done": { const a=(ui.trSel||[]).filter(k=>TRADES.some(x=>x[0]===k)); if(a.length){ S.shop.cat=S.shop.cat||{}; S.shop.cat.trs=a.slice(0,3); S.shop.cat.tr=a[0]; save(); } ui.trSel=[]; ui.modal=null; closeModalSafe(); break; }
+    case "trade-later": ui.trSel=[]; ui.modal=null; closeModalSafe(); break;
     case "lang": S.shop.lang=L()==="fr"?"en":"fr"; save(); render(); break;
     case "clear-examples":
       S.customers=S.customers.filter(c=>!c.example); S.txs=S.txs.filter(x=>!x.example); S.products=S.products.filter(p=>!p.example);
