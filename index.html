@@ -526,6 +526,17 @@ Object.assign(BIZ.school.fr,{tab_sale:"Paiement",new_sale:"Nouveau paiement",tab
 Object.entries({rent:["Rent bill","Loyer"],hotel:["Stay","Séjour"],beauty:["Visit","Visite"],school:["Fee","Frais"],services:["Service","Prestation"],repair:["Job","Travail"],health:["Visit","Visite"]}).forEach(([k,v])=>{ BIZ[k].en.sale=v[0]; BIZ[k].fr.sale=v[1]; });
 BIZ.rent.fr.tab_stock="Biens"; BIZ.rent.fr.stock="Biens"; BIZ.rent.fr.add_product="Ajouter un bien";
 const biz = () => (S&&S.shop&&BIZ[S.shop.biz])?S.shop.biz:"shop";
+/* Tutorial videos (YouTube). Leave "" until the video is uploaded: the button stays hidden. */
+const VIDEOS={
+ restaurant:{en:"https://youtube.com/shorts/c8fkhoaXCPk",fr:"https://youtube.com/shorts/FE1x8z_5q7M"},
+ artisans:{en:"https://youtube.com/shorts/PfnqtMjnIv4",fr:"https://youtube.com/shorts/M477_bNFEr4"},
+ beauty:{en:"https://youtube.com/shorts/5hn1AvSixaw",fr:"https://youtube.com/shorts/rBNzYjfi8cU"},
+ shops:{en:"https://youtube.com/shorts/O0-TpjkQfaQ",fr:"https://youtube.com/shorts/ek6TdMHvEi0"},
+ hotel:{en:"https://youtube.com/shorts/73xx_dztntE",fr:"https://youtube.com/shorts/Mw4vX-kIRlI"},
+ travel:{en:"",fr:""},
+ health:{en:"",fr:""}};
+const VID_OF={food:"restaurant",repair:"artisans",services:"artisans",beauty:"beauty",shop:"shops",electronics:"shops",hotel:"hotel",travel:"travel",health:"health"};
+function howBtn(){ try{ const k=VID_OF[biz()]; const u=k&&VIDEOS[k]&&(VIDEOS[k][L()]||""); if(!u||!isOwner()) return ""; return `<a class="btn small" href="${u}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">▶ ${lx("Voir comment ça marche","Watch how it works")}</a>`; }catch(_){ return ""; } }
 const NOSTOCK=["rent","hotel","beauty","school","services","travel","health"];
 const nostock = () => NOSTOCK.includes(biz());
 const svcDef = () => nostock() || biz()==="food" || biz()==="repair"; /* new dish/drink: no stock counting unless unticked */
@@ -1400,6 +1411,7 @@ function viewStock(){
   const val=S.products.reduce((s,p)=>s+(p.svc?0:Math.max(0,p.qty)*p.price),0);
   let h=`<section class="sec"><h2 style="flex-wrap:wrap">${t("stock")}${isOwner()?`<span style="display:flex;gap:6px;flex-wrap:wrap;flex-basis:100%;justify-content:flex-end"><button class="btn small" data-act="bulk-add">${t("bulk_btn")}</button><button class="btn small primary" data-act="add-product">${t("add_product")}</button></span>`:""}</h2>`;
   if(isOwner()&&list.length&&!nostock()) h+=`<div class="card"><div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${t("stock_value")}</div><div class="num" style="font-size:1.35rem;margin-top:4px">${money(val)}</div></div>`;
+  { const hb=howBtn(); if(hb) h+=`<p style="margin:0 0 10px">${hb}</p>`; }
   h+=`<div class="card flush">`;
   if(!list.length) h+=`<div class="empty">${t("no_products")}</div>`;
   h+=list.map(p=>{ if(p.svc) return `<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)}${biz()==="hotel"&&+p.rooms>1?" · "+p.rooms+" "+lx("chambres","rooms"):""}</div></div><div class="amt">${biz()==="hotel"?`<span class="badge ${roomStatus(p).free?"got":"owed"}">${esc(roomText(p))}</span>`:t("svc_tag")?`<span class="badge">${t("svc_tag")}</span>`:""}</div></button>`; const st=p.qty<=0?`<span class="badge owed">${t("out")}</span>`:p.qty<=p.low?`<span class="badge late">${t("low")}</span>`:"";
@@ -1625,6 +1637,7 @@ function catSection(){
   const col=ACCENTS.includes(c0.color)?c0.color:accentOf(S.shop);
   const imgF=(k,lab,w)=>`<div class="field"><label>${lab}</label><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${c0[k]?`<img alt="" src="${esc(c0[k])}" style="width:${w}px;height:56px;object-fit:cover;border-radius:${k==="logo"?"50%":"10px"}">`:""}<label class="btn small" style="cursor:pointer;margin:0">${lx("Choisir","Choose")}<input type="file" id="c-${k}" accept="image/*" style="display:none"></label>${c0[k]?`<button type="button" class="btn small ghost" data-act="cat-img-rm" data-k="${k}">${lx("Retirer","Remove")}</button>`:""}</div></div>`;
   return `<section class="sec" id="cat-box"><h2>${lx("Ma page en ligne","My online page")}</h2><div class="card form">
+    ${(()=>{ const hb=howBtn(); return hb?`<p style="margin:0">${hb}</p>`:""; })()}
     <p class="note" style="margin:0">${lx("Partagez un lien sur WhatsApp ou ailleurs. Vos clients voient vos prix et vous envoient leur commande sur WhatsApp. Le stock et les coûts ne sont jamais affichés.","Share one link on WhatsApp or anywhere. Your customers see your prices and send you their order on WhatsApp. Your stock numbers and costs are never shown.")}</p>
     ${window.__mkt===false?`<p class="note" style="margin:0;font-weight:600">${lx("Votre page est enregistrée. Elle sera visible du public après une vérification rapide (en général sous 24 h).","Your page is saved. It will be public after a quick check (usually within a day).")}${waPageLink(c)}</p>`:""}
     <label class="chk"><input type="checkbox" id="c-on" ${c.on?"checked":""}> ${lx("Activer ma page en ligne","Turn on my online page")}</label>
