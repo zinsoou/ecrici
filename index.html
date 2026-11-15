@@ -301,6 +301,18 @@ details.more>.note{padding-bottom:12px!important}
 .chk{min-height:44px}
 .sw button{width:40px;height:40px}
 :where(button,a,input,select,textarea):focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:2px}
+details.acc{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-top:12px;overflow:hidden}
+details.acc>summary{list-style:none;cursor:pointer;min-height:60px;padding:12px 48px 12px 16px;display:flex;flex-direction:column;justify-content:center;gap:2px;position:relative;-webkit-tap-highlight-color:transparent}
+details.acc>summary::-webkit-details-marker{display:none}
+details.acc>summary::after{content:"";position:absolute;right:20px;top:50%;width:8px;height:8px;margin-top:-6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
+details.acc[open]>summary::after{transform:rotate(-135deg);margin-top:-2px}
+details.acc[open]>summary{border-bottom:1px solid var(--line)}
+.acc-t{font-family:var(--font-display);font-weight:700;font-size:1.05rem;color:var(--ink)}
+.acc-h{color:var(--muted);font-size:.82rem}
+details.acc>.card{border:0;border-radius:0;background:transparent}
+details.acc>*:not(summary){margin-left:0}
+details.acc>:not(summary):not(.card){padding:12px 16px}
+.accs{margin-top:14px}
 @keyframes veilIn{from{opacity:0}to{opacity:1}}
 @keyframes sheetIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.veil,.sheet{animation:none}}
@@ -1701,9 +1713,20 @@ async function saveCat(){
   S.shop.cat=old; save(); 
   ui.catMsg=r&&r.skip?lx("Connectez-vous à votre compte pour publier.","Sign in to your account to publish."):r&&r.taken?lx("Ce nom de lien est déjà pris. Essayez un autre.","That link name is already taken. Try another."):r&&r.reserved?lx("Ce nom (ou le nom de votre boutique) est réservé. Évitez « Ecrici », « support », « MTN » et les noms de banques.","That name (or your shop name) is reserved. Avoid \"Ecrici\", \"support\", \"MTN\" and bank names."):r&&r.offline?lx("Pas d'internet. Réessayez quand vous êtes en ligne.","No internet. Try again when you are online."):lx("Impossible de publier maintenant. Réessayez.","Could not publish right now. Try again."); render();
 }
+function accWrap(k,html,title,hint){
+  if(!html) return "";
+  const i=html.indexOf("<h2"), j=html.indexOf("</h2>",i), e=html.lastIndexOf("</section>");
+  if(!/^\s*<section/.test(html)||i<0||j<0||e<0) return html;
+  const attrs=html.slice(html.indexOf("<section")+8,html.indexOf(">")).replace(/class="[^"]*"/,"");
+  const body=html.slice(j+5,e), ttl=title||html.slice(html.indexOf(">",i)+1,j);
+  const open=ui.setOpen&&ui.setOpen[k]?" open":"";
+  return `<details class="acc"${attrs} data-k="${k}"${open}><summary><span class="acc-t">${ttl}</span>${hint?`<span class="acc-h">${hint}</span>`:""}</summary>${body}</details>`;
+}
 function viewSettings(){
   const s=S.shop;
-  return paySection()+catSection()+`<section class="sec"><h2>${t("settings")}</h2><div class="card form">
+  if(!ui.setOpen) ui.setOpen={};
+  const A=(k,html,title,hint)=>accWrap(k,html,title,hint);
+  const biz_html=`<section class="sec"><h2>${t("settings")}</h2><div class="card form">
     <div class="field"><label for="s-name">${t("shop_name")}</label><input id="s-name" value="${esc(s.name)}" autocomplete="off"></div>
     <div class="field"><label for="s-phone">${t("shop_phone")}</label><input id="s-phone" value="${esc(s.phone)}" inputmode="tel" autocomplete="off"></div>
     <div class="grid2">
@@ -1721,15 +1744,27 @@ function viewSettings(){
     <div class="field"><label for="s-late">${t("late_after")}</label><input id="s-late" value="${esc(s.lateDays)}" inputmode="numeric"></div>
     <button class="btn primary" data-act="save-settings">${t("save")}</button>
   </div></section>
-  <section class="sec"><h2>${t("appearance")}</h2><div class="card"><div class="seg">
+  `;
+  const app_html=`<section class="sec"><h2>${t("appearance")}</h2><div class="card"><div class="seg">
     ${[["auto","th_auto"],["light","th_light"],["dark","th_dark"]].map(([k,l])=>`<button class="pill" data-act="theme" data-m="${k}" aria-pressed="${getTheme()===k}">${t(l)}</button>`).join("")}</div></div></section>
-  ${staffSection()}<section class="sec"><h2>${t("backup")}</h2><div class="card form"><p class="note" style="margin:0">${t("backup_note")}</p>
+  `;
+  const back_html=`<section class="sec"><h2>${t("backup")}</h2><div class="card form"><p class="note" style="margin:0">${t("backup_note")}</p>
     <p class="note" style="margin:0"><b>${t("last_backup")}:</b> ${S.shop.lastBackup?fmtDate(S.shop.lastBackup):t("never")}</p>
     <div class="actions"><button class="btn" data-act="tour-open">${t("tour_open")}</button>${biz()==="shop"?`<button class="btn" data-act="load-examples">${t("load_examples")}</button>`:""}<button class="btn primary" data-act="backup-now">${t("backup_now")}</button><button class="btn" data-act="export-csv">${t("export_csv")}</button></div>
     <div class="field"><label for="f-import">${t("import")}</label><input type="file" id="f-import" accept=".json,application/json"></div></div></section>
-  <section class="sec"><h2>${t("danger")}</h2><div class="card form">
+  `;
+  const dng_html=`<section class="sec"><h2>${t("danger")}</h2><div class="card form">
     ${ui.confirmReset?`<div class="actions"><button class="btn danger" data-act="reset-yes">${t("reset_confirm")}</button><button class="btn" data-act="reset-no">${t("cancel")}</button></div>`
       :`<button class="btn danger" data-act="reset" style="justify-self:start">${t("reset")}</button>`}</div></section>`;
+  return `<div class="accs">`
+    +A("biz",biz_html,lx("Mon activité","My business"),lx("Nom, téléphone, pays, reçus","Name, phone, country, receipts"))
+    +A("pay",paySection(),null,lx("Mobile money et banque sur vos factures","Mobile money and bank details on invoices"))
+    +A("cat",catSection(),null,lx("Votre lien public et Ecrici Market","Your public link and Ecrici Market"))
+    +A("app",app_html,null,lx("Clair, sombre ou automatique","Light, dark or automatic"))
+    +A("staff",staffSection(),null,lx("Employés et codes PIN","Employees and PIN codes"))
+    +A("backup",back_html,null,lx("Sauvegarder et restaurer vos données","Save and restore your data"))
+    +A("danger",dng_html,null,lx("Tout effacer","Erase everything"))
+    +`</div>`;
 }
 
 /* ---------- receipts & messages ---------- */
@@ -1930,6 +1965,7 @@ function histSync(){
   if(ui.view!=="home"&&!_ht){ if(_hpush("t")) _ht=true; }
   else if(ui.view==="home"&&_ht){ _ht=false; _hback(); }
 }
+document.addEventListener("toggle",e=>{ const d=e.target; if(d&&d.classList&&d.classList.contains("acc")){ ui.setOpen=ui.setOpen||{}; ui.setOpen[d.dataset.k]=d.open; } },true);
 window.addEventListener("popstate",()=>{
   if(_ign>0){ _ign--; return; }
   if(_hm){ _hm=false; ui.modal=null; _renderModal(); return; }
@@ -1948,7 +1984,7 @@ function _renderModal(){
     const text=`${c?t(kind==="invoice"?"msg_invoice_intro":"msg_receipt_intro",c.name)+"\n\n":""}${receiptText(x,kind)}`;
     const wa=`https://wa.me/${ph}?text=${encodeURIComponent(text)}`;
     const sms=`sms:${ph?"+"+ph:""}?body=${encodeURIComponent(text)}`;
-    inner=`${x.type==="sale"?`<div class="seg" role="group" style="padding:8px;margin:0 0 8px;justify-content:center;background:var(--card);border-radius:14px"><button class="pill" data-act="set-doc" data-k="receipt" ${kind==="receipt"?'aria-pressed="true"':""}>${t("receipt")}</button><button class="pill" data-act="set-doc" data-k="invoice" ${kind==="invoice"?'aria-pressed="true"':""}>${t("invoice")}</button></div>`:""}${ticketHtml(x,kind)}${x.void?`<div class="dlg" style="color:var(--owed)">${t("cancelled")} · ${fmtDate(x.void.date)}${x.void.by?` · ${esc(x.void.by)}`:""}${x.void.reason?` — ${esc(x.void.reason)}`:""}</div>`:""}<details class="more"><summary>${lx("Plus d'options","More options")}</summary><div class="actions">
+    inner=`${x.type==="sale"?`<div class="seg" role="group" style="padding:8px 56px;margin:0 0 8px;justify-content:center;background:var(--card);border-radius:20px"><button class="pill" data-act="set-doc" data-k="receipt" ${kind==="receipt"?'aria-pressed="true"':""}>${t("receipt")}</button><button class="pill" data-act="set-doc" data-k="invoice" ${kind==="invoice"?'aria-pressed="true"':""}>${t("invoice")}</button></div>`:""}${ticketHtml(x,kind)}${x.void?`<div class="dlg" style="color:var(--owed)">${t("cancelled")} · ${fmtDate(x.void.date)}${x.void.by?` · ${esc(x.void.by)}`:""}${x.void.reason?` — ${esc(x.void.reason)}`:""}</div>`:""}<details class="more"><summary>${lx("Plus d'options","More options")}</summary><div class="actions">
       <a class="btn" href="${sms}">${t("sms")}</a>
       <button class="btn" data-act="copy-receipt" data-id="${x.id}">${t("copy")}</button>
       <button class="btn" data-act="pdf-dl" data-id="${x.id}">${t("pdf_dl")}</button>
@@ -2261,7 +2297,7 @@ document.addEventListener("click",e=>{
     case "pk-toggle": if(ui.draft){ ui.draft.pkClosed=!ui.draft.pkClosed; pkVis(); } break;
     case "pick-done": ui.modal=null; render(); break;
     case "add-line": ui.draft.lines.push({d:"",q:"1",p:"",pid:null,auto:false}); render(); { const i=ui.draft.lines.length-1; const f=$("#l"+i+"d"); f&&f.focus(); } break;
-    case "biz-go": ui.view="set"; render(); setTimeout(()=>{ const e=$("#s-biz"); if(e){ e.scrollIntoView({block:"center"}); e.focus(); } },50); break;
+    case "biz-go": ui.view="set"; (ui.setOpen=ui.setOpen||{}).biz=true; render(); setTimeout(()=>{ const e=$("#s-biz"); if(e){ e.scrollIntoView({block:"center"}); e.focus(); } },50); break;
     case "biz-no": S.shop.biz="shop"; try{ localStorage.setItem("ecrici-biz","shop"); }catch(e){} save(); render(); break;
     case "line-det": ui.draft.lines[+el.dataset.i].open=true; render(); break;
     case "del-line": ui.draft.lines.splice(+el.dataset.i,1); render(); break;
@@ -2338,7 +2374,7 @@ document.addEventListener("click",e=>{
       if(oldC!==s.country&&!$("#s-lang").dataset.touched) {}
       save(); render(); toast(t("saved_ok")); break; }
     case "save-cat": saveCat(); break;
-    case "go-cat": ui.view="set"; render(); setTimeout(()=>{ const b=$("#cat-box"); if(b) b.scrollIntoView({block:"start"}); },60); break;
+    case "go-cat": ui.view="set"; (ui.setOpen=ui.setOpen||{}).cat=true; render(); setTimeout(()=>{ const b=$("#cat-box"); if(b) b.scrollIntoView({block:"start"}); },60); break;
     case "logo-rm": delete S.shop.logoData; save(); render(); break;
     case "cat-col": catGrab(); catPatch({color:el.dataset.c}); break;
     case "cat-img-rm": { catGrab(); const k=el.dataset.k, old=(S.shop.cat||{})[k]; if(old&&window.__catImgDel) window.__catImgDel(old); const n=Object.assign({},S.shop.cat); delete n[k]; S.shop.cat=n; catPatch({}); break; }
@@ -2354,7 +2390,7 @@ document.addEventListener("click",e=>{
     case "cat-wa": { const c=S.shop.cat; window.open("https://wa.me/?text="+encodeURIComponent((lx("Voici mes prix et mes articles : ","See my prices and items here: "))+catUrl()),"_blank","noopener"); break; }
     case "save-pay": { const out=[]; for(let i=0;i<3;i++){ const n=($("#pay-n-"+i)||{}).value||""; if(n.trim()) out.push({m:($("#pay-m-"+i)||{}).value||"Other",n:n.trim().slice(0,60),a:(($("#pay-a-"+i)||{}).value||"").trim().slice(0,60)}); }
       S.shop.pay=out; S.shop.payinfo=""; save(); render(); toast(t("saved_ok")); break; }
-    case "go-pay": ui.modal=null; $("#layer").innerHTML=""; ui.view="set"; render(); setTimeout(()=>{ const b=$("#pay-box"); if(b) b.scrollIntoView({block:"start"}); },50); break;
+    case "go-pay": ui.modal=null; $("#layer").innerHTML=""; ui.view="set"; (ui.setOpen=ui.setOpen||{}).pay=true; render(); setTimeout(()=>{ const b=$("#pay-box"); if(b) b.scrollIntoView({block:"start"}); },50); break;
     case "tour-next": if(ui.tour){ ui.tour.i++; drawTour(); } break;
     case "tour-back": if(ui.tour){ ui.tour.i=Math.max(0,ui.tour.i-1); drawTour(); } break;
     case "tour-skip": tourClose(); break;
