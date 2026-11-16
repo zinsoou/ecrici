@@ -175,6 +175,12 @@ css.textContent = `#lg-gate{position:fixed;inset:0;z-index:9999;overflow:auto;ba
 #lg-gate .lg-err{color:var(--owed);font-size:14px;min-height:18px}
 #lg-gate .lg-chk{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
 #lg-gate .lg-chk input{width:auto}
+#lg-gate .phbox{display:flex;align-items:stretch;background:var(--paper);border:1px solid var(--line);border-radius:10px;min-height:48px}
+#lg-gate .phbox:focus-within{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:2px}
+#lg-gate .phbox .cc{position:relative;flex:none;display:flex;align-items:center;gap:6px;padding:0 10px 0 12px;border-right:1px solid var(--line);font-weight:600;white-space:nowrap}
+#lg-gate .phbox .cc span.car{font-size:.7em;opacity:.6}
+#lg-gate .phbox .cc select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;font-size:16px}
+#lg-gate .phbox input{border:0;background:transparent;border-radius:0 10px 10px 0;min-height:46px;outline:0;font-size:16px}
 #lg-gate .lg-price{color:var(--muted);font-size:14px}
 #lg-gate a.btn{text-decoration:none;text-align:center}
 #lg-gate .lg-foot{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:6px;text-align:center;color:var(--muted);font-size:13px}
@@ -185,7 +191,7 @@ document.body.appendChild(gate);
 if (hideStyle) hideStyle.remove();
 document.documentElement.setAttribute("translate", "no"); { const m = document.createElement("meta"); m.name = "google"; m.content = "notranslate"; document.head.appendChild(m); }
 
-let gateKind = "loading", mode = "login", form = { country: "BJ", phone: "", name: "", code: "", ref: "" }, busyAuth = false, authErrText = "";
+let gateKind = "loading", mode = "login", form = { country: (() => { try { const z = (Intl.DateTimeFormat().resolvedOptions().timeZone || "").split("/")[1] || "", M = { Lagos: "NG", Accra: "GH", Nairobi: "KE", Lome: "TG", Abidjan: "CI", Dakar: "SN", Ouagadougou: "BF", Bamako: "ML", Niamey: "NE", Douala: "CM", Johannesburg: "ZA", Kigali: "RW", Dar_es_Salaam: "TZ", Kampala: "UG" }; return M[z] || "BJ"; } catch (e) { return "BJ"; } })(), phone: "", name: "", code: "", ref: "" }, busyAuth = false, authErrText = "";
 try {
   const jc = new URLSearchParams(location.search).get("join");
   if (jc) { lsSet("ecrici-join", String(jc).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 16)); history.replaceState(null, "", location.pathname); }
@@ -194,7 +200,9 @@ try {
   if (rf) { lsSet("ecrici-ref", String(rf).replace(/[<>"]/g, "").trim().slice(0, 60)); history.replaceState(null, "", location.pathname); }
   form.ref = lsGet("ecrici-ref") || ""; form.biz = form.biz || "shop"; if (form.ref && !form.code) mode = "signup";
 } catch (e) {}
-const COUNTRY_OPTS = () => Object.entries(COUNTRIES).map(([k, v]) => `<option value="${k}" ${form.country === k ? "selected" : ""}>${esc(v.name)} (+${v.cc})</option>`).join("");
+const flag = k => { try { return String.fromCodePoint(...[...k].map(c => 127397 + c.charCodeAt(0))); } catch (e) { return ""; } };
+const COUNTRY_OPTS = () => Object.entries(COUNTRIES).map(([k, v]) => `<option value="${k}" ${form.country === k ? "selected" : ""}>${flag(k)} ${esc(v.name)} (+${v.cc})</option>`).join("");
+const CCBOX = () => `<span aria-hidden="true">${flag(form.country)} +${COUNTRIES[form.country].cc}</span><span class="car" aria-hidden="true">▼</span><select id="lg-country" aria-label="${esc(g("country"))}">${COUNTRY_OPTS()}</select>`;
 const shopRow = () => jget(K.acct) || {};
 const waLink = txt => CFG.adminWhatsapp ? `https://wa.me/${String(CFG.adminWhatsapp).replace(/\D/g, "")}?text=${encodeURIComponent(txt)}` : "";
 const head = () => `<div class="lg-top"><button class="pill" data-lg="lang">${lang() === "fr" ? "English" : "Français"}</button>${canInst() || isIOS() ? `<button class="pill" data-lg="install">${esc(g("inst"))}</button>` : ""}</div>${iosHelp && isIOS() ? `<div class="lg-msg" style="margin-top:10px">${esc(g("ios_t"))}</div>` : ""}<h1>Ecrici</h1><p class="lg-tag">${esc(g("tag"))}</p>`;
@@ -224,8 +232,7 @@ function drawGate() {
       ${su ? `<div class="field"><label for="lg-name">${esc(g("shop"))}</label><input id="lg-name" value="${esc(form.name)}" autocomplete="organization" autocapitalize="characters" placeholder="${esc(lang() === "fr" ? "BOUTIQUE DE VICTOR" : "VICTOR'S DRYCLEANER")}" style="text-transform:uppercase"></div>` : ""}
       ${su ? `<div class="field"><label for="lg-biz">${esc(g("biz_l"))}</label><select id="lg-biz">${["shop","electronics","pharmacy","food","beauty","health","school","repair","travel","services","rent","hotel"].map(k => `<option value="${k}" ${form.biz === k ? "selected" : ""}>${esc(g("biz_" + k))}</option>`).join("")}</select></div>` : ""}
       ${su ? `<div class="field"><label for="lg-ref">${esc(g("ref_l"))}</label><input id="lg-ref" value="${esc(form.ref)}" autocomplete="off" maxlength="60"><small class="lg-hint" style="opacity:.7;font-size:.8em">${esc(g("ref_h"))}</small></div>` : ""}
-      <div class="field"><label for="lg-country">${esc(g("country"))}</label><select id="lg-country">${COUNTRY_OPTS()}</select></div>
-      <div class="field"><label for="lg-phone">${esc(g("phone"))}</label><input id="lg-phone" value="${esc(form.phone)}" inputmode="tel" autocomplete="tel" placeholder="${esc(PH[form.country] || "")}"><small class="lg-hint" style="opacity:.7;font-size:.8em">${esc(g("hint_phone"))} ${esc(PH[form.country] || "")}</small></div>
+      <div class="field"><label for="lg-phone">${esc(g("phone"))}</label><div class="phbox"><label class="cc">${CCBOX()}</label><input id="lg-phone" value="${esc(form.phone)}" inputmode="tel" autocomplete="tel" placeholder="${esc(PH[form.country] || "")}"></div></div>
       <div class="field"><label for="lg-pw">${esc(su || jn ? g("pw") : g("pw_login"))}</label><input id="lg-pw" type="password" autocomplete="${su || jn ? "new-password" : "current-password"}"></div>
       ${jn ? `<div class="field"><label for="lg-code">${esc(g("code"))}</label><input id="lg-code" value="${esc(form.code)}" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase"></div>` : ""}
       ${su ? `<p class="lg-tag" style="margin:0;font-size:.8em;opacity:.75">${esc(g("terms_a"))} <a href="terms.html" target="_blank" rel="noopener">${esc(g("terms_b"))}</a> ${esc(g("terms_d"))} <a href="privacy.html" target="_blank" rel="noopener">${esc(g("terms_e"))}</a>${esc(g("terms_c"))}</p>` : ""}
