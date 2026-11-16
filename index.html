@@ -573,8 +573,8 @@ const VIDEOS={
  beauty:{en:"https://youtube.com/shorts/5hn1AvSixaw",fr:"https://youtube.com/shorts/rBNzYjfi8cU"},
  shops:{en:"https://youtube.com/shorts/O0-TpjkQfaQ",fr:"https://youtube.com/shorts/ek6TdMHvEi0"},
  hotel:{en:"https://youtube.com/shorts/73xx_dztntE",fr:"https://youtube.com/shorts/Mw4vX-kIRlI"},
- travel:{en:"",fr:""},
- health:{en:"",fr:""}};
+ travel:{en:"https://youtube.com/shorts/9V_9e2PzoZw",fr:"https://youtube.com/shorts/CMZpZdvpdNU"},
+ health:{en:"https://youtube.com/shorts/tpCRDtj1_oQ",fr:"https://youtube.com/shorts/GlQwDE938dE"}};
 const VID_OF={food:"restaurant",repair:"artisans",services:"artisans",beauty:"beauty",shop:"shops",electronics:"shops",hotel:"hotel",travel:"travel",health:"health"};
 function howBtn(){ try{ const k=VID_OF[biz()]; const u=k&&VIDEOS[k]&&(VIDEOS[k][L()]||""); if(!u||!isOwner()) return ""; return `<a class="btn small" href="${u}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">▶ ${lx("Voir comment ça marche","Watch how it works")}</a>`; }catch(_){ return ""; } }
 const NOSTOCK=["rent","hotel","beauty","school","services","travel","health"];
