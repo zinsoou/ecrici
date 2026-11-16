@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="google" content="notranslate">
-<meta name="robots" content="noindex">
 <meta name="ecrici-shop-page" content="1">
 <title>Shop</title>
 <meta name="theme-color" content="#0E1A4F">
@@ -85,16 +84,35 @@ const okU=u=>typeof u==="string"&&u.indexOf(IMGP)===0&&u.length<400;
 const th=u=>/-f\.jpg$/.test(u)?u.replace(/-f\.jpg$/,"-t.jpg"):u;
 const thImg=(u,a)=>`<img alt="${esc(a||"")}" loading="lazy" decoding="async" src="${esc(th(u))}" data-f="${esc(u)}" onerror="if(this.dataset.f&&this.src!==this.dataset.f){this.src=this.dataset.f}else{this.style.display='none'}">`;
 const SV={pin:'<svg viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',wa:'<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-13.4 7.8L3 21l1.3-4.4A9 9 0 1 1 21 12z"/></svg>',ph:'<svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>',up:'<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v4h-4"/></svg>'};
+function noidx(){ try{ let m=document.querySelector('meta[name=robots]'); if(!m){ m=document.createElement("meta"); m.name="robots"; document.head.appendChild(m); } m.content="noindex"; }catch(e){} }
+/* Search engines: a page that loads (public, live, not blocked) gets a real title, description and business data. A missing page is noindex. */
+const TL={shop:["Boutique","Shop"],electronics:["Électronique","Electronics"],food:["Restaurant","Restaurant"],beauty:["Salon de beauté","Beauty salon"],health:["Santé","Health"],school:["École","School"],repair:["Artisan et réparation","Repairs and artisans"],travel:["Agence de voyage","Travel agency"],services:["Services","Services"],rent:["Location","Rentals"],hotel:["Hôtel","Hotel"]};
+const LDT={food:"Restaurant",beauty:"BeautySalon",hotel:"Hotel",travel:"TravelAgency",health:"MedicalBusiness",school:"School",shop:"Store",electronics:"ElectronicsStore",repair:"HomeAndConstructionBusiness"};
+function seo(){ try{
+  const f=(D.lang==="fr")?0:1, tr=(TL[D.biz]||TL.shop)[f], addr=String(D.addr||"").trim(), nm=String(D.name||"").trim();
+  const ttl=(nm+" - "+tr+(addr?", "+addr.split(",").slice(-2).join(",").trim():"")).slice(0,70);
+  const tg=String(D.tag||"").trim();
+  const ds=(tg||(f?"Catalogue, prix et commandes directes sur WhatsApp.":"Catalogue, prices and direct orders on WhatsApp.")).slice(0,155);
+  document.title=ttl;
+  const mm=(n,c,a)=>{ const pr=!!a; let m=document.querySelector("meta["+(pr?"property":"name")+"='"+n+"']"); if(!m){ m=document.createElement("meta"); if(pr) m.setAttribute("property",n); else m.name=n; document.head.appendChild(m);} m.content=c; };
+  mm("description",ds); mm("og:title",ttl,"meta[property="); mm("og:description",ds,"meta[property="); mm("og:type","website","meta[property=");
+  const cu="https://ecrici.com/shop.html?s="+encodeURIComponent(slug); let l=document.querySelector("link[rel=canonical]"); if(!l){ l=document.createElement("link"); l.rel="canonical"; document.head.appendChild(l); } l.href=cu; mm("og:url",cu,"meta[property=");
+  if(okU(D.logo)) mm("og:image",D.logo,"meta[property=");
+  const dg=String(D.phone||"").replace(/\D/g,"");
+  const ld={"@context":"https://schema.org","@type":LDT[D.biz]||"LocalBusiness","name":nm,"url":cu,"description":ds};
+  if(okU(D.logo)) ld.image=D.logo; if(dg.length>=8) ld.telephone="+"+dg; if(addr) ld.address={"@type":"PostalAddress","streetAddress":addr}; if(D.hrs) ld.openingHours=String(D.hrs).slice(0,80);
+  let s=document.getElementById("ld"); if(!s){ s=document.createElement("script"); s.type="application/ld+json"; s.id="ld"; document.head.appendChild(s); } s.textContent=JSON.stringify(ld);
+}catch(e){} }
 function msg(b,s){ $("m").innerHTML=`<div class="msg"><b>${esc(b)}</b>${esc(s||"")}</div>`; }
 async function load(){
   tx=T[dl];
-  if(!slug){ msg(tx.nf,tx.nfs); return; }
+  if(!slug){ noidx(); msg(tx.nf,tx.nfs); return; }
   try{
     const H={apikey:ECRICI.key};
     let r=await fetch(BASE+"/rest/v1/rpc/catalog_get",{method:"POST",headers:Object.assign({"Content-Type":"application/json"},H),body:JSON.stringify({p_slug:slug})});
     if(r.status===404){ const base=BASE+"/rest/v1/catalogs?slug=eq."+slug+"&active=eq.true&select="; r=await fetch(base+"data,updated_at,verified,created_at",{headers:H}); if(!r.ok) r=await fetch(base+"data,updated_at",{headers:H}); }
     if(!r.ok) throw 0; const j=await r.json();
-    if(!j.length||(j[0].data&&j[0].data.biz==="pharmacy")){ msg(tx.nf,tx.nfs); return; }
+    if(!j.length||(j[0].data&&j[0].data.biz==="pharmacy")){ noidx(); msg(tx.nf,tx.nfs); return; }
     D=j[0].data; D._u=j[0].updated_at; D._v=j[0].verified===true; D._c=j[0].created_at||""; sl=D.lang==="fr"?"fr":"en"; lg=dl; tx=T[lg]; document.documentElement.lang=lg; $("lgb").textContent=tx.lgt; $("lgb").onclick=()=>{ dl=lg==="fr"?"en":"fr"; try{ localStorage.setItem("ecrici-lang",dl); }catch(e){} lg=dl; tx=T[lg]; document.documentElement.lang=lg; $("lgb").textContent=tx.lgt; draw(); }; draw();
   }catch(e){ msg(tx.err); }
 }
@@ -113,7 +131,7 @@ function openGal(list,st){ if(!list.length) return; const o=document.createEleme
 async function share(){ const u=location.href.split("#")[0]; try{ if(navigator.share){ await navigator.share({title:D.name,url:u}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
   try{ await navigator.clipboard.writeText(u); $("sh").textContent=tx.copied; setTimeout(()=>$("sh").textContent="↗ "+tx.share,1800); }catch(e){ prompt(tx.share,u); } }
 function draw(){
-  document.title=D.name; $("nm").textContent=D.name; $("sh").textContent="↗ "+tx.share; $("sh").hidden=false; $("sh").onclick=share;
+  document.title=D.name; seo(); $("nm").textContent=D.name; $("sh").textContent="↗ "+tx.share; $("sh").hidden=false; $("sh").onclick=share;
   if(/^#[0-9a-f]{6}$/i.test(D.col||"")){ document.documentElement.style.setProperty("--hd",D.col); document.querySelector('meta[name=theme-color]').content=D.col; }
   if(okU(D.cover)) $("hd").style.backgroundImage="linear-gradient(rgba(10,15,44,.25),rgba(10,15,44,.55)),url('"+encodeURI(D.cover).replace(/'/g,"%27")+"')";
   if(okU(D.logo)){ $("lgo").src=D.logo; $("lgo").hidden=false; } else { $("lgi").textContent=(D.name||"?").trim().slice(0,2).toUpperCase(); $("lgi").hidden=false; }

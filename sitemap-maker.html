@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Ecrici sitemap maker</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;max-width:560px;margin:0 auto;padding:20px;background:#F6F7FB;color:#0E1A4F}button{font:inherit;font-weight:700;background:#2447D6;color:#fff;border:0;border-radius:12px;padding:14px 18px;width:100%;min-height:48px}pre{background:#fff;border:1px solid #E4E8F2;border-radius:12px;padding:12px;white-space:pre-wrap;word-break:break-all;font-size:13px}.n{color:#5F6989;font-size:14px}</style></head>
+<body><h1>Sitemap maker</h1>
+<p class="n">Makes a fresh sitemap.xml with every shop that is public and listed in the Market. Download it, then upload it to GitHub next to index.html (replace the old one). Do this about once a week while you add shops.</p>
+<button id="go">Make sitemap.xml</button><p id="st" class="n"></p><pre id="out" hidden></pre>
+<script src="config.js"></script>
+<script>
+const $=id=>document.getElementById(id), B=String(ECRICI.url).replace(/\/+$/,""), SITE="https://ecrici.com";
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+async function page(off){ const r=await fetch(B+"/rest/v1/rpc/market_search",{method:"POST",headers:{apikey:ECRICI.key,"Content-Type":"application/json"},body:JSON.stringify({p_q:"",p_limit:100,p_offset:off})}); if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); }
+$("go").onclick=async()=>{ $("st").textContent="Working..."; try{
+  let all=[], off=0; for(;;){ const j=await page(off); all=all.concat(j); if(j.length<100||all.length>5000) break; off+=100; }
+  const seen={}, u=[[SITE+"/",""],[SITE+"/market.html",""]];
+  all.forEach(x=>{ if(!x.slug||seen[x.slug]) return; seen[x.slug]=1; u.push([SITE+"/shop.html?s="+encodeURIComponent(x.slug),(x.updated_at||"").slice(0,10)]); });
+  const xml='<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+u.map(a=>"<url><loc>"+esc(a[0])+"</loc>"+(a[1]?"<lastmod>"+a[1]+"</lastmod>":"")+"</url>").join("\n")+"\n</urlset>\n";
+  $("out").textContent=xml; $("out").hidden=false; $("st").textContent=(u.length-2)+" shop page(s) in the sitemap. The download should start now.";
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([xml],{type:"application/xml"})); a.download="sitemap.xml"; document.body.appendChild(a); a.click(); a.remove();
+ }catch(e){ $("st").textContent="Could not load the shops ("+e.message+"). Check your internet and try again."; } };
+</script></body></html>
