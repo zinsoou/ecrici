@@ -1,0 +1,61 @@
+# Rebuilds sitemap.xml every day from the shops that are public and listed in the Ecrici Market.
+# It only uses the public address and key already inside config.js. No secret is needed.
+name: Update sitemap
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sitemap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build sitemap.xml
+        run: |
+          node - <<'JS'
+          const fs = require("fs");
+          const w = {};
+          new Function("window", fs.readFileSync("config.js", "utf8"))(w);
+          const C = w.ECRICI;
+          if (!C || !C.url || !C.key) { console.error("config.js has no ECRICI url/key"); process.exit(1); }
+          const B = String(C.url).replace(/\/+$/, ""), SITE = "https://ecrici.com";
+          const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+          (async () => {
+            let all = [], off = 0;
+            for (;;) {
+              const r = await fetch(B + "/rest/v1/rpc/market_search", {
+                method: "POST",
+                headers: { apikey: C.key, "Content-Type": "application/json" },
+                body: JSON.stringify({ p_q: "", p_limit: 100, p_offset: off })
+              });
+              if (!r.ok) { console.error("Market request failed: HTTP " + r.status); process.exit(1); }
+              const j = await r.json();
+              if (!Array.isArray(j)) { console.error("Unexpected answer"); process.exit(1); }
+              all = all.concat(j);
+              if (j.length < 100 || all.length > 5000) break;
+              off += 100;
+            }
+            const seen = {}, urls = [SITE + "/", SITE + "/market.html"];
+            all.forEach(x => { if (x.slug && !seen[x.slug]) { seen[x.slug] = 1; urls.push(SITE + "/shop.html?s=" + encodeURIComponent(x.slug)); } });
+            urls.sort((a, b) => (a === SITE + "/" ? -1 : b === SITE + "/" ? 1 : a === SITE + "/market.html" ? -1 : b === SITE + "/market.html" ? 1 : a < b ? -1 : 1));
+            const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls.map(u => "<url><loc>" + esc(u) + "</loc></url>").join("\n") + "\n</urlset>\n";
+            fs.writeFileSync("sitemap.xml", xml);
+            console.log((urls.length - 2) + " shop page(s) in the sitemap");
+          })().catch(e => { console.error(e); process.exit(1); });
+          JS
+      - name: Save it if it changed
+        run: |
+          if git diff --quiet -- sitemap.xml; then
+            echo "No change."
+          else
+            git config user.name "ecrici-sitemap-bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add sitemap.xml
+            git commit -m "Update sitemap.xml"
+            git push
+          fi
