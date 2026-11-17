@@ -1,8 +1,8 @@
 /* Offline cache. Bump VERSION whenever you upload a new index.html. */
-const VERSION = "ecrici-v112";
+const VERSION = "ecrici-v113";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "config.js", "hosted.js", "privacy.html", "terms.html", "qr.js"];
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(VERSION).then(c => Promise.all(FILES.map(f => c.add(f).catch(() => {})))).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then(c => Promise.all(FILES.map(f => c.add(new Request(f,{cache:'reload'})).catch(() => {})))).then(() => self.skipWaiting()));
 });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim()));
@@ -17,6 +17,6 @@ self.addEventListener("fetch", e => {
     e.respondWith(fetch(req).then(r => { const cp = r.clone(); caches.open(VERSION).then(c => c.put(req, cp)); return r; }).catch(() => caches.match(req)));
     return;
   }
-  e.respondWith(fetch(req).then(r => { const cp = r.clone(); caches.open(VERSION).then(c => c.put(req, cp)); return r; })
+  e.respondWith(fetch(req,{cache:'no-cache'}).then(r => { const cp = r.clone(); caches.open(VERSION).then(c => c.put(req, cp)); return r; })
     .catch(() => caches.match(req).then(m => m || caches.match("index.html"))));
 });
