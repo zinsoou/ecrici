@@ -583,6 +583,7 @@ const VIDEOS={
  hotel:{en:"https://youtube.com/shorts/73xx_dztntE",fr:"https://youtube.com/shorts/Mw4vX-kIRlI"},
  travel:{en:"https://youtube.com/shorts/9V_9e2PzoZw",fr:"https://youtube.com/shorts/CMZpZdvpdNU"},
  health:{en:"https://youtube.com/shorts/tpCRDtj1_oQ",fr:"https://youtube.com/shorts/GlQwDE938dE"}};
+const EXPLAINER={en:"https://youtube.com/shorts/5k079559RYE",fr:"https://youtube.com/shorts/ATNx7UAs8B8"};
 const TEAMVID={pin:{en:"https://youtube.com/shorts/5Qz4XRFRi8A",fr:"https://youtube.com/shorts/nQdYqcsn0BU"},invite:{en:"https://youtube.com/shorts/yZH5a2gJG0s",fr:"https://youtube.com/shorts/aDO6Q5Jn-4w"}};
 const VID_OF={food:"restaurant",repair:"artisans",services:"artisans",beauty:"beauty",shop:"shops",electronics:"shops",hotel:"hotel",travel:"travel",health:"health"};
 function howBtn(){ try{ const k=VID_OF[biz()]; const u=k&&VIDEOS[k]&&(VIDEOS[k][L()]||""); if(!u||!isOwner()) return ""; return `<a class="btn small" href="${u}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">▶ ${lx("Voir comment ça marche","Watch how it works")}</a>`; }catch(_){ return ""; } }
@@ -1175,7 +1176,7 @@ function homeGuide(){
   if(b==="rent"){ steps[0]=[S.customers.some(c=>+c.rent>0),"cust",lx("1. Ajoutez vos locataires et leur loyer","1. Add your tenants and their rent")]; steps[1]=[S.txs.some(x=>x.rentMonth),"cust",lx("2. Facturez le loyer du mois (bouton dans Locataires)","2. Charge this month's rent (button in Tenants)")]; steps[2]=[S.txs.some(x=>x.type==="payment"),"cust",lx("3. Enregistrez un premier paiement","3. Record a first payment")]; }
   if(steps.every(x=>x[0])||S.shop.guideOff) return "";
   const first=steps.findIndex(x=>!x[0]);
-  return `<section class="sec"><h2>${lx("Pour bien démarrer","Get started")}<span>${steps.filter(x=>x[0]).length}/3</span></h2><div class="card flush">${steps.map((x,i)=>`<button class="row" data-act="tab" data-v="${x[1]}" ${x[0]?'style="opacity:.55"':""}><div class="main"><div class="name">${x[0]?"✓ ":""}${esc(x[2])}</div></div>${i===first?`<div class="amt"><span class="badge">${lx("Ici","Next")}</span></div>`:""}</button>`).join("")}</div></section>`;
+  return `<section class="sec"><h2>${lx("Pour bien démarrer","Get started")}<span>${steps.filter(x=>x[0]).length}/3</span></h2><div class="card flush">${steps.map((x,i)=>`<button class="row" data-act="tab" data-v="${x[1]}" ${x[0]?'style="opacity:.55"':""}><div class="main"><div class="name">${x[0]?"✓ ":""}${esc(x[2])}</div></div>${i===first?`<div class="amt"><span class="badge">${lx("Ici","Next")}</span></div>`:""}</button>`).join("")}</div>${(()=>{const u=EXPLAINER[L()]||EXPLAINER.en;return `<a class="btn small" href="${u}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;margin-top:10px">▶ ${lx("Voir comment ça marche","Watch how it works")}</a>`})()}</section>`;
 }
 const apptOn=()=>["health","beauty"].includes(biz());
 const wdLabel=k=>{ const t0=todayKey(); if(k===t0) return lx("Aujourd'hui","Today"); if(k===dayAdd(t0,1)) return lx("Demain","Tomorrow"); return fmtDay(k); };

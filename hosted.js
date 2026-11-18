@@ -171,6 +171,7 @@ css.textContent = `#lg-gate{position:fixed;inset:0;z-index:9999;overflow:auto;ba
 #lg-gate h2{font-family:var(--font-display);font-size:20px;margin:0}
 #lg-gate .lg-tag{color:var(--muted);margin:0;font-size:15px}
 #lg-gate .lg-top{display:flex;justify-content:flex-end}
+#lg-gate .lg-watch{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);font-weight:600;font-size:15px;text-decoration:none}#lg-gate .lg-watch i{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--brand,#1B33A8);color:#fff;font-style:normal;font-size:12px}#lg-gate .lg-watch small{font-weight:500;color:var(--muted)}
 #lg-gate .lg-msg{background:var(--warn-bg);color:var(--warn-ink);border-radius:12px;padding:10px 12px;font-size:14px}
 #lg-gate .lg-err{color:var(--owed);font-size:14px;min-height:18px}
 #lg-gate .lg-chk{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
@@ -207,6 +208,8 @@ const shopRow = () => jget(K.acct) || {};
 const waLink = txt => CFG.adminWhatsapp ? `https://wa.me/${String(CFG.adminWhatsapp).replace(/\D/g, "")}?text=${encodeURIComponent(txt)}` : "";
 const head = () => `<div class="lg-top"><button class="pill" data-lg="lang">${lang() === "fr" ? "English" : "Français"}</button>${canInst() || isIOS() ? `<button class="pill" data-lg="install">${esc(g("inst"))}</button>` : ""}</div>${iosHelp && isIOS() ? `<div class="lg-msg" style="margin-top:10px">${esc(g("ios_t"))}</div>` : ""}<h1>Ecrici</h1><p class="lg-tag">${esc(g("tag"))}</p>`;
 
+const WATCH = { en: "https://youtube.com/shorts/5k079559RYE", fr: "https://youtube.com/shorts/ATNx7UAs8B8" };
+const watchBtn = () => `<a class="lg-watch" href="${WATCH[lang()] || WATCH.en}" target="_blank" rel="noopener"><i>▶</i><span>${lang() === "fr" ? "Voir comment ça marche" : "Watch how it works"} <small>· ${lang() === "fr" ? "45 s" : "45 sec"}</small></span></a>`;
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.standalone;
 let iosHelp = false;
 function canInst() { try { return typeof deferredInstall !== "undefined" && !!deferredInstall && !matchMedia("(display-mode: standalone)").matches; } catch (e) { return false; } }
@@ -227,7 +230,7 @@ function drawGate() {
     h = head() + `<p class="lg-tag">${esc(g("wait"))}</p>`;
   } else if (gateKind === "auth") {
     const su = mode === "signup", jn = mode === "join";
-    h = head() + `<div class="card form"><h2>${esc(jn ? g("join_t") : su ? g("signup") : g("login"))}</h2>
+    h = head() + (jn ? "" : watchBtn()) + `<div class="card form"><h2>${esc(jn ? g("join_t") : su ? g("signup") : g("login"))}</h2>
       ${jn ? `<p class="lg-tag" style="margin:0">${esc(g("join_hint"))}</p>` : ""}
       ${su ? `<div class="field"><label for="lg-name">${esc(g("shop"))}</label><input id="lg-name" value="${esc(form.name)}" autocomplete="organization" autocapitalize="characters" placeholder="${esc(lang() === "fr" ? "BOUTIQUE DE VICTOR" : "VICTOR'S DRYCLEANER")}" style="text-transform:uppercase"></div>` : ""}
       ${su ? `<div class="field"><label for="lg-biz">${esc(g("biz_l"))}</label><select id="lg-biz">${["shop","electronics","pharmacy","food","beauty","health","school","repair","travel","services","rent","hotel"].map(k => `<option value="${k}" ${form.biz === k ? "selected" : ""}>${esc(g("biz_" + k))}</option>`).join("")}</select></div>` : ""}
