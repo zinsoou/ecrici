@@ -304,6 +304,8 @@ details.more[open]>summary::after{transform:rotate(-135deg);margin-top:4px}
 details.more>.actions{display:flex;flex-wrap:wrap;gap:8px;padding:4px 0 12px}
 details.more>.note{padding-bottom:12px!important}
 .pill{min-height:44px;padding:8px 16px;display:inline-flex;align-items:center;justify-content:center}
+.spw{display:flex;flex-wrap:wrap;gap:8px}.spc{min-height:44px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:.92rem;cursor:pointer;text-align:left}.spc[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}.spc[disabled]{opacity:.55;cursor:default}.spsel{display:grid;gap:8px}.sprow{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--card);display:grid;gap:8px}.sprow .nm{font-weight:600}.spm{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.spown{display:flex;gap:8px;align-items:center}.spown input{flex:1;min-width:0}
+
 .btn.small{min-height:44px;padding:8px 14px}
 .btn{border-radius:12px}
 .chk{min-height:44px}
@@ -1135,8 +1137,8 @@ function pickList(q,compact){
   const list=S.products.filter(p=>!q||p.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
   if(!list.length) return `<p class="note" style="text-align:center">${t("pick_none")}</p>`;
   return list.map(p=>{ const n=pickQty(p.id); const out=!p.svc&&p.qty<=0, sub=p.svc?(biz()==="hotel"?roomText(p,true):t("svc_tag")):out?t("out"):`${t("in_stock")}: ${p.qty}`;
-    if(compact) return `<button class="row pk1" data-act="pick-p" data-id="${p.id}"${out?' style="opacity:.5"':""}><span class="nm">${esc(p.name)}</span><span class="meta">${money(p.price)}${(p.svc?sub:out?sub:p.qty)!==""?" · "+esc(p.svc?sub:out?sub:p.qty):""}</span>${n>0?`<b class="qn">×${n}</b>`:""}</button>`;
-    return `<button class="row" data-act="pick-p" data-id="${p.id}"${out?' style="opacity:.5"':""}><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)}${sub?" · "+esc(sub):""}</div></div>${n>0?`<div class="amt"><b>×${n}</b></div>`:""}</button>`; }).join("");
+    if(compact) return `<button class="row pk1" data-act="pick-p" data-id="${p.id}"${out?' style="opacity:.5"':""}><span class="nm">${esc(p.name)}</span><span class="meta">${pmTxt(p)}${(p.svc?sub:out?sub:p.qty)!==""?" · "+esc(p.svc?sub:out?sub:p.qty):""}</span>${n>0?`<b class="qn">×${n}</b>`:""}</button>`;
+    return `<button class="row" data-act="pick-p" data-id="${p.id}"${out?' style="opacity:.5"':""}><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${pmTxt(p)}${sub?" · "+esc(sub):""}</div></div>${n>0?`<div class="amt"><b>×${n}</b></div>`:""}</button>`; }).join("");
 }
 function pickAdd(id){
   const pr=S.products.find(x=>x.id===id), d=ui.draft; if(!pr||!d) return;
@@ -1173,10 +1175,11 @@ function homeGuide(){
     [S.products.length>0,"stock",lx("1. Ajoutez ","1. Add ")+({shop:lx("vos produits","your products"),electronics:lx("vos produits","your products"),pharmacy:lx("vos produits","your products"),food:lx("votre menu","your menu"),beauty:lx("vos services","your services"),health:lx("vos soins et actes","your services"),school:lx("vos types de frais","your fee types"),repair:lx("vos travaux","your jobs"),travel:lx("vos voyages","your trips"),services:lx("vos services","your services"),rent:lx("vos logements","your units"),hotel:lx("vos chambres","your rooms")}[b]||"")],
     [S.customers.length>0||S.txs.length>0,"cust",lx("2. Ajoutez ","2. Add ")+({rent:lx("vos locataires","your tenants"),hotel:lx("vos clients","your guests"),school:lx("vos élèves","your students"),health:lx("vos patients","your patients")}[b]||lx("vos clients","your customers"))],
     [S.txs.length>0,"sale",lx("3. Enregistrez ","3. Record ")+({rent:lx("un premier loyer","your first rent"),hotel:lx("un premier séjour","your first stay"),school:lx("un premier paiement","your first payment"),travel:lx("une première réservation","your first booking")}[b]||lx("une première vente","your first sale"))]];
+  if(spOn()) steps[0][2]=lx("1. Choisissez vos services","1. Choose your services");
   if(b==="rent"){ steps[0]=[S.customers.some(c=>+c.rent>0),"cust",lx("1. Ajoutez vos locataires et leur loyer","1. Add your tenants and their rent")]; steps[1]=[S.txs.some(x=>x.rentMonth),"cust",lx("2. Facturez le loyer du mois (bouton dans Locataires)","2. Charge this month's rent (button in Tenants)")]; steps[2]=[S.txs.some(x=>x.type==="payment"),"cust",lx("3. Enregistrez un premier paiement","3. Record a first payment")]; }
   if(steps.every(x=>x[0])||S.shop.guideOff) return "";
   const first=steps.findIndex(x=>!x[0]);
-  return `<section class="sec"><h2>${lx("Pour bien démarrer","Get started")}<span>${steps.filter(x=>x[0]).length}/3</span></h2><div class="card flush">${steps.map((x,i)=>`<button class="row" data-act="tab" data-v="${x[1]}" ${x[0]?'style="opacity:.55"':""}><div class="main"><div class="name">${x[0]?"✓ ":""}${esc(x[2])}</div></div>${i===first?`<div class="amt"><span class="badge">${lx("Ici","Next")}</span></div>`:""}</button>`).join("")}</div>${(()=>{const u=EXPLAINER[L()]||EXPLAINER.en;return `<a class="btn small" href="${u}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;margin-top:10px">▶ ${lx("Voir comment ça marche","Watch how it works")}</a>`})()}</section>`;
+  return `<section class="sec"><h2>${lx("Pour bien démarrer","Get started")}<span>${steps.filter(x=>x[0]).length}/3</span></h2><div class="card flush">${steps.map((x,i)=>`<button class="row" data-act="${x[1]==="stock"&&spOn()&&!x[0]?"svc-pick":"tab"}" data-v="${x[1]}" ${x[0]?'style="opacity:.55"':""}><div class="main"><div class="name">${x[0]?"✓ ":""}${esc(x[2])}</div></div>${i===first?`<div class="amt"><span class="badge">${lx("Ici","Next")}</span></div>`:""}</button>`).join("")}</div>${(()=>{const u=EXPLAINER[L()]||EXPLAINER.en;return `<a class="btn small" href="${u}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;margin-top:10px">▶ ${lx("Voir comment ça marche","Watch how it works")}</a>`})()}</section>`;
 }
 const apptOn=()=>["health","beauty"].includes(biz());
 const wdLabel=k=>{ const t0=todayKey(); if(k===t0) return lx("Aujourd'hui","Today"); if(k===dayAdd(t0,1)) return lx("Demain","Tomorrow"); return fmtDay(k); };
@@ -1456,16 +1459,97 @@ function viewReports(){
   return h+`</section>`;
 }
 
+/* ---------- service picker: tap to add, no typing needed ---------- */
+const SVC={
+plumber:[["Réparation de fuite","Fixing a leak"],["Débouchage de canalisation","Unblocking a drain"],["Installation de lavabo ou évier","Installing a sink or basin"],["Installation de WC","Installing a toilet"],["Installation de douche","Installing a shower"],["Pose de robinet","Fitting a tap"],["Installation de réservoir ou citerne","Installing a water tank"],["Branchement de pompe à eau","Water pump connection"],["Pose de tuyauterie","Laying pipes"],["Réparation de chauffe-eau","Water heater repair"]],
+electrician:[["Recherche de panne","Fault finding"],["Installation électrique d'une maison","Wiring a house"],["Pose de prises et d'interrupteurs","Fitting sockets and switches"],["Pose de lampes et de luminaires","Fitting lights and fixtures"],["Installation de ventilateur","Installing a fan"],["Réparation de court-circuit","Fixing a short circuit"],["Pose de compteur et de disjoncteur","Meter and breaker installation"],["Branchement de groupe électrogène","Generator hookup"],["Installation d'onduleur ou de panneau solaire","Inverter or solar panel installation"],["Installation de caméras","Installing cameras"]],
+carpenter:[["Fabrication de porte","Making a door"],["Fabrication de fenêtre","Making a window"],["Fabrication de lit","Making a bed"],["Fabrication de table et de chaises","Making tables and chairs"],["Fabrication d'armoire ou de placard","Making a wardrobe or cupboard"],["Cuisine équipée","Kitchen cabinets"],["Réparation de meubles","Furniture repair"],["Charpente et toiture en bois","Roof timber work"],["Pose de porte ou de serrure","Fitting a door or lock"],["Faux plafond","False ceiling"]],
+mason:[["Construction de mur","Building a wall"],["Fondations","Foundations"],["Dalle et béton","Slab and concrete"],["Crépissage et enduit","Plastering and rendering"],["Construction de maison","Building a house"],["Clôture","Boundary wall"],["Fosse septique","Septic tank"],["Rénovation et réparation de fissures","Renovation and crack repair"],["Pose de pavés","Paving"]],
+painter:[["Peinture intérieure","Interior painting"],["Peinture extérieure","Exterior painting"],["Peinture de plafond","Ceiling painting"],["Préparation et enduit des murs","Wall preparation and filling"],["Peinture de portes et fenêtres","Painting doors and windows"],["Peinture décorative","Decorative finishes"],["Peinture de portail et de grille","Painting gates and railings"],["Reprise après dégât des eaux","Repainting after water damage"]],
+welder:[["Fabrication de portail","Making a gate"],["Fabrication de porte métallique","Metal door"],["Grilles de fenêtre","Window grilles"],["Barrières et clôtures","Fences and railings"],["Escaliers et rampes","Stairs and handrails"],["Hangar et charpente métallique","Metal shed and roof frame"],["Réservoir et bac en métal","Metal tank"],["Réparation de soudure","Welding repairs"],["Étals et meubles métalliques","Metal stalls and furniture"]],
+mechanic:[["Vidange et entretien","Oil change and service"],["Diagnostic de panne","Fault diagnosis"],["Réparation de freins","Brake repair"],["Réparation de moteur","Engine repair"],["Réparation de suspension","Suspension repair"],["Changement de batterie","Battery replacement"],["Réparation de climatisation auto","Car AC repair"],["Changement de pneus","Tyre change"],["Réparation de moto","Motorbike repair"],["Tôlerie et peinture auto","Body and paint work"]],
+ac:[["Installation de climatiseur","Installing an air conditioner"],["Entretien et nettoyage de clim","AC servicing and cleaning"],["Recharge de gaz","Gas recharge"],["Réparation de climatiseur","AC repair"],["Réparation de réfrigérateur","Fridge repair"],["Réparation de congélateur","Freezer repair"],["Installation de chambre froide","Cold room installation"],["Dépannage à domicile","Home call-out"]],
+tiler:[["Carrelage de sol","Floor tiling"],["Carrelage mural","Wall tiling"],["Carrelage de salle de bain","Bathroom tiling"],["Carrelage de cuisine","Kitchen tiling"],["Pose de plinthes","Skirting tiles"],["Réparation de carrelage","Tile repair"],["Pose de marbre ou de granito","Marble or granito laying"]],
+tailor:[["Robe sur mesure","Made-to-measure dress"],["Chemise ou pantalon sur mesure","Made-to-measure shirt or trousers"],["Costume","Suit"],["Tenues de cérémonie","Ceremony outfits"],["Uniformes scolaires","School uniforms"],["Tenues en pagne ou wax","Wax print outfits"],["Retouches et ourlets","Alterations and hems"],["Réparation de vêtements","Clothing repair"],["Rideaux et draps","Curtains and bedding"]],
+cleaner:[["Ménage de maison","House cleaning"],["Nettoyage après travaux","Post-construction cleaning"],["Nettoyage de bureaux","Office cleaning"],["Lavage de canapés et de tapis","Sofa and carpet cleaning"],["Nettoyage de vitres","Window cleaning"],["Désinfection","Disinfection"],["Entretien régulier","Regular cleaning contract"]],
+phonefix:[["Changement d'écran","Screen replacement"],["Changement de batterie","Battery replacement"],["Réparation du port de charge","Charging port repair"],["Réparation après chute ou eau","Repair after drop or water damage"],["Déblocage et logiciel","Unlocking and software"],["Réparation de haut-parleur ou micro","Speaker or microphone repair"],["Réparation d'ordinateur","Laptop repair"]],
+genfix:[["Entretien et vidange","Servicing and oil change"],["Diagnostic de panne","Fault diagnosis"],["Réparation du démarreur","Starter repair"],["Réparation du carburateur","Carburettor repair"],["Réparation de l'alternateur","Alternator repair"],["Remplacement de pièces","Parts replacement"],["Installation et branchement","Installation and hookup"]],
+photo:[["Photos de mariage","Wedding photos"],["Photos d'événement","Event photos"],["Portraits et photos d'identité","Portraits and ID photos"],["Vidéo d'événement","Event video"],["Photos de produits","Product photos"],["Impression de photos","Photo printing"]],
+gardener:[["Tonte de pelouse","Lawn mowing"],["Taille de haies","Hedge trimming"],["Plantation","Planting"],["Entretien de jardin","Garden maintenance"],["Arrosage","Watering"],["Aménagement paysager","Landscaping"]],
+hairdresser:[["Tresses","Braids"],["Tissage","Weaving"],["Coiffure de mariage","Wedding hairstyle"],["Défrisage","Relaxing"],["Shampoing et brushing","Wash and blow-dry"],["Pose de perruque","Wig installation"],["Coloration","Hair colouring"],["Soins capillaires","Hair treatment"],["Coupe enfant","Children's haircut"]],
+barber:[["Coupe homme","Men's haircut"],["Coupe et barbe","Haircut and beard"],["Taille de barbe","Beard trim"],["Rasage","Shave"],["Coupe enfant","Children's haircut"],["Coloration et soin","Colouring and treatment"]],
+makeup:[["Maquillage de jour","Day makeup"],["Maquillage de soirée","Evening makeup"],["Maquillage de mariée","Bridal makeup"],["Maquillage de cérémonie","Ceremony makeup"],["Cours de maquillage","Makeup lessons"]],
+nails:[["Manucure","Manicure"],["Pédicure","Pedicure"],["Vernis semi-permanent","Gel polish"],["Pose de faux ongles","Nail extensions"],["Décoration d'ongles","Nail art"]],
+spa:[["Massage","Massage"],["Soin du visage","Facial"],["Gommage","Body scrub"],["Épilation","Waxing"],["Soin des mains et des pieds","Hand and foot care"]]};
+const spOn=()=>isOwner()&&tradeOn()&&["work","beauty"].includes(grpOf());
+const pmTxt=p=>{ const pm=p&&p.pm; if(pm==="q") return lx("Sur devis","On quote"); if(pm==="f"&&p.price>0) return lx("À partir de ","From ")+money(p.price); return money(p&&p.price); };
+const spNorm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const SP_STOP=new Set(["de","du","des","la","le","les","un","une","et","and","the","for","pour","avec","with","en","of","my","mon","ma","mes","je","tu","il","on","me","is","am","an","at","in","to","fais","fait","make","fix","do","installation","installing","install","pose","reparation","repair","repairing","fitting","making","fabrication","fixing","service","services","entretien","changement","replacement","remplacement","nettoyage","cleaning"]);
+const spToks=s=>spNorm(s).split(/[^a-z0-9]+/).filter(w=>w.length>=2&&!SP_STOP.has(w));
+const spSame=(a,b)=>{ const n=Math.min(5,a.length,b.length); return a.slice(0,n)===b.slice(0,n)&&Math.abs(a.length-b.length)<=3; };
+const spName=s=>L()==="fr"?s[0]:s[1];
+const spHave=s=>S.products.some(p=>{ const n=spNorm(p.name); return n===spNorm(s[0])||n===spNorm(s[1]); });
+const spTrades=()=>{ const sel=trSel(S.shop.cat), all=tradesFor().map(x=>x[0]).filter(k=>SVC[k]); return sel.filter(k=>SVC[k]).concat(all.filter(k=>!sel.includes(k))); };
+function spOpen(){ const tr=spTrades(); ui.modal={type:"svcpick",tr:tr[0]||"",sel:{},custom:[],msg:""}; renderModal(); }
+const spObj=(m,k)=>/^c\d+$/.test(k)?m.custom[+k.slice(1)]:m.sel[k];
+function spRows(m){ const rows=[]; Object.keys(m.sel).forEach(k=>{ const p=k.split(":"), s=(SVC[p[0]]||[])[+p[1]]; if(s) rows.push([k,spName(s),m.sel[k]]); }); m.custom.forEach((c,i)=>rows.push(["c"+i,c.name,c])); return rows; }
+const SPR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function spBody(m){
+  const tr=spTrades(), cur=m.tr, list=SVC[cur]||[], rows=spRows(m);
+  const mine=trSel(S.shop.cat).filter(k=>SVC[k]), shown=(mine.length&&!m.more)?tr.filter(k=>mine.includes(k)||k===cur):tr;
+  const pills=`<div><div class="note" style="margin:0 0 6px">${lx("Votre métier","Your trade")}</div><div class="spw" role="group">${shown.map(k=>`<button class="pill" data-act="sp-tr" data-k="${k}" aria-pressed="${k===cur}">${esc(trLab(k))}</button>`).join("")}${(mine.length&&!m.more&&shown.length<tr.length)?`<button class="pill" data-act="sp-more">${lx("Autre métier","Other trade")} ▾</button>`:""}</div></div>`;
+  const mic=SPR?`<div><button class="btn small" data-act="sp-mic">${ui._spL?"⏺ "+lx("Je vous écoute… touchez pour arrêter","Listening… tap to stop"):"🎤 "+lx("Dites ce que vous faites","Say what you do")}</button>${m.msg?`<p class="note" style="margin:6px 0 0">${esc(m.msg)}</p>`:""}</div>`:"";
+  const chips=list.length?`<div><div class="note" style="margin:0 0 6px">${lx("Touchez ce que vous faites","Tap what you do")}</div><div class="spw">${list.map((s,i)=>{ const k=cur+":"+i, have=spHave(s), on=!!m.sel[k]; return `<button class="spc" data-act="sp-tog" data-k="${k}" aria-pressed="${on}" ${have?"disabled":""}>${have||on?"✓ ":"+ "}${esc(spName(s))}</button>`; }).join("")}</div></div>`:"";
+  const sel=rows.length?`<div><div class="note" style="margin:0 0 6px"><b>${lx("Mes services","My services")} (${rows.length})</b> · ${lx("Le prix est facultatif.","Price is optional.")}</div><div class="spsel">${rows.map(([k,n,o])=>{ const pm=o.pm||"q"; return `<div class="sprow"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div class="nm">${esc(n)}</div><button class="btn small" data-act="sp-del" data-k="${k}" aria-label="${lx("Retirer","Remove")}">×</button></div><div class="spm">${[["q",lx("Sur devis","On quote")],["f",lx("À partir de","From")],["x",lx("Prix fixe","Fixed price")]].map(([v,lab])=>`<button class="pill" data-act="sp-pm" data-k="${k}" data-m="${v}" aria-pressed="${pm===v}">${lab}</button>`).join("")}${pm!=="q"?`<input data-spk="${k}" inputmode="decimal" placeholder="${lx("Prix","Price")}" value="${esc(o.price||"")}" autocomplete="off" style="width:110px">`:""}</div></div>`; }).join("")}</div></div>`:"";
+  const own=`<div class="spown"><input id="sp-own" placeholder="${lx("Un autre service ? Écrivez-le","Another service? Type it")}" maxlength="60" autocomplete="off"><button class="btn small" data-act="sp-add-own">${lx("Ajouter","Add")}</button></div>`;
+  return pills+mic+chips+sel+own;
+}
+function spAct(m){ const n=spRows(m).length; return `<button class="btn primary" data-act="sp-go" ${n?"":"disabled"}>${n?lx("Ajouter "+n+" service"+(n>1?"s":""),"Add "+n+" service"+(n>1?"s":"")):lx("Choisissez au moins un service","Choose at least one service")}</button>`; }
+function spModal(m){ return `<div class="dlg form" style="max-height:90vh;grid-template-rows:auto auto minmax(0,1fr) auto"><h2>${lx("Quels services faites-vous ?","Which services do you offer?")}</h2><p class="note" style="margin:0">${lx("Touchez pour choisir. Pas besoin d'écrire. Vous pourrez changer les prix plus tard.","Tap to choose. No typing needed. You can change prices later.")}</p><div id="sp-body" style="overflow:auto;display:grid;gap:14px;align-content:start;padding-bottom:4px">${spBody(m)}</div><div class="actions" id="sp-act">${spAct(m)}</div></div>`; }
+function spRefresh(){ const m=ui.modal, b=$("#sp-body"); if(!b||!m||m.type!=="svcpick") return; const y=b.scrollTop; b.innerHTML=spBody(m); b.scrollTop=y; const a=$("#sp-act"); if(a) a.innerHTML=spAct(m); }
+function spPrice(k,v){ const m=ui.modal; if(!m||m.type!=="svcpick") return; const o=spObj(m,k); if(o) o.price=v; }
+function spDone(m){ const u=catUrl(), on=!!(S.shop.cat&&S.shop.cat.on&&u); return `<div class="dlg"><h2>✓ ${lx(m.n+" service"+(m.n>1?"s":"")+" ajouté"+(m.n>1?"s":""),m.n+" service"+(m.n>1?"s":"")+" added")}</h2><p class="note" style="margin:0">${on?lx("Vos clients peuvent déjà les voir sur votre page.","Your customers can already see them on your page."):lx("Mettez votre page en ligne pour que les clients vous trouvent et vous écrivent sur WhatsApp.","Put your page online so customers can find you and message you on WhatsApp.")}</p><div class="actions">${on?`<a class="btn primary" href="${esc(u)}" target="_blank" rel="noopener">${lx("Voir ma page","See my page")}</a>`:`<button class="btn primary" data-act="sp-page">${lx("Mettre ma page en ligne","Put my page online")}</button>`}<button class="btn" data-act="svc-pick">${lx("Ajouter d'autres services","Add more services")}</button><button class="btn" data-act="close-modal">${lx("Terminé","Done")}</button></div></div>`; }
+function spSave(){
+  const m=ui.modal; if(!m||m.type!=="svcpick") return; let n=0;
+  const add=(name,o)=>{ name=String(name||"").trim().slice(0,80); if(!name||S.products.some(p=>p.name.toLowerCase()===name.toLowerCase())) return; let pm=o.pm||"q"; if(pm==="x") pm=""; const price=parseAmt(o.price)||0; if(pm!=="q"&&!(price>0)) pm="q"; const p={id:uid(),name,price:pm==="q"?0:price,qty:0,low:0,cost:0,svc:true}; if(pm) p.pm=pm; S.products.push(p); n++; };
+  const trs=[]; Object.keys(m.sel).forEach(k=>{ const p=k.split(":"), s=(SVC[p[0]]||[])[+p[1]]; if(s){ add(spName(s),m.sel[k]); if(!trs.includes(p[0])) trs.push(p[0]); } });
+  m.custom.forEach(c=>add(c.name,c));
+  if(!n){ toast(lx("Rien à ajouter.","Nothing to add.")); return; }
+  if(!trSel(S.shop.cat).length&&trs.length){ S.shop.cat=S.shop.cat||{}; S.shop.cat.trs=trs.slice(0,3); S.shop.cat.tr=trs[0]; }
+  save(); ui.modal={type:"svcdone",n}; render(); renderModal();
+}
+function spMic(){
+  if(!SPR) return; if(ui._spR){ try{ ui._spR.stop(); }catch(_){} return; }
+  let r; try{ r=new SPR(); }catch(_){ return; }
+  r.lang=L()==="fr"?"fr-FR":"en-US"; r.interimResults=false; r.maxAlternatives=1; ui._spL=1;
+  r.onresult=e=>{ const tx=e.results&&e.results[0]&&e.results[0][0]?e.results[0][0].transcript:""; spHear(tx); };
+  r.onerror=()=>{ if(ui.modal&&ui.modal.type==="svcpick") ui.modal.msg=lx("Impossible d'écouter. Vérifiez le micro, ou touchez les services.","Could not listen. Check the microphone, or tap the services."); };
+  r.onend=()=>{ ui._spL=0; ui._spR=null; spRefresh(); };
+  ui._spR=r; try{ r.start(); }catch(_){ ui._spL=0; ui._spR=null; } spRefresh();
+}
+function spHear(text){
+  const m=ui.modal; if(!m||m.type!=="svcpick") return; let hit=0, nw=0;
+  const segs=String(text||"").split(/[,;.]|\band\b|\bet\b|\bpuis\b|\baussi\b/i).map(s=>s.trim()).filter(s=>s.length>2);
+  const pool=[]; Object.keys(SVC).forEach(tk=>SVC[tk].forEach((s,i)=>pool.push({k:tk+":"+i,tk,i,toks:[spToks(s[0]),spToks(s[1])]})));
+  segs.forEach(seg=>{ const st=spToks(seg); if(!st.length) return;
+    let best=null, bs=0; pool.forEach(c=>c.toks.forEach(tk2=>{ if(!tk2.length) return; const ov=tk2.filter(w=>st.some(x=>spSame(x,w))).length, sc=Math.max(ov/tk2.length,ov/st.length*.9); if(sc>bs){ bs=sc; best=c; } }));
+    const tm=TRADES.find(x=>SVC[x[0]]&&[x[1],x[2]].some(nm=>{ const w=spToks(nm)[0]; return w&&st.some(x=>spSame(x,w)); }));
+    if(best&&bs>=.6){ if(!m.sel[best.k]&&!spHave(SVC[best.tk][best.i])){ m.sel[best.k]={pm:"q",price:""}; hit++; } m.tr=best.tk; }
+    else if(tm&&st.length<=2){ m.tr=tm[0]; hit++; }
+    else if(!m.custom.some(c=>spNorm(c.name)===spNorm(seg))){ m.custom.push({name:seg.charAt(0).toUpperCase()+seg.slice(1,60),pm:"q",price:""}); nw++; } });
+  m.msg=text?(lx("J'ai entendu : « "+text+" »","I heard: “"+text+"”")+(hit+nw?"":" — "+lx("rien reconnu","nothing matched"))):lx("Je n'ai rien entendu.","I didn't hear anything.");
+}
+
 /* --- stock --- */
 function viewStock(){
   const list=[...S.products].sort((a,b)=>a.name.localeCompare(b.name));
   const val=S.products.reduce((s,p)=>s+(p.svc?0:Math.max(0,p.qty)*p.price),0);
-  let h=`<section class="sec"><h2 style="flex-wrap:wrap">${t("stock")}${isOwner()?`<span style="display:flex;gap:6px;flex-wrap:wrap;flex-basis:100%;justify-content:flex-end"><button class="btn small" data-act="bulk-add">${t("bulk_btn")}</button><button class="btn small primary" data-act="add-product">${t("add_product")}</button></span>`:""}</h2>`;
+  let h=`<section class="sec"><h2 style="flex-wrap:wrap">${t("stock")}${isOwner()?`<span style="display:flex;gap:6px;flex-wrap:wrap;flex-basis:100%;justify-content:flex-end">${spOn()?`<button class="btn small primary" data-act="svc-pick">${lx("Choisir dans une liste","Choose from a list")}</button>`:""}<button class="btn small" data-act="bulk-add">${t("bulk_btn")}</button><button class="btn small${spOn()?"":" primary"}" data-act="add-product">${t("add_product")}</button></span>`:""}</h2>`;
   if(isOwner()&&list.length&&!nostock()) h+=`<div class="card"><div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${t("stock_value")}</div><div class="num" style="font-size:1.35rem;margin-top:4px">${money(val)}</div></div>`;
   { const hb=howBtn(); if(hb) h+=`<p style="margin:0 0 10px">${hb}</p>`; }
   h+=`<div class="card flush">`;
-  if(!list.length) h+=`<div class="empty">${t("no_products")}</div>`;
-  h+=list.map(p=>{ if(p.svc) return `<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)}${biz()==="hotel"&&+p.rooms>1?" · "+p.rooms+" "+lx("chambres","rooms"):""}</div></div><div class="amt">${biz()==="hotel"?`<span class="badge ${roomStatus(p).free?"got":"owed"}">${esc(roomText(p))}</span>`:t("svc_tag")?`<span class="badge">${t("svc_tag")}</span>`:""}</div></button>`; const st=p.qty<=0?`<span class="badge owed">${t("out")}</span>`:p.qty<=p.low?`<span class="badge late">${t("low")}</span>`:"";
+  if(!list.length) h+=`<div class="empty">${t("no_products")}${spOn()?`<p style="margin:12px 0 0"><button class="btn primary" data-act="svc-pick">${lx("Choisir mes services dans une liste","Choose my services from a list")}</button></p>`:""}</div>`;
+  h+=list.map(p=>{ if(p.svc) return `<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${pmTxt(p)}${biz()==="hotel"&&+p.rooms>1?" · "+p.rooms+" "+lx("chambres","rooms"):""}</div></div><div class="amt">${biz()==="hotel"?`<span class="badge ${roomStatus(p).free?"got":"owed"}">${esc(roomText(p))}</span>`:t("svc_tag")?`<span class="badge">${t("svc_tag")}</span>`:""}</div></button>`; const st=p.qty<=0?`<span class="badge owed">${t("out")}</span>`:p.qty<=p.low?`<span class="badge late">${t("low")}</span>`:"";
     return `<button class="row" data-act="open-product" data-id="${p.id}"><div class="main"><div class="name">${esc(p.name)}</div><div class="sub">${money(p.price)}${(()=>{ const B=pbs(p).filter(b=>b.q>0), f=B.filter(b=>b.e).map(b=>b.e).sort()[0]; return f?" · "+lx("Exp. ","Exp. ")+fmtExp(f)+(B.length>1?" · "+B.length+" "+lx("lots","batches"):""):""; })()}</div></div><div class="amt"><div class="num">${p.qty}</div>${(()=>{ const e=expState(p); return e&&e.s==="expired"?`<span class="badge owed">${lx("Périmé","Expired")}</span>`:e&&e.s==="soon"?`<span class="badge late">${lx("Expire bientôt","Expiring")}</span>`:st; })()}</div></button>`; }).join("");
   return h+`</div></section>`;
 }
@@ -1477,6 +1561,7 @@ function productModal(m){
     <label class="chk" ${nostock()?"hidden":""}><input type="checkbox" id="pr-svc" ${(p?p.svc:svcDef())?"checked":""} ${own?"":"disabled"} onchange="document.getElementById('pr-stk').hidden=document.getElementById('pr-stk2').hidden=this.checked;var xb=document.getElementById('pr-exp-box');if(xb)xb.hidden=this.checked"> ${t("is_service")}</label>
     <div class="grid2"><div class="field"><label for="pr-price">${t("unit_price")}</label><input id="pr-price" value="${esc(p?p.price:"")}" placeholder="${esc(ph("price"))}" inputmode="decimal" ${ro}></div>
     <div class="field" id="pr-stk" ${(p?p.svc:svcDef())?"hidden":""}><label for="pr-qty">${t("in_stock")}</label><input id="pr-qty" value="${esc(expOn()?Math.round(m.bs.reduce((a,b)=>a+b.q,0)*1000)/1000:p?p.qty:"0")}" inputmode="decimal" ${ro}${expOn()?" readonly":""}></div></div>
+    ${spOn()?`<div class="field"><label for="pr-pm">${lx("Type de prix","Price type")}</label><select id="pr-pm" ${ro}><option value="">${lx("Prix fixe","Fixed price")}</option><option value="f"${p&&p.pm==="f"?" selected":""}>${lx("À partir de (prix de départ)","From (starting price)")}</option><option value="q"${p&&p.pm==="q"?" selected":""}>${lx("Sur devis","On quote")}</option></select></div>`:""}
     ${biz()==="hotel"?`<div class="field"><label for="pr-rooms">${lx("Nombre de chambres de ce type","How many rooms of this type")}</label><input id="pr-rooms" value="${esc(p?(p.rooms||1):"1")}" inputmode="numeric" ${ro} placeholder="1"><p class="note" style="margin:4px 0 0">${lx("Ex. 1 pour « Chambre 101 », 6 pour « Chambre standard ».","e.g. 1 for “Room 101”, 6 for “Standard room”.")}</p></div>`:""}
     ${expOn()?`<div id="pr-exp-box" ${(p&&p.svc)?"hidden":""}><label style="font-weight:600;display:block;margin:6px 0">${lx("Lots en stock","Batches in stock")}</label><div id="bt-list">${btList(m.bs)}</div><div class="grid2"><div class="field"><label for="pr-batch">${lx("N° de lot","Batch no.")}</label><input id="pr-batch" placeholder="${lx("ex. B2231","e.g. B2231")}" ${ro} autocomplete="off"></div><div class="field"><label for="pr-exp">${lx("Date d'expiration","Expiry date")}</label><input id="pr-exp" placeholder="${lx("ex. 03/2028","e.g. 03/2028")}" ${ro} inputmode="numeric" autocomplete="off"></div></div><div class="field"><label for="pr-bq">${lx("Quantité de ce lot","Quantity in this batch")}</label><input id="pr-bq" inputmode="decimal" placeholder="${lx("ex. 50","e.g. 50")}" ${ro}></div>${own?`<button type="button" class="btn small" data-act="add-batch" style="margin-bottom:6px">${lx("+ Ajouter ce lot","+ Add this batch")}</button>`:""}<p class="note" style="margin:0 0 8px">${lx("Chaque arrivage = un lot. Format de date mois/année. Le lot qui expire en premier est vendu en premier, et vous êtes alerté 90 jours avant l'expiration.","Each delivery = one batch. Date format month/year. The batch expiring first is sold first, and you are alerted 90 days before expiry.")}</p></div>`:""}
     ${own&&!nostock()?`<div class="field"><label for="pr-cost">${t("cost_price")}</label><input id="pr-cost" value="${esc(p?(p.cost||""):"")}" inputmode="decimal"></div>
@@ -1540,6 +1625,7 @@ function saveProduct(){
     if(!p){ p={id:uid(),name,price,qty,low,cost,svc}; S.products.push(p); } else { p.name=name; p.price=price; p.qty=qty; p.low=low; p.cost=cost; p.svc=svc; }
     if(expOn()){ delete p.exp; delete p.batch; if(svc) delete p.bs; else p.bs=m.bs.filter(b=>b.q>0).map(b=>({n:b.n||"",e:b.e||"",q:b.q})); }
     if(rooms) p.rooms=rooms;
+    if($("#pr-pm")){ const pv=$("#pr-pm").value; if(pv==="q"||pv==="f") p.pm=pv; else delete p.pm; }
     if($("#pr-desc")){ const dv=($("#pr-desc").value||"").trim().slice(0,80); if(dv) p.desc=dv; else delete p.desc; if(m.dt&&m.dt.length) p.dt=m.dt.filter(k=>dtList().some(x=>x[0]===k)); else delete p.dt; }
     if($("#pr-show")){ if($("#pr-show").checked) delete p.hide; else p.hide=true;
       const cv=($("#pr-cat").value||"").trim().slice(0,24); if(cv) p.cat=cv; else delete p.cat; if($("#pr-pin").checked) p.pin=true; else delete p.pin; }
@@ -1667,7 +1753,7 @@ function qrDraw(url){
 }
 window.__catData=function(){
   const c=S.shop.cat||{}, ns=nostock();
-  const items=S.products.filter(p=>!p.hide&&p.name).slice(0,300).map(p=>({n:String(p.name).slice(0,80),p:Number(p.price)||0,f:money(p.price),a:(p.svc||ns)?1:(sellable(p)>0?1:0),d:descOf(p)||undefined,i:p.img||undefined,g:(p.more&&p.more.length)?p.more.slice(0,4):undefined,c:p.cat||undefined,x:p.pin?1:undefined}));
+  const items=S.products.filter(p=>!p.hide&&p.name).slice(0,300).map(p=>({n:String(p.name).slice(0,80),p:Number(p.price)||0,f:pmTxt(p),q:p.pm==="q"?lx("Sur devis","On quote"):undefined,a:(p.svc||ns)?1:(sellable(p)>0?1:0),d:descOf(p)||undefined,i:p.img||undefined,g:(p.more&&p.more.length)?p.more.slice(0,4):undefined,c:p.cat||undefined,x:p.pin?1:undefined}));
   return {v:1,name:S.shop.name,biz:biz(),lang:L(),phone:intlPhone(c.phone||S.shop.phone||""),tag:String(c.tag||"").slice(0,120),addr:String(S.shop.address||"").slice(0,120),col:ACCENTS.includes(c.color)?c.color:accentOf(S.shop),logo:c.logo||undefined,cover:c.cover||undefined,gal:(c.gal&&c.gal.length)?c.gal.slice(0,PHGAL):undefined,hrs:String(c.hrs||"").slice(0,70),tr:(tradeOn()&&trSel(c)[0])||undefined,trl:(tradeOn()?(()=>{ const t=trSel(c).filter(k=>k!=="other").map(k=>{ const r=TRADES.find(x=>x[0]===k); return r[1]+" "+r[2]+(r[3]?" "+r[3]:""); }); return t.length?t.join(" · "):undefined; })():undefined),lab:(TRV[trKey()]&&TRV[trKey()].lab)||CATLAB[biz()]||CATLAB.shop,cur:[C().sym,C().after?1:0,(C().sym==="FCFA"||C().dec===0)?0:2],items};
 };
 function catNote(){
@@ -2132,6 +2218,8 @@ function _renderModal(){
   }else if(m.type==="catqr"){
     inner=`<div class="dlg form" style="text-align:center"><h2>${lx("Code QR de ma page","QR code for my page")}</h2><p class="note" style="margin:0">${lx("Imprimez-le et collez-le dans votre boutique. Vos clients scannent et voient vos prix.","Print it and stick it in your shop. Customers scan it and see your prices.")}</p><img id="qr-img" alt="QR" width="240" height="240" style="margin:8px auto;border-radius:8px;background:#fff"><div class="actions" style="justify-content:center"><button class="btn primary" data-act="cat-qr-print">${lx("Imprimer","Print")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
     qrDraw(catUrl());
+  }else if(m.type==="svcpick"){ inner=spModal(m);
+  }else if(m.type==="svcdone"){ inner=spDone(m);
   }else if(m.type==="product"){ inner=productModal(m);
   }else if(m.type==="editcust"){
     const c=custById(m.id); if(!c){ ui.modal=null; layer.innerHTML=""; return; }
@@ -2151,7 +2239,7 @@ function _renderModal(){
   layer.innerHTML=`<div class="veil" data-act="veil"><div class="sheet" role="dialog" aria-modal="true"><div class="xrow"><button class="xbtn" data-act="close-modal" aria-label="${t("close")}"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></button></div>${inner}</div></div>`;
   if(layer.querySelector(".dxin")){const xr=layer.querySelector(".xrow");if(xr)xr.remove();}
   else{const xr=layer.querySelector(".xrow"),card=layer.querySelector(".sheet > .dlg");if(xr&&card){const xb=xr.querySelector(".xbtn");xb.classList.add("in");card.insertBefore(xb,card.firstChild);xr.remove();}}
-  const first=layer.querySelector("input"); if(first&&m.type!=="receipt") first.focus();
+  const first=layer.querySelector("input"); if(first&&m.type!=="receipt"&&m.type!=="svcpick") first.focus();
 }
 
 /* ---------- actions ---------- */
@@ -2234,8 +2322,18 @@ document.addEventListener("click",e=>{
   if(a==="veil"){ if(e.target===el){ ui.modal=null; renderModal(); } return; }
   switch(a){
     case "tab": ui.view=el.dataset.v; ui.custId=null; if(ui.view!=="sale") {} render(); window.scrollTo(0,0); if(ui.view==="stock") askTrade(); break;
+    case "svc-pick": if(spOn()) spOpen(); break;
+    case "sp-tr": if(ui.modal&&ui.modal.type==="svcpick"){ ui.modal.tr=el.dataset.k; spRefresh(); } break;
+    case "sp-tog": { const m=ui.modal, k=el.dataset.k; if(!m) break; if(m.sel[k]) delete m.sel[k]; else m.sel[k]={pm:"q",price:""}; spRefresh(); break; }
+    case "sp-pm": { const m=ui.modal, o=m&&spObj(m,el.dataset.k); if(o){ o.pm=el.dataset.m; if(o.pm==="q") o.price=""; } spRefresh(); break; }
+    case "sp-del": { const m=ui.modal, k=el.dataset.k; if(!m) break; if(/^c\d+$/.test(k)) m.custom.splice(+k.slice(1),1); else delete m.sel[k]; spRefresh(); break; }
+    case "sp-add-own": { const m=ui.modal, inp=$("#sp-own"), v=inp?inp.value.trim():""; if(!m||!v) break; if(!m.custom.some(c=>spNorm(c.name)===spNorm(v))) m.custom.push({name:v.charAt(0).toUpperCase()+v.slice(1,60),pm:"q",price:""}); spRefresh(); break; }
+    case "sp-mic": spMic(); break;
+    case "sp-more": if(ui.modal&&ui.modal.type==="svcpick"){ ui.modal.more=1; spRefresh(); } break;
+    case "sp-go": spSave(); break;
+    case "sp-page": ui.modal=null; renderModal(); ui.view="set"; (ui.setOpen=ui.setOpen||{}).cat=true; render(); break;
     case "trade-toggle": { const k=el.dataset.k, a=(ui.trSel=ui.trSel||[]); const i=a.indexOf(k); if(i>=0) a.splice(i,1); else if(a.length<3) a.push(k); else toast(lx("3 choix maximum","3 choices maximum")); renderModal(); break; }
-    case "trade-done": { const a=(ui.trSel||[]).filter(k=>TRADES.some(x=>x[0]===k)); if(a.length){ S.shop.cat=S.shop.cat||{}; S.shop.cat.trs=a.slice(0,3); S.shop.cat.tr=a[0]; save(); } ui.trSel=[]; ui.modal=null; closeModalSafe(); break; }
+    case "trade-done": { const a=(ui.trSel||[]).filter(k=>TRADES.some(x=>x[0]===k)); if(a.length){ S.shop.cat=S.shop.cat||{}; S.shop.cat.trs=a.slice(0,3); S.shop.cat.tr=a[0]; save(); } ui.trSel=[]; ui.modal=null; closeModalSafe(); if(spOn()&&!S.products.length) setTimeout(spOpen,150); break; }
     case "trade-later": ui.trSel=[]; ui.modal=null; closeModalSafe(); break;
     case "lang": S.shop.lang=L()==="fr"?"en":"fr"; save(); render(); break;
     case "clear-examples":
@@ -2432,6 +2530,7 @@ document.addEventListener("click",async e=>{
 },true);
 document.addEventListener("input",e=>{
   const el=e.target;
+  if(el.dataset&&el.dataset.spk){ spPrice(el.dataset.spk,el.value); return; }
   if(el.id==="pk-inline"){ ui.draft.pq=el.value; const B=$("#pk-inl"); if(B) B.innerHTML=pickList(el.value,true); pkVis(); return; }
   if(el.id==="pk-q"){ const L=$("#pk-list"); if(L) L.innerHTML=pickList(el.value); return; } if(!el.dataset||!el.dataset.bind) return;
   const r=setBind(el.dataset.bind,el.value);
