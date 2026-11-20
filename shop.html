@@ -151,7 +151,7 @@ function draw(){
   { const dg=String(D.phone||"").replace(/\D/g,"");
     if(dg.length>=8){ $("qa").innerHTML=`<a class="wa" href="https://wa.me/${dg}?text=${encodeURIComponent(tx.hi2+" "+D.name)}" rel="noopener">${SV.wa}${esc(SVM?tx.mw:tx.wa)}</a><a class="ca" href="tel:+${dg}">${SV.ph}${esc(tx.call)}</a>`; $("qa").hidden=false; }
     const sn=D._c?new Date(D._c).toLocaleDateString(lg==="fr"?"fr-FR":"en-GB",{month:"short",year:"numeric"}):"", ch=[];
-    if(D.hrs) ch.push(SV.clock+esc(tx.hrsl+": "+D.hrs)); if(D.addr) ch.push(SV.pin+esc(D.addr));
+    if(D.hrs) ch.push(SV.clock+esc(tx.hrsl+": "+D.hrs)); if(D.dl){ const fr=lg==="fr", t=D.dl==="p"?(fr?"Retrait sur place":"Pickup only"):(D.dl==="d"?(fr?"Livraison":"Delivery"):(fr?"Livraison et retrait":"Delivery and pickup")); ch.push(SV.pin+esc(t+(D.da&&D.dl!=="p"?" : "+D.da:""))); } if(D.addr) ch.push(SV.pin+esc(D.addr));
     if(D._u){ const n=Math.floor((Date.now()-new Date(D._u))/864e5); const w=n<=0?tx.td:n===1?tx.yd:n<45?tx.dg.replace("{n}",n):tx.dm.replace("{n}",Math.round(n/30)); ch.push(SV.up+esc(tx.upd+": "+w)); }
     if(sn) ch.push(esc(tx.since+" "+sn));
     $("chp").innerHTML=ch.map(x=>`<span>${x}</span>`).join(""); }
@@ -185,7 +185,7 @@ const FM={
 const DELIV={t:"sel",k:"dl",fr:"Retrait ou livraison",en:"Pickup or delivery",o:[["Retrait sur place","Pickup"],["Livraison","Delivery"]]};
 ["shop","electronics","food"].forEach(b=>FM[b]=[DELIV,{k:"ad",t:"text",fr:"Adresse de livraison",en:"Delivery address",ifd:1}]);
 const BOOK=["hotel","beauty","health","travel","rent"], NOTOT=["hotel","rent"];
-const fields=()=>FM[D.biz]||[];
+const fields=()=>{ const f=FM[D.biz]||[]; if(["shop","electronics","food"].includes(D.biz)){ if(D.dl==="p") return []; if(D.dl==="d") return [{k:"ad",t:"text",fr:"Adresse de livraison",en:"Delivery address"}]; } return f; };
 function form(){
   const today=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
   $("fm").innerHTML=`<h3>${esc(tx.det)}</h3><label>${esc(tx.name)}<input id="cn" maxlength="60" autocomplete="name"></label>`+fields().map(f=>{ const lb=esc(lg==="fr"?f.fr:f.en), id="f_"+f.k, w=f.ifd?' data-ifd="1" hidden':"";

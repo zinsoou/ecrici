@@ -329,6 +329,8 @@ details.acc>:not(summary):not(.card){padding:12px 16px}
 @media (hover:hover){ .row:hover{background:var(--paper)} .btn:hover,.pill:hover{filter:brightness(.96)} .tabs button:hover{background:var(--paper)} }
 
 @media (prefers-reduced-motion:no-preference){.veil{animation:fade .12s ease-out}@keyframes fade{from{opacity:0}to{opacity:1}}}
+.lnc{display:flex;gap:10px;align-items:center}.lnbar{height:8px;border-radius:6px;background:var(--line,#e5e7eb);margin:8px 0;overflow:hidden}.lnbar i{display:block;height:100%;background:var(--accent,#0a7d4f);border-radius:6px;transition:width .3s}
+.lnprev{border:1px solid var(--line,#e5e7eb);border-radius:14px;overflow:hidden;background:#fff;color:#111}.lnpc{height:70px}.lnpb{padding:0 14px 14px}.lnpl{width:52px;height:52px;border-radius:50%;margin-top:-26px;border:3px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.3rem;background-size:cover}.lnpr{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid #eee;font-size:.9rem}.lnwa{margin-top:10px;background:#25d366;color:#fff;text-align:center;padding:9px;border-radius:10px;font-weight:600}
 </style>
 
 <div class="wrap" id="app"></div>
@@ -1003,7 +1005,7 @@ function viewHome(){
   if(isOwner()&&canInstall()&&!/class="banner"/.test(h)) h+=`<div class="banner"><span>${t("inst_txt")}</span><span style="display:flex;gap:6px">${deferredInstall?`<button class="btn small primary" data-act="install-app">${t("inst_btn")}</button>`:""}<button class="btn small" data-act="install-off">${t("inst_later")}</button></span></div>`;
   const startOn=false;
   if(biz()==="shop"&&!startOn&&!S.customers.length&&!S.txs.length&&!S.products.length) h+=`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`;
-  h+=homeGuide()+riderCard()+rentCard()+hotelCard()+apptCard()+jobCard()+expiryCard();
+  h+=lnCard()+homeGuide()+riderCard()+rentCard()+hotelCard()+apptCard()+jobCard()+expiryCard();
   h+=`<section class="sec"><h2>${t("today")}<span>${new Date().toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{weekday:"long",day:"numeric",month:"long"})}</span></h2>
     <div class="sum">
       <div class="card"><div class="lbl">${t("sold")}</div><div class="val num">${money(sold)}</div></div>
@@ -1538,7 +1540,7 @@ function spAct(m){ const n=spRows(m).length; return `<button class="btn primary"
 function spModal(m){ return `<div class="dlg form" style="max-height:90vh;grid-template-rows:auto auto minmax(0,1fr) auto"><h2>${lx("Quels services faites-vous ?","Which services do you offer?")}</h2><p class="note" style="margin:0">${lx("Touchez pour choisir. Pas besoin d'écrire. Vous pourrez changer les prix plus tard.","Tap to choose. No typing needed. You can change prices later.")}</p><div id="sp-body" style="overflow:auto;display:grid;gap:14px;align-content:start;padding-bottom:4px">${spBody(m)}</div><div class="actions" id="sp-act">${spAct(m)}</div></div>`; }
 function spRefresh(){ const m=ui.modal, b=$("#sp-body"); if(!b||!m||m.type!=="svcpick") return; const y=b.scrollTop; b.innerHTML=spBody(m); b.scrollTop=y; const a=$("#sp-act"); if(a) a.innerHTML=spAct(m); }
 function spPrice(k,v){ const m=ui.modal; if(!m||m.type!=="svcpick") return; const o=spObj(m,k); if(o) o.price=v; }
-function spDone(m){ const u=catUrl(), on=!!(S.shop.cat&&S.shop.cat.on&&u); return `<div class="dlg"><h2>✓ ${lx(m.n+" service"+(m.n>1?"s":"")+" ajouté"+(m.n>1?"s":""),m.n+" service"+(m.n>1?"s":"")+" added")}</h2><p class="note" style="margin:0">${on?lx("Vos clients peuvent déjà les voir sur votre page.","Your customers can already see them on your page."):lx("Mettez votre page en ligne pour que les clients vous trouvent et vous écrivent sur WhatsApp.","Put your page online so customers can find you and message you on WhatsApp.")}</p><div class="actions">${on?`<a class="btn primary" href="${esc(u)}" target="_blank" rel="noopener">${lx("Voir ma page","See my page")}</a>`:`<button class="btn primary" data-act="sp-page">${lx("Mettre ma page en ligne","Put my page online")}</button>`}<button class="btn" data-act="svc-pick">${lx("Ajouter d'autres services","Add more services")}</button><button class="btn" data-act="close-modal">${lx("Terminé","Done")}</button></div></div>`; }
+function spDone(m){ const u=catUrl(), on=!!(S.shop.cat&&S.shop.cat.on&&u); return `<div class="dlg"><h2>✓ ${lx(m.n+" service"+(m.n>1?"s":"")+" ajouté"+(m.n>1?"s":""),m.n+" service"+(m.n>1?"s":"")+" added")}</h2><p class="note" style="margin:0">${on?lx("Vos clients peuvent déjà les voir sur votre page.","Your customers can already see them on your page."):lx("Mettez votre page en ligne pour que les clients vous trouvent et vous écrivent sur WhatsApp.","Put your page online so customers can find you and message you on WhatsApp.")}</p><div class="actions">${on?`<a class="btn primary" href="${esc(u)}" target="_blank" rel="noopener">${lx("Voir ma page","See my page")}</a>`:`<button class="btn primary" data-act="sp-page">${lx("Mettre ma page en ligne","Put my page online")}</button>`}<button class="btn" data-act="svc-pick">${lx("Ajouter d'autres services","Add more services")}</button>${lnOK()&&!(S.shop.cat&&S.shop.cat.on)?`<button class="btn primary" data-act="ln-go" data-i="2">${lx("Continuer le lancement","Continue launching")}</button>`:""}<button class="btn" data-act="close-modal">${lx("Terminé","Done")}</button></div></div>`; }
 function spSave(){
   const m=ui.modal; if(!m||m.type!=="svcpick") return; let n=0;
   const add=(name,o)=>{ name=String(name||"").trim().slice(0,80); if(!name||S.products.some(p=>p.name.toLowerCase()===name.toLowerCase())) return; let pm=o.pm||"q"; if(pm==="x") pm=""; const price=parseAmt(o.price)||0; if(pm!=="q"&&!(price>0)) pm="q"; const p={id:uid(),name,price:pm==="q"?0:price,qty:0,low:0,cost:0,svc:true}; if(pm) p.pm=pm; S.products.push(p); n++; };
@@ -1667,7 +1669,7 @@ function saveProduct(){
   if(ents){ const keep=ents.filter(e=>e.u).map(e=>e.u), had=[p.img].concat(p.more||[]).filter(Boolean);
     had.filter(u=>!keep.includes(u)).forEach(u=>{ if(window.__catImgDel) window.__catImgDel(u); });
     phSet(p,keep); }
-  save(); ui.modal=null; render(); toast(t("product_saved"));
+  const _ln=ui.modal&&ui.modal.ln; save(); ui.modal=_ln?{type:"launch",i:2}:null; render(); toast(t("product_saved"));
   if(ents&&ents.some(e=>e.b)&&window.__catImg){ toast(lx("Envoi des photos…","Uploading photos…")); const pid=p.id;
     Promise.all(ents.map(e=>e.u?Promise.resolve(e.u):window.__catImg(e.b,pid).catch(()=>null))).then(res=>{ const q=S.products.find(x=>x.id===pid), ok=res.filter(Boolean); if(q){ phSet(q,ok); save(); render(); } const bad=res.length-ok.length; toast(bad?lx(bad+" photo(s) non envoyée(s). Réessayez.",bad+" photo(s) not sent. Try again."):lx("Photos ajoutées","Photos added")); }); }
   ents&&ents.forEach(e=>{ try{ if(e.pv) URL.revokeObjectURL(e.pv); }catch(_){} });
@@ -1784,7 +1786,7 @@ function qrDraw(url){
 window.__catData=function(){
   const c=S.shop.cat||{}, ns=nostock();
   const items=S.products.filter(p=>!p.hide&&p.name).slice(0,300).map(p=>({n:String(p.name).slice(0,80),p:Number(p.price)||0,f:pmTxt(p),q:p.pm==="q"?lx("Sur devis","On quote"):undefined,a:(p.svc||ns)?1:(sellable(p)>0?1:0),d:descOf(p)||undefined,i:p.img||undefined,g:(p.more&&p.more.length)?p.more.slice(0,4):undefined,c:p.cat||undefined,x:p.pin?1:undefined}));
-  return {v:1,name:S.shop.name,biz:biz(),lang:L(),phone:intlPhone(c.phone||S.shop.phone||""),tag:String(c.tag||"").slice(0,120),addr:String(S.shop.address||"").slice(0,120),col:ACCENTS.includes(c.color)?c.color:accentOf(S.shop),logo:c.logo||undefined,cover:c.cover||undefined,gal:(c.gal&&c.gal.length)?c.gal.slice(0,PHGAL):undefined,hrs:String(c.hrs||"").slice(0,70),tr:(tradeOn()&&trSel(c)[0])||undefined,trl:(tradeOn()?(()=>{ const t=trSel(c).filter(k=>k!=="other").map(k=>{ const r=TRADES.find(x=>x[0]===k); return r[1]+" "+r[2]+(r[3]?" "+r[3]:""); }); return t.length?t.join(" · "):undefined; })():undefined),lab:(TRV[trKey()]&&TRV[trKey()].lab)||CATLAB[biz()]||CATLAB.shop,cur:[C().sym,C().after?1:0,(C().sym==="FCFA"||C().dec===0)?0:2],items};
+  return {v:1,name:S.shop.name,biz:biz(),lang:L(),phone:intlPhone(c.phone||S.shop.phone||""),tag:String(c.tag||"").slice(0,120),addr:String(S.shop.address||"").slice(0,120),col:ACCENTS.includes(c.color)?c.color:accentOf(S.shop),logo:c.logo||undefined,cover:c.cover||undefined,gal:(c.gal&&c.gal.length)?c.gal.slice(0,PHGAL):undefined,hrs:String(c.hrs||"").slice(0,70),dl:(DLB.includes(biz())&&["d","p","b"].includes(c.dl))?c.dl:undefined,da:(DLB.includes(biz())&&c.dl&&c.dl!=="p"&&c.da)?String(c.da).slice(0,80):undefined,tr:(tradeOn()&&trSel(c)[0])||undefined,trl:(tradeOn()?(()=>{ const t=trSel(c).filter(k=>k!=="other").map(k=>{ const r=TRADES.find(x=>x[0]===k); return r[1]+" "+r[2]+(r[3]?" "+r[3]:""); }); return t.length?t.join(" · "):undefined; })():undefined),lab:(TRV[trKey()]&&TRV[trKey()].lab)||CATLAB[biz()]||CATLAB.shop,cur:[C().sym,C().after?1:0,(C().sym==="FCFA"||C().dec===0)?0:2],items};
 };
 function catNote(){
   if(!catOn()||!isOwner()) return "";
@@ -1820,12 +1822,134 @@ function catSection(){
     <div class="field"><label for="c-cityp">${lx("Ma ville (pour le Market)","My city (for the Market)")}</label>${(()=>{ const L=CITIES[S.shop.country]||[], cc=cityCanon(c.city||""), inL=!!cc&&L.includes(cc); return `<select id="c-cityp"><option value="">${lx("Choisir…","Choose…")}</option>${L.map(x=>`<option ${inL&&cc===x?"selected":""}>${esc(x)}</option>`).join("")}<option value="~" ${cc&&!inL?"selected":""}>${lx("Autre ville…","Other city…")}</option></select><input id="c-city" value="${esc(c.city||"")}" maxlength="40" placeholder="${lx("ex. Cotonou","e.g. Lagos")}" autocomplete="off" style="margin-top:8px;${cc&&!inL||!L.length?"":"display:none"}">`; })()}</div>
     ${tradeOn()?`<div class="field"><label>${sellGrp()?lx("Ce que je vends (pour être trouvé)","What I sell (so people can find you)"):lx("Mon métier (pour être trouvé)","My trade (so people can find you)")} · ${lx("jusqu'à 3","up to 3")}</label><div id="c-trs" style="display:flex;flex-wrap:wrap;gap:6px 14px">${tradesFor().map(r=>`<label class="chk" style="margin:0"><input type="checkbox" value="${r[0]}" ${trSel(c).includes(r[0])?"checked":""} onchange="if(document.querySelectorAll('#c-trs input:checked').length>3){this.checked=false}"> ${esc(lx(r[1],r[2]))}</label>`).join("")}</div></div>`:""}
     <div class="field"><label for="c-tag">${lx("Petit message (facultatif)","Short message (optional)")}</label><input id="c-tag" value="${esc(c.tag||"")}" maxlength="120" placeholder="${lx("ex. Livraison à Cotonou et Calavi","e.g. Delivery in Lagos and Abuja")}" autocomplete="off"><div class="dtg" style="margin-top:8px">${TAGS_().map(x=>`<button type="button" data-act="tagfill" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</div></div>
-    <div class="err" id="c-err" role="alert">${esc(m)}</div>
+    ${dlField(c,"c")}<div class="err" id="c-err" role="alert">${esc(m)}</div>
     <button class="btn primary" data-act="save-cat">${lx("Enregistrer et publier","Save and publish")}</button>
     ${c.on&&url?`<div class="field"><label>${lx("Votre lien","Your link")}</label><input readonly value="${esc(url)}" onfocus="this.select()"></div>
     <div class="actions"><button class="btn" data-act="cat-copy">${lx("Copier le lien","Copy link")}</button><button class="btn" data-act="cat-wa">${lx("Partager sur WhatsApp","Share on WhatsApp")}</button>${c.listed?`<a class="btn" href="/market.html" target="_blank" rel="noopener">${lx("Voir Ecrici Market","See Ecrici Market")}</a>`:""}<button class="btn" data-act="cat-qr">${lx("Code QR","QR code")}</button><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">${lx("Voir ma page","View my page")}</a></div>
     <p class="note" style="margin:0">${lx("Dans chaque article, décochez « Afficher sur ma page » pour le cacher.","In each item, untick “Show on my online page” to hide it.")}</p>`:""}
   </div></section>`;
+}
+/* ===== Launch assistant (v121) ===== */
+const lnOK=()=>!!(window.__catPub&&!window.__member&&isOwner()&&biz()!=="pharmacy");
+function lnWord(){ const b=biz(); return ({shop:lx("vos produits","your products"),electronics:lx("vos produits","your products"),food:lx("votre menu","your menu"),beauty:lx("vos services","your services"),health:lx("vos soins","your services"),school:lx("vos types de frais","your fee types"),repair:lx("vos travaux","your jobs"),travel:lx("vos voyages","your trips"),services:lx("vos services","your services"),rent:lx("vos logements","your units"),hotel:lx("vos chambres","your rooms")})[b]||lx("vos articles","your items"); }
+function lnItemHint(){ const b=biz(); return ({shop:lx("Pour chaque produit : nom, prix et une photo.","For each product: name, price and a photo."),electronics:lx("Pour chaque produit : nom, prix et une photo.","For each product: name, price and a photo."),food:lx("Pour chaque plat : nom, prix et une photo.","For each dish: name, price and a photo."),hotel:lx("Pour chaque type de chambre : nom, prix par nuit et une photo.","For each room type: name, price per night and a photo."),rent:lx("Pour chaque logement : type, loyer et une photo.","For each unit: type, rent and a photo."),school:lx("Pour chaque frais : nom et montant.","For each fee: name and amount."),travel:lx("Pour chaque voyage : destination, prix et une photo.","For each trip: destination, price and a photo.")})[b]||lx("Pour chaque service : nom et prix (ou « sur devis »).","For each service: name and price (or “on quote”)."); }
+const DLB=["shop","electronics","food"];
+function dlField(c,pre){ if(!DLB.includes(biz())) return ""; const v=c.dl||"";
+  return `<div class="field"><label for="${pre}-dl">${lx("Livraison ou retrait","Delivery or pickup")}</label><select id="${pre}-dl" onchange="document.getElementById('${pre}-da').style.display=this.value==='p'||!this.value?'none':''"><option value="">${lx("Choisir…","Choose…")}</option><option value="b" ${v==="b"?"selected":""}>${lx("Livraison et retrait sur place","Delivery and pickup")}</option><option value="d" ${v==="d"?"selected":""}>${lx("Livraison seulement","Delivery only")}</option><option value="p" ${v==="p"?"selected":""}>${lx("Retrait sur place seulement","Pickup only")}</option></select><input id="${pre}-da" value="${esc(c.da||"")}" maxlength="80" placeholder="${lx("Zones livrées, ex. Cotonou et Calavi","Areas you deliver to, e.g. Lagos and Abuja")}" autocomplete="off" style="margin-top:8px;${v&&v!=="p"?"":"display:none"}"></div>`; }
+function lnState(){
+  const c=S.shop.cat||{}, trs=trSel(c), nm=String(S.shop.name||"").trim();
+  const items=S.products.filter(p=>!p.hide&&p.name).length, ph=c.phone||S.shop.phone||"";
+  const live=!!(c.on&&c.slug);
+  const st=[
+    {k:"name",req:1,ok:!!nm&&nm!=="Ma Boutique"&&(!tradeOn()||trs.length>0),t:lx("Nom et métier","Name and trade")},
+    {k:"contact",req:1,ok:!!intlPhone(ph)&&!!cityCanon(c.city||""),t:lx("WhatsApp et ville","WhatsApp and city")},
+    {k:"items",req:1,ok:items>=1,t:lx("Ajouter ","Add ")+lnWord(),extra:items>=1&&items<3},
+    {k:"look",req:0,ok:!!c.logo,t:lx("Logo et photos","Logo and photos")},
+    {k:"hrs",req:0,ok:!!c.hrs,t:lx("Horaires et message","Hours and message")},
+    {k:"go",req:1,ok:live,t:lx("Aperçu et publication","Preview and publish")}];
+  const blockers=st.filter(x=>x.req&&!x.ok&&x.k!=="go");
+  return {st,live,items,blockers,done:st.filter(x=>x.ok).length,nextI:Math.max(0,st.findIndex(x=>!x.ok&&x.req)) };
+}
+function lnCard(){
+  if(!lnOK()) return "";
+  const s=lnState(), p=Math.round(s.done/6*100);
+  if(s.live){
+    if(S.shop.growOff) return "";
+    return `<section class="sec"><div class="card lnc"><div style="flex:1"><b>🚀 ${lx("Faites grandir votre entreprise","Grow your business")}</b><div class="note" style="margin:2px 0 8px">${lx("6 petits conseils pour attirer plus de clients.","6 quick tips to attract more customers.")}</div><button class="btn small primary" data-act="ln-grow">${lx("Voir les conseils","See the tips")}</button></div><button class="btn small ghost" data-act="ln-growx" aria-label="${lx("Masquer","Hide")}">×</button></div></section>`;
+  }
+  if(S.shop.lnOff) return "";
+  const nx=s.st[s.nextI];
+  return `<section class="sec"><div class="card lnc" style="display:block"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>🚀 ${lx("Lancez votre boutique en ligne","Launch your online shop")}</b><button class="btn small ghost" data-act="ln-x" aria-label="${lx("Masquer","Hide")}">×</button></div><div class="lnbar"><i style="width:${p}%"></i></div><div class="note" style="margin:0 0 8px">${s.done}/6 · ${lx("Prochaine étape : ","Next step: ")}<b>${esc(nx.t)}</b></div><button class="btn primary" data-act="ln-open">${s.done?lx("Continuer","Continue"):lx("Commencer","Start")}</button></div></section>`;
+}
+function lnHead(i,title,sub){ return `<button class="btn small ghost" data-act="ln-list" style="margin:0 0 6px;width:auto;display:inline-block">← ${lx("Étapes","Steps")}</button><div class="lnbar"><i style="width:${Math.round((i+1)/6*100)}%"></i></div><h2 style="margin:6px 0 4px">${title}</h2>${sub?`<p class="note" style="margin:0 0 10px">${sub}</p>`:""}`; }
+function lnModal(m){
+  const s=lnState(), c=S.shop.cat||{}, i=m.i, err=m.err?`<div class="err" role="alert">${esc(m.err)}</div>`:"";
+  const nav=(label,act)=>`<div class="actions"><button class="btn primary wide" data-act="${act||"ln-next"}">${label||lx("Enregistrer et continuer","Save and continue")}</button></div>`;
+  const skip=`<div class="actions"><button class="btn primary wide" data-act="ln-next">${lx("Continuer","Continue")}</button></div>`;
+  if(i<0||i==null){
+    return `<div class="dlg"><h2>${lx("Lancez votre boutique en ligne","Launch your online shop")}</h2><p class="note" style="margin:0 0 8px">${s.live?lx("Votre boutique est en ligne. Vous pouvez modifier chaque étape.","Your shop is live. You can edit any step."):lx("Une étape à la fois. Vos réponses sont enregistrées automatiquement.","One step at a time. Your answers are saved automatically.")}</p>
+    <div class="card flush">${s.st.map((x,k)=>`<button class="row" data-act="ln-go" data-i="${k}"><div class="main"><div class="name">${x.ok?"✓ ":""}${esc(x.t)}</div></div><div class="amt"><span class="badge" style="${x.ok?"":"background:"+(x.req?"#fde8e6":"#eef")}">${x.ok?lx("Fait","Done"):x.req?lx("Obligatoire","Required"):lx("Conseillé","Recommended")}</span></div></button>`).join("")}</div>
+    ${s.live?`<div class="actions"><button class="btn primary wide" data-act="ln-go" data-i="6">${lx("Voir mon lien","See my link")}</button></div>`:s.blockers.length?`<p class="note" style="margin:10px 0 0">${lx("Pour publier, il manque : ","To publish, you still need: ")}<b>${s.blockers.map(x=>esc(x.t)).join(", ")}</b></p><div class="actions"><button class="btn primary wide" data-act="ln-go" data-i="${s.nextI}">${lx("Continuer","Continue")}</button></div>`:`<div class="actions"><button class="btn primary wide" data-act="ln-go" data-i="5">${lx("Voir l'aperçu et publier","Preview and publish")}</button></div>`}</div>`;
+  }
+  if(i===0){
+    const sel=trSel(c);
+    return `<div class="dlg form">${lnHead(0,lx("Votre nom et votre métier","Your name and trade"),lx("C'est ce que vos clients verront en premier.","This is what customers see first."))}
+    <div class="field"><label for="ln-name">${lx("Nom de votre entreprise","Business name")}</label><input id="ln-name" value="${esc(String(S.shop.name||"")==="Ma Boutique"?"":S.shop.name)}" maxlength="40" autocomplete="off" placeholder="${lx("ex. Atelier Koffi","e.g. Koffi Workshop")}"></div>
+    ${tradeOn()?`<div class="field"><label>${sellGrp()?lx("Ce que vous vendez","What you sell"):lx("Votre métier","Your trade")} · ${lx("jusqu'à 3","up to 3")}</label><div id="ln-trs" style="display:flex;flex-wrap:wrap;gap:6px 14px">${tradesFor().map(r=>`<label class="chk" style="margin:0"><input type="checkbox" value="${r[0]}" ${sel.includes(r[0])?"checked":""} onchange="if(document.querySelectorAll('#ln-trs input:checked').length>3){this.checked=false}"> ${esc(lx(r[1],r[2]))}</label>`).join("")}</div></div>`:""}${err}${nav()}</div>`;
+  }
+  if(i===1){
+    const L0=CITIES[S.shop.country]||[], cc=cityCanon(c.city||""), inL=!!cc&&L0.includes(cc);
+    return `<div class="dlg form">${lnHead(1,lx("Comment les clients vous joignent","How customers reach you"),lx("Les commandes et messages arrivent sur WhatsApp.","Orders and messages arrive on WhatsApp."))}
+    <div class="field"><label for="ln-ph">${lx("Numéro WhatsApp","WhatsApp number")}</label><input id="ln-ph" value="${esc(c.phone||S.shop.phone||"")}" inputmode="tel" autocomplete="off" placeholder="${lx("ex. 97 00 00 00","e.g. 0803 000 0000")}"></div>
+    <div class="field"><label for="ln-cs">${lx("Votre ville","Your city")}</label><select id="ln-cs" onchange="document.getElementById('ln-city').style.display=this.value==='~'?'':'none'"><option value="">${lx("Choisir…","Choose…")}</option>${L0.map(x=>`<option ${inL&&cc===x?"selected":""}>${esc(x)}</option>`).join("")}<option value="~" ${cc&&!inL?"selected":""}>${lx("Autre ville…","Other city…")}</option></select><input id="ln-city" value="${esc(cc&&!inL?cc:"")}" maxlength="40" placeholder="${lx("ex. Cotonou","e.g. Lagos")}" autocomplete="off" style="margin-top:8px;${cc&&!inL||!L0.length?"":"display:none"}"></div>${err}${nav()}</div>`;
+  }
+  if(i===2){
+    const n=s.items, add=spOn()?`<button class="btn primary wide" data-act="ln-add">${lx("Choisir mes services","Choose my services")}</button>`:`<button class="btn primary wide" data-act="ln-add">${n?lx("Ajouter un autre","Add another"):lx("Ajouter le premier","Add the first one")}</button>`;
+    return `<div class="dlg">${lnHead(2,lx("Ajoutez ","Add ")+lnWord(),lnItemHint())}
+    <div class="card" style="text-align:center"><div style="font-size:1.6rem;font-weight:700">${n}</div><div class="note" style="margin:0">${lx("affiché(s) sur votre page","shown on your page")}${n<3?" · "+lx("3 ou plus, c'est mieux","3 or more is better"):""}</div></div>
+    <div class="actions">${add}${n?`<button class="btn wide" data-act="ln-next">${lx("Continuer","Continue")}</button>`:`<p class="note" style="margin:6px 0 0">${lx("Au moins 1 est obligatoire pour publier.","At least 1 is required to publish.")}</p>`}</div></div>`;
+  }
+  if(i===3){
+    const img=(k,lab,w)=>`<div class="field"><label>${lab}</label><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${c[k]?`<img alt="" src="${esc(c[k])}" style="width:${w}px;height:56px;object-fit:cover;border-radius:${k==="logo"?"50%":"10px"}">`:""}<label class="btn small" style="cursor:pointer;margin:0">${c[k]?lx("Changer","Change"):lx("Choisir","Choose")}<input type="file" id="c-${k}" accept="image/*" style="display:none"></label></div></div>`;
+    const g=c.gal||[];
+    return `<div class="dlg form">${lnHead(3,lx("Votre logo et vos photos","Your logo and photos"),lx("Facultatif, mais une page avec photos inspire plus confiance.","Optional, but pages with photos earn more trust."))}
+    ${img("logo",lx("Logo (rond)","Logo (round)"),56)}${img("cover",lx("Photo de couverture","Cover photo"),100)}
+    <div class="field"><label>${lx("Photos de votre lieu ou de votre travail","Photos of your place or your work")}</label><div class="phg">${g.map(u=>`<div class="pht"><img alt="" src="${esc(u)}"></div>`).join("")}${g.length<PHGAL?`<label class="pht add"><span>+</span><small>${lx("Photo","Photo")}</small><input type="file" id="c-gal" accept="image/*" multiple style="display:none"></label>`:""}</div></div>${skip}</div>`;
+  }
+  if(i===4){
+    const hs=HRS_(), custom=c.hrs&&!hs.includes(c.hrs);
+    return `<div class="dlg form">${lnHead(4,DLB.includes(biz())?lx("Horaires, livraison et message","Hours, delivery and message"):lx("Horaires et petit message","Hours and short message"),lx("Facultatif. Dites quand vous êtes disponible.","Optional. Say when you are available."))}
+    <div class="field"><label for="ln-hp">${lx("Horaires","Opening hours")}</label><select id="ln-hp" onchange="document.getElementById('ln-hrs').style.display=this.value==='~'?'':'none'"><option value="">${lx("Choisir…","Choose…")}</option>${hs.map(h=>`<option ${c.hrs===h?"selected":""} value="${esc(h)}">${esc(h)}</option>`).join("")}<option value="~" ${custom?"selected":""}>${lx("Autre…","Other…")}</option></select><input id="ln-hrs" value="${esc(custom?c.hrs:"")}" maxlength="70" placeholder="${lx("ex. Lun-Sam 8h-19h","e.g. Mon-Sat 8am-7pm")}" autocomplete="off" style="margin-top:8px;${custom?"":"display:none"}"></div>
+    <div class="field"><label for="ln-tag">${lx("Petit message","Short message")}</label><input id="ln-tag" value="${esc(c.tag||"")}" maxlength="120" autocomplete="off" placeholder="${lx("ex. Livraison à Cotonou et Calavi","e.g. Delivery in Lagos and Abuja")}"><div class="dtg" style="margin-top:8px">${TAGS_().map(x=>`<button type="button" data-act="ln-tagfill" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</div></div>${dlField(c,"ln")}${skip}</div>`;
+  }
+  if(i===5){
+    const its=S.products.filter(p=>!p.hide&&p.name).slice(0,3), col=ACCENTS.includes(c.color)?c.color:accentOf(S.shop), slug=catSlugify(c.slug||S.shop.name);
+    const ok=!s.blockers.length;
+    return `<div class="dlg form">${lnHead(5,lx("Aperçu : vos clients verront ceci","Preview: this is what customers will see"),"")}
+    <div class="lnprev"><div class="lnpc" style="background:${c.cover?`url(${esc(c.cover)}) center/cover`:col}"></div><div class="lnpb"><div class="lnpl" style="background:${c.logo?`url(${esc(c.logo)}) center/cover`:col}">${c.logo?"":esc((S.shop.name||"?").charAt(0).toUpperCase())}</div><b>${esc(S.shop.name)}</b><div class="note" style="margin:2px 0">${[cityCanon(c.city||""),c.hrs].filter(Boolean).map(esc).join(" · ")}</div>${c.tag?`<div class="note" style="margin:2px 0">${esc(c.tag)}</div>`:""}${its.map(p=>`<div class="lnpr"><span>${esc(p.name)}</span><b>${p.pm==="q"?lx("Sur devis","On quote"):money(Number(p.price)||0)}</b></div>`).join("")||`<div class="note">${lx("Aucun article","No items yet")}</div>`}<div class="lnwa">WhatsApp</div></div></div>
+    ${ok?`<div class="field" style="margin-top:10px"><label for="ln-slug">${lx("Votre lien","Your link")}</label><input id="ln-slug" value="${esc(slug)}" autocomplete="off" autocapitalize="none" spellcheck="false"></div><label class="chk"><input type="checkbox" id="ln-list" ${c.listed===false?"":"checked"}> ${lx("Me lister dans Ecrici Market (les clients me trouvent)","List me in Ecrici Market (customers can find me)")}</label>`:`<div class="card" style="margin-top:10px"><b>${lx("Il manque encore :","Still needed:")}</b>${s.blockers.map(x=>`<button class="btn small" style="margin:6px 6px 0 0" data-act="ln-go" data-i="${s.st.indexOf(x)}">${esc(x.t)}</button>`).join("")}</div>`}${err}
+    <div class="actions"><button class="btn primary wide" data-act="ln-pub" ${ok?"":"disabled"}>${s.live?lx("Mettre à jour ma boutique","Update my shop"):lx("PUBLIER MA BOUTIQUE","PUBLISH MY SHOP")}</button></div></div>`;
+  }
+  /* i===6 live */
+  const u=catUrl(), wait=window.__mkt===false;
+  return `<div class="dlg" style="text-align:center"><div style="font-size:2.4rem">🎉</div><h2>${lx("Félicitations ! Votre entreprise est maintenant EN LIGNE sur Ecrici Market.","Congratulations! Your business is now LIVE on ECRICI Marketplace.")}</h2>${wait?`<p class="note">${lx("Votre page sera visible dans le Market après une vérification rapide (en général sous 24 h). Le lien fonctionne déjà.","Your Market listing appears after a quick check (usually within a day). Your link already works.")}</p>`:""}
+  <div class="field"><input readonly value="${esc(u)}" onfocus="this.select()" style="text-align:center"></div>
+  <div class="actions" style="display:grid;gap:8px"><a class="btn primary wide" href="${esc(u)}" target="_blank" rel="noopener">${lx("Voir ma boutique","View my shop")}</a><button class="btn wide" data-act="cat-wa">${lx("Partager sur WhatsApp","Share on WhatsApp")}</button><button class="btn wide" data-act="cat-copy">${lx("Copier le lien de mon site","Copy my website link")}</button><button class="btn wide" data-act="ln-go" data-i="2">${lx("Ajouter d'autres articles","Add more items")}</button><button class="btn wide" data-act="ln-grow">${lx("🚀 Faire grandir mon entreprise","🚀 Grow my business")}</button></div></div>`;
+}
+function growModal(){
+  const T=[[lx("Partagez votre lien","Share your link"),lx("Envoyez-le sur WhatsApp, dans votre statut et à vos clients. Collez-le dans votre bio Facebook ou Instagram.","Send it on WhatsApp, post it in your status and give it to your customers. Paste it in your Facebook or Instagram bio."),`<button class="btn small" data-act="cat-wa">${lx("Partager","Share")}</button><button class="btn small" data-act="cat-qr">${lx("Code QR","QR code")}</button>`],
+    [lx("Ajoutez plus d'articles","Add more items"),lx("Plus vous en montrez, plus vous recevez de messages. Visez 10 ou plus.","The more you show, the more messages you get. Aim for 10 or more."),`<button class="btn small" data-act="ln-go" data-i="2">${lx("Ajouter","Add")}</button>`],
+    [lx("Améliorez votre profil","Improve your profile"),lx("Un logo, une couverture et des photos de votre travail rassurent les clients.","A logo, a cover and photos of your work reassure customers."),`<button class="btn small" data-act="ln-go" data-i="3">${lx("Ajouter des photos","Add photos")}</button>`],
+    [lx("Répondez vite","Reply fast"),lx("Les clients écrivent sur WhatsApp. Répondez dans l'heure : c'est la clé pour vendre.","Customers write on WhatsApp. Reply within the hour: it is the key to selling."),""],
+    [lx("Gardez vos disponibilités à jour","Keep availability up to date"),lx("Dans chaque article, décochez « Afficher sur ma page » quand ce n'est plus disponible.","In each item, untick “Show on my online page” when it is no longer available."),""],
+    [lx("Utilisez votre cahier","Use your ledger"),lx("Enregistrez chaque vente et chaque dette dans Ecrici pour voir votre vrai bénéfice.","Record every sale and debt in Ecrici to see your real profit."),`<button class="btn small" data-act="ln-sale">${lx("Enregistrer une vente","Record a sale")}</button>`]];
+  return `<div class="dlg"><h2>🚀 ${lx("Faites grandir votre entreprise","Grow your business")}</h2>${T.map((x,k)=>`<div class="card" style="margin:8px 0"><b>${k+1}. ${x[0]}</b><p class="note" style="margin:4px 0 ${x[2]?"8px":"0"}">${x[1]}</p>${x[2]}</div>`).join("")}<div class="actions"><button class="btn primary wide" data-act="ln-growdone">${lx("Terminé","Done")}</button></div></div>`;
+}
+async function lnPub(){
+  const m=ui.modal; if(!m) return; const c=S.shop.cat||{}, slug=catSlugify(($("#ln-slug")||{}).value||c.slug||S.shop.name), listed=!!($("#ln-list")||{}).checked;
+  const fail=e=>{ m.err=e; renderModal(); };
+  if(!catSlugOk(slug)) return fail(lx("Le nom du lien doit avoir 3 à 30 lettres, chiffres ou tirets.","The link name needs 3 to 30 letters, numbers or dashes."));
+  if(catReserved(slug)) return fail(lx("Ce nom de lien est réservé. Utilisez le nom de votre boutique.","That link name is reserved. Use your shop name instead."));
+  const ph=c.phone||S.shop.phone||""; if(!intlPhone(ph)) return fail(lx("Entrez un numéro WhatsApp valide.","Enter a valid WhatsApp number."));
+  const old=S.shop.cat||{}; S.shop.cat=Object.assign({},old,{on:true,slug,phone:ph,listed,city:cityCanon(old.city||"")}); save();
+  const btn=document.querySelector('[data-act="ln-pub"]'); if(btn){ btn.disabled=true; btn.textContent=lx("Publication…","Publishing…"); }
+  const r=await window.__catPub(true).catch(()=>({ok:false,offline:true}));
+  if(r&&r.ok){ ui.cd=null; ui.modal={type:"launch",i:6}; render(); return; }
+  S.shop.cat=old; save();
+  fail(r&&r.skip?lx("Connectez-vous à votre compte pour publier.","Sign in to your account to publish."):r&&r.taken?lx("Ce nom de lien est déjà pris. Essayez un autre.","That link name is already taken. Try another."):r&&r.reserved?lx("Ce nom est réservé. Évitez « Ecrici », « support », « MTN » et les noms de banques.","That name is reserved. Avoid “Ecrici”, “support”, “MTN” and bank names."):r&&r.offline?lx("Pas d'internet. Réessayez quand vous êtes en ligne.","No internet. Try again when you are online."):lx("Impossible de publier maintenant. Réessayez.","Could not publish right now. Try again."));
+}
+function lnNext(){
+  const m=ui.modal; if(!m) return; const i=m.i, g=id=>($("#"+id)||{}).value||"";
+  if(i===0){ const nm=g("ln-name").trim(); const trs=[...document.querySelectorAll("#ln-trs input:checked")].map(x=>x.value).slice(0,3);
+    if(nm.length<2){ m.err=lx("Entrez le nom de votre entreprise.","Enter your business name."); return renderModal(); }
+    if(tradeOn()&&!trs.length){ m.err=lx("Choisissez au moins un choix.","Pick at least one option."); return renderModal(); }
+    S.shop.name=nm.slice(0,40); const o={}; if(tradeOn()){ o.trs=trs; o.tr=trs[0]; } S.shop.cat=Object.assign({},S.shop.cat||{},o); save(); }
+  if(i===1){ const ph=g("ln-ph").trim(), cs=g("ln-cs"), city=cityCanon(cs==="~"?g("ln-city"):cs).slice(0,40);
+    if(!intlPhone(ph)){ m.err=lx("Entrez un numéro WhatsApp valide.","Enter a valid WhatsApp number."); return renderModal(); }
+    if(!city){ m.err=lx("Choisissez votre ville.","Choose your city."); return renderModal(); }
+    S.shop.cat=Object.assign({},S.shop.cat||{},{phone:ph,city}); if(!S.shop.phone) S.shop.phone=ph; save(); }
+  if(i===4){ const hp=g("ln-hp"), hrs=(hp==="~"?g("ln-hrs"):hp).trim().slice(0,70), tag=g("ln-tag").trim().slice(0,120); const _dl=DLB.includes(biz())?g("ln-dl"):undefined, _da=g("ln-da").trim().slice(0,80); S.shop.cat=Object.assign({},S.shop.cat||{},{hrs,tag},_dl!==undefined?{dl:_dl,da:_dl==="p"?"":_da}:{}); save(); if(S.shop.cat.on&&S.shop.cat.slug) window.__catPub(true).catch(()=>{}); }
+  m.err=""; m.i=Math.min(5,i+1); render();
 }
 function catGrab(){ const g=id=>($("#"+id)||{}).value; if(!$("#c-slug")) return; ui.cd={slug:g("c-slug"),phone:g("c-phone"),tag:g("c-tag"),hrs:g("c-hrs"),trs:trsGrab(),tr:(trsGrab()[0]||""),city:g("c-city"),on:($("#c-on")||{}).checked,listed:($("#c-list")||{}).checked}; }
 function catPatch(o){ S.shop.cat=Object.assign({},S.shop.cat||{},o); save(); window.__catPub&&S.shop.cat.slug&&S.shop.cat.on&&window.__catPub(true).catch(()=>{}); render(); }
@@ -1835,7 +1959,7 @@ async function saveCat(){
   if(on){ if(!catSlugOk(slug)) return fail(lx("Le nom du lien doit avoir 3 à 30 lettres, chiffres ou tirets.","The link name needs 3 to 30 letters, numbers or dashes."));
     if(catReserved(slug)) return fail(lx("Ce nom de lien est réservé. Choisissez le nom de votre boutique.","That link name is reserved. Use your shop name instead."));
     if(!intlPhone(ph)) return fail(lx("Entrez un numéro WhatsApp valide pour recevoir les commandes.","Enter a valid WhatsApp number to receive orders.")); }
-  const old=S.shop.cat||{}; S.shop.cat=Object.assign({},old,{on,slug:slug||old.slug||"",phone:ph,tag,hrs,tr,trs,listed:listed&&on,city}); save(); ui.catMsg="";
+  const _dl=DLB.includes(biz())?($("#c-dl")||{}).value||"":undefined, _da=(($("#c-da")||{}).value||"").trim().slice(0,80); const old=S.shop.cat||{}; S.shop.cat=Object.assign({},old,{on,slug:slug||old.slug||"",phone:ph,tag,hrs,tr,trs,listed:listed&&on,city},_dl!==undefined?{dl:_dl,da:_dl==="p"?"":_da}:{}); save(); ui.catMsg="";
   const r=await window.__catPub(true).catch(()=>({ok:false,offline:true}));
   if(r&&r.ok){ ui.cd=null; render(); toast(on?lx("Page publiée","Page published"):lx("Page désactivée","Page turned off")); return; }
   S.shop.cat=old; save(); 
@@ -2245,6 +2369,8 @@ function _renderModal(){
       <p class="note" style="margin:0">${t("pick_hint")}</p>
       <div id="pk-list" style="overflow:auto;display:grid;gap:6px;align-content:start">${pickList("")}</div>
       <div class="actions"><button class="btn primary" data-act="pick-done"><span id="pk-n">${cnt}</span> ${t("pick_n")} · ${t("pick_done")}</button></div></div>`;
+  }else if(m.type==="launch"){ inner=lnModal(m);
+  }else if(m.type==="grow"){ inner=growModal();
   }else if(m.type==="catqr"){
     inner=`<div class="dlg form" style="text-align:center"><h2>${lx("Code QR de ma page","QR code for my page")}</h2><p class="note" style="margin:0">${lx("Imprimez-le et collez-le dans votre boutique. Vos clients scannent et voient vos prix.","Print it and stick it in your shop. Customers scan it and see your prices.")}</p><img id="qr-img" alt="QR" width="240" height="240" style="margin:8px auto;border-radius:8px;background:#fff"><div class="actions" style="justify-content:center"><button class="btn primary" data-act="cat-qr-print">${lx("Imprimer","Print")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
     qrDraw(catUrl());
@@ -2516,6 +2642,17 @@ document.addEventListener("click",e=>{
       if(oldC!==s.country&&!$("#s-lang").dataset.touched) {}
       save(); render(); toast(t("saved_ok")); break; }
     case "save-cat": saveCat(); break;
+    case "ln-open": ui.modal={type:"launch",i:-1}; renderModal(); break;
+    case "ln-list": ui.modal={type:"launch",i:-1}; renderModal(); break;
+    case "ln-go": ui.modal={type:"launch",i:+el.dataset.i}; renderModal(); break;
+    case "ln-next": lnNext(); break;
+    case "ln-pub": lnPub(); break;
+    case "ln-add": { ui.modal=null; renderModal(); if(spOn()) spOpen(); else { ui.modal={type:"product",id:null,ln:1}; renderModal(); } break; }
+    case "ln-tagfill": { const e=$("#ln-tag"); if(e) e.value=el.dataset.v; break; }
+    case "ln-x": S.shop.lnOff=true; save(); render(); break;
+    case "ln-grow": ui.modal={type:"grow"}; renderModal(); break;
+    case "ln-growx": case "ln-growdone": S.shop.growOff=true; save(); ui.modal=null; render(); break;
+    case "ln-sale": ui.modal=null; ui.view="sale"; render(); window.scrollTo(0,0); break;
     case "go-cat": ui.view="set"; (ui.setOpen=ui.setOpen||{}).cat=true; render(); setTimeout(()=>{ const b=$("#cat-box"); if(b) b.scrollIntoView({block:"start"}); },60); break;
     case "logo-rm": delete S.shop.logoData; save(); render(); break;
     case "cat-col": catGrab(); catPatch({color:el.dataset.c}); break;
