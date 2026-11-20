@@ -1633,7 +1633,7 @@ function productModal(m){
   if(expOn()&&!m.bs){ const pp=m.id?S.products.find(x=>x.id===m.id):null; m.bs=pbs(pp).map(b=>({...b})); }
   const p=m.id?S.products.find(x=>x.id===m.id):null, own=isOwner(), ro=own?"":"readonly";
   return `<div class="dlg form"><h2>${p?esc(p.name):t("add_product")}</h2>
-    <div class="field"><label for="pr-name">${t("product_name")}</label><input id="pr-name" value="${esc(p?p.name:"")}" placeholder="${esc(ph("name"))}" ${ro} autocomplete="off" ${ppOn()&&!p?'list="pr-sg"':""}>${ppOn()&&!p?`<datalist id="pr-sg">${sugAll().map(x=>`<option value="${esc(x[0])}">`).join("")}</datalist>`:""}</div>
+    <div class="field"><label for="pr-name">${t("product_name")}</label><input id="pr-name" value="${esc(p?p.name:"")}" placeholder="${esc(ph("name"))}" ${ro} autocomplete="off" ${ppOn()&&!p?'list="pr-sg"':""}>${ppOn()&&!p?`<datalist id="pr-sg">${sugAll().map(x=>`<option value="${esc(x[0])}">`).join("")}</datalist>`:""}</div>${brList().length?`<div class="field"><label for="pr-br">${lx("Marque","Brand")}</label><input id="pr-br" list="pr-brl" value="${esc(p&&p.br?p.br:"")}" maxlength="24" autocomplete="off" placeholder="${lx("Choisir ou écrire","Choose or type")}" ${ro}><datalist id="pr-brl">${brList().map(x=>`<option value="${esc(x)}">`).join("")}</datalist></div>`:""}
     <label class="chk" ${nostock()?"hidden":""}><input type="checkbox" id="pr-svc" ${(p?p.svc:svcDef())?"checked":""} ${own?"":"disabled"} onchange="document.getElementById('pr-stk').hidden=document.getElementById('pr-stk2').hidden=this.checked;var xb=document.getElementById('pr-exp-box');if(xb)xb.hidden=this.checked"> ${t("is_service")}</label>
     <div class="grid2"><div class="field"><label for="pr-price">${t("unit_price")}</label><input id="pr-price" value="${esc(p?p.price:"")}" placeholder="${esc(ph("price"))}" inputmode="decimal" ${ro}></div>
     <div class="field" id="pr-stk" ${(p?p.svc:svcDef())?"hidden":""}><label for="pr-qty">${t("in_stock")}</label><input id="pr-qty" value="${esc(expOn()?Math.round(m.bs.reduce((a,b)=>a+b.q,0)*1000)/1000:p?p.qty:"0")}" inputmode="decimal" ${ro}${expOn()?" readonly":""}></div></div>
@@ -1702,6 +1702,7 @@ function saveProduct(){
     if(expOn()){ delete p.exp; delete p.batch; if(svc) delete p.bs; else p.bs=m.bs.filter(b=>b.q>0).map(b=>({n:b.n||"",e:b.e||"",q:b.q})); }
     if(rooms) p.rooms=rooms;
     if($("#pr-pm")){ const pv=$("#pr-pm").value; if(pv==="q"||pv==="f") p.pm=pv; else delete p.pm; }
+    if($("#pr-br")){ const bv=($("#pr-br").value||"").trim().slice(0,24); if(bv) p.br=bv; else delete p.br; }
     if($("#pr-desc")){ const dv=($("#pr-desc").value||"").trim().slice(0,80); if(dv) p.desc=dv; else delete p.desc; if(m.dt&&m.dt.length) p.dt=m.dt.filter(k=>dtList().some(x=>x[0]===k)); else delete p.dt; }
     if($("#pr-show")){ if($("#pr-show").checked) delete p.hide; else p.hide=true;
       const cv=($("#pr-cat").value||"").trim().slice(0,24); if(cv) p.cat=cv; else delete p.cat; if($("#pr-pin").checked) p.pin=true; else delete p.pin; }
@@ -1823,6 +1824,9 @@ const DTT={
  language:[["eve","Cours du soir","Evening classes"],["grp","Cours en groupe","Group classes"],["pr","Cours particuliers","Private lessons"]],
  bar:[["dj","Musique / DJ","Music / DJ"],["hh","Happy hour","Happy hour"]]
 };
+const BRD={phones:["Tecno","Infinix","Samsung","Itel","iPhone (Apple)","Xiaomi","Redmi","Oppo","Vivo","Realme","Huawei","Nokia","Gionee","Other"],computers:["HP","Dell","Lenovo","Apple","Asus","Acer","Toshiba","Microsoft","Other"],tv:["Samsung","LG","Hisense","TCL","Sony","Skyworth","Nasco","Other"],generators:["Honda","Tiger","Elepaq","Sumec Firman","Yamaha","Pramac","Mikano","Other"],appliances:["LG","Samsung","Hisense","Midea","Haier","Nasco","Scanfrost","Binatone","Other"],cosmetics:["Nivea","Vaseline","Dove","Garnier","L'Oréal","Fair & White","Carolight","Other"],clothes:[],autoparts:["Toyota","Honda","Hyundai","Kia","Nissan","Peugeot","Mercedes","Other"]};
+const brList=()=>{ try{ return (BRD[trKey()]||[]).filter(x=>x!=="Other"); }catch(e){ return []; } };
+const brandOf=p=>{ if(p.br) return String(p.br).slice(0,24); const n=String(p.name||"").toLowerCase(); const f=brList().find(b=>{ const k=b.replace(/\s*\(.*\)/,"").toLowerCase(); return n===k||n.startsWith(k+" ")||n.includes(" "+k+" ")||n.endsWith(" "+k); }); return f?f.replace(/\s*\(.*\)/,""):""; };
 const DTR={
  driving:[["car","Voiture","Car"],["mo","Moto","Motorbike"],["lic","Passage du permis inclus","Licence test included"],["eve","Cours du soir","Evening lessons"],["pk","Récupération à domicile","Home pickup"]],
  land:[["tt","Titre foncier","Land title"],["rd","Accès route","Road access"],["wat","Eau à proximité","Water nearby"],["elc","Électricité à proximité","Electricity nearby"],["fence","Clôturé","Fenced"],["nego","Prix négociable","Negotiable price"]],
@@ -1874,7 +1878,7 @@ function qrDraw(url){
 }
 window.__catData=function(){
   const c=S.shop.cat||{}, ns=nostock();
-  const items=S.products.filter(p=>!p.hide&&p.name).slice(0,300).map(p=>({n:String(p.name).slice(0,80),p:Number(p.price)||0,f:pmTxt(p),q:p.pm==="q"?lx("Sur devis","On quote"):undefined,a:(p.svc||ns)?1:(sellable(p)>0?1:0),d:descOf(p)||undefined,i:p.img||undefined,g:(p.more&&p.more.length)?p.more.slice(0,4):undefined,c:p.cat||undefined,x:p.pin?1:undefined}));
+  const items=S.products.filter(p=>!p.hide&&p.name).slice(0,300).map(p=>({n:String(p.name).slice(0,80),p:Number(p.price)||0,f:pmTxt(p),q:p.pm==="q"?lx("Sur devis","On quote"):undefined,a:(p.svc||ns)?1:(sellable(p)>0?1:0),d:descOf(p)||undefined,i:p.img||undefined,g:(p.more&&p.more.length)?p.more.slice(0,4):undefined,c:p.cat||undefined,b:(brandOf(p)||undefined),x:p.pin?1:undefined}));
   return {v:1,name:S.shop.name,biz:biz(),lang:L(),phone:intlPhone(c.phone||S.shop.phone||""),tag:String(c.tag||"").slice(0,120),addr:String(S.shop.address||"").slice(0,120),col:ACCENTS.includes(c.color)?c.color:accentOf(S.shop),logo:c.logo||undefined,cover:c.cover||undefined,gal:(c.gal&&c.gal.length)?c.gal.slice(0,PHGAL):undefined,hrs:String(c.hrs||"").slice(0,70),dl:(DLB.includes(biz())&&["d","p","b"].includes(c.dl))?c.dl:undefined,da:(DLB.includes(biz())&&c.dl&&c.dl!=="p"&&c.da)?String(c.da).slice(0,80):undefined,tr:(tradeOn()&&trSel(c)[0])||undefined,trl:(tradeOn()?(()=>{ const t=trSel(c).filter(k=>k!=="other").map(k=>{ const r=TRADES.find(x=>x[0]===k); return r[1]+" "+r[2]+(r[3]?" "+r[3]:""); }); return t.length?t.join(" · "):undefined; })():undefined),lab:(TRV[trKey()]&&TRV[trKey()].lab)||CATLAB[biz()]||CATLAB.shop,cur:[C().sym,C().after?1:0,(C().sym==="FCFA"||C().dec===0)?0:2],items};
 };
 function catNote(){
@@ -2861,7 +2865,7 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("change",e=>{
   const el=e.target;
-  if(el.id==="pr-name"&&ppOn()&&ui.modal&&ui.modal.type==="product"&&!ui.modal.id){ const hit=sugAll().find(x=>x[0].toLowerCase()===el.value.trim().toLowerCase()); if(hit){ const ce=$("#pr-cat"); if(ce&&!ce.value) ce.value=hit[1].slice(0,24); } }
+  if(el.id==="pr-name"&&ppOn()&&ui.modal&&ui.modal.type==="product"&&!ui.modal.id){ const hit=sugAll().find(x=>x[0].toLowerCase()===el.value.trim().toLowerCase()); if(hit){ const ce=$("#pr-cat"); if(ce&&!ce.value) ce.value=hit[1].slice(0,24); }  const be=$("#pr-br"); if(be&&!be.value){ const bo=brandOf({name:el.value}); if(bo) be.value=bo; } }
   if(el.dataset&&el.dataset.bind==="cust"){ setBind("cust",el.value); }
   if(el.id==="pr-img"&&el.files&&el.files[0]&&ui.modal&&ui.modal.type==="product"){ const m=ui.modal, files=[...el.files]; el.value="";
     const room=Math.min(PHMAX-m.ph.length, PHSHOP-phTotal(m.id)-m.ph.length); if(room<=0){ toast(lx("Limite de photos atteinte.","Photo limit reached.")); return; }

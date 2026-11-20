@@ -44,6 +44,7 @@ h2{display:flex;align-items:baseline;justify-content:space-between;font-size:18p
 .ban{margin:30px 0 0;background:var(--on);color:var(--onf);border-radius:18px;padding:20px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}.ban b{font-size:17px;display:block}.ban span{opacity:.8;font-size:14px}.ban .cta{margin:0}
 .ft{text-align:center;color:var(--mut);font-size:13px;padding:22px 0 40px}.ft a{color:var(--acc);font-weight:700;text-decoration:none}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.fp{font-weight:800;font-size:13.5px;margin-top:4px}
 </style>
 </head>
 <body>
@@ -51,7 +52,7 @@ h2{display:flex;align-items:baseline;justify-content:space-between;font-size:18p
 <div class="w">
 <section class="hero"><h1 id="hl"></h1><p id="sb"></p>
 <label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="q" type="search" autocomplete="off" maxlength="60" enterkeyhint="search"></label>
-<div class="loc"><span id="nr" style="display:contents"></span><select id="co" aria-label="Country"></select></div></section>
+<div class="loc"><span id="nr" style="display:contents"></span><select id="co" aria-label="Country"></select><select id="so" aria-label="Sort" hidden></select></div></section>
 <div class="cats" id="ch"></div><div class="trs" id="trs" hidden></div>
 <div id="ps" hidden><h2 id="ph"></h2><div class="pg" id="pg"></div><div id="pm"></div></div>
 <h2 id="sh"></h2><div class="sg" id="r"></div><div id="mr"></div>
@@ -71,6 +72,7 @@ const ICON={pharmacy:"💊",shop:"🏪",electronics:"📱",food:"🍲",beauty:"�
 const sp=new URLSearchParams(location.search);
 let lg=sp.get("l")||(localStorage.getItem("ecrici-lang")||((navigator.language||"en").slice(0,2)==="fr"?"fr":"en"));lg=lg==="fr"?"fr":"en";
 let q=(sp.get("q")||"").slice(0,60),co=(sp.get("c")||"").toUpperCase(),bz=sp.get("b")||"",off=0,poff=0,tm=null,seq=0;
+let sort=["price_asc","price_desc","new"].includes(sp.get("o"))?sp.get("o"):"",v2=true;
 const BASE=String(ECRICI.url).replace(/\/+$/,""), IMGP=BASE+"/storage/v1/object/public/catalog/";
 const okImg=u=>typeof u==="string"&&u.indexOf(IMGP)===0&&u.length<400;
 const th=u=>/-f\.jpg$/.test(u)?u.replace(/-f\.jpg$/,"-t.jpg"):u;
@@ -102,10 +104,11 @@ function near(){ const e=$("nr"); if(!e) return;
       CT.forEach(x=>{ const a=Math.sin((x[2]-la)*R/2)**2+Math.cos(la*R)*Math.cos(x[2]*R)*Math.sin((x[3]-lo)*R/2)**2, d=12742*Math.asin(Math.sqrt(a)); if(d<bd){ bd=d; best=x; } });
       if(best&&bd<=200) setCity(best[1]); else { nmsg=tx().far; near(); } },()=>{ nmsg=tx().deny; near(); },{timeout:8000,maximumAge:600000}); }; }
 function setCity(c){ cy=c; const k=CT.find(x=>x[1]===c); if(k) nco=k[0]; try{ localStorage.setItem("ecrici-market-city",c); }catch(e){} nmsg=""; near(); load(); }
+function soFill(){ const e=$("so"); if(!e) return; const fr=lg==="fr"; e.innerHTML=[["",fr?"Trier : plus proches":"Sort: nearest"],["price_asc",fr?"Prix : du plus bas":"Price: low to high"],["price_desc",fr?"Prix : du plus haut":"Price: high to low"],["new",fr?"Les plus récents":"Newest"]].map(o=>`<option value="${o[0]}" ${o[0]===sort?"selected":""}>${esc(o[1])}</option>`).join(""); }
 function trades(){ const e=$("trs"); if(!e) return; const ks=TG[bz]; e.hidden=!ks; if(!ks){ e.innerHTML=""; return; }
   e.innerHTML=ks.map(k=>TR.find(x=>x[0]===k)).filter(Boolean).map(x=>`<button class="pill ${q.toLowerCase()===nm(x).toLowerCase()?"on":""}" type="button" data-q="${esc(nm(x))}">${esc(nm(x))}</button>`).join(""); }
 function chrome(){ document.documentElement.lang=lg; const t=tx();
-  $("hl").textContent=t.hl; $("sb").textContent=t.sb; $("q").placeholder=phb(bz); $("q").value=q; $("lg").textContent=t.lg; $("ph").textContent=t.pop; $("sh").textContent=t.shops; $("bt").textContent=t.bt; $("bs").textContent=t.bs; $("bc").textContent=t.cta;
+  $("hl").textContent=t.hl; $("sb").textContent=t.sb; $("q").placeholder=phb(bz); soFill(); $("q").value=q; $("lg").textContent=t.lg; $("ph").textContent=t.pop; $("sh").textContent=t.shops; $("bt").textContent=t.bt; $("bs").textContent=t.bs; $("bc").textContent=t.cta;
   $("co").innerHTML=`<option value="">${esc(t.all)}</option>`+CO.map(c=>`<option value="${c[0]}" ${c[0]===co?"selected":""}>${esc(nm(c))}</option>`).join("");
   $("ch").innerHTML=`<button class="cat" data-b="" aria-pressed="${bz===""}"><b>✨</b>${esc(t.cat)}</button>`+BZ.map(b=>`<button class="cat" data-b="${b[0]}" aria-pressed="${bz===b[0]}"><b>${ICON[b[0]]||"🏪"}</b>${esc(nm(b))}</button>`).join("");
   trades(); $("ft").innerHTML=`${esc(t.ft)} <a href="https://ecrici.com/">Ecrici</a><br><a href="/terms.html">${esc(t.tm)}</a> · <a href="/privacy.html">${esc(t.pv)}</a>`; }
@@ -117,10 +120,11 @@ const place=r=>{ const c2=CO.find(c=>c[0]===r.country); return [r.city,c2?nm(c2)
 function pcard(r){ return `<a class="pc" href="${url(r.slug)}"><div class="im">${okImg(r.i)?imgTag(r.i,r.n):""}</div><div class="b"><div class="n">${esc(r.n)}</div>${r.f?`<div class="pr">${esc(r.f)}</div>`:""}<div class="sp">${PIN}<span>${esc(r.shop)}${r.city?" · "+esc(r.city):""}</span></div></div></a>`; }
 function card(r){ const bn=BZ.find(b=>b[0]===r.biz), col=/^#[0-9a-f]{6}$/i.test(r.col||"")?r.col:"#0E1A4F";
   const av=okImg(r.logo)?`<img class="av" alt="" loading="lazy" decoding="async" src="${esc(r.logo)}">`:`<div class="av" style="background:${col}">${esc((r.name||"?").trim().slice(0,2).toUpperCase())}</div>`;
-  return `<a class="sc" href="${url(r.slug)}"><div class="cv" style="background:linear-gradient(135deg,${col},#0E1A4F)"></div><div class="r">${av}<div class="t"><b>${esc(r.name)}</b>${r.verified?`<span class="vf" title="${esc(tx().vft)}">✔ ${esc(tx().vf)}</span>`:""}${r.near===0?`<span class="ny">${esc(tx().ny)}</span>`:""}<div class="m">${esc([(TR.find(x=>x[0]===r.tr&&x[0]!=="other")?nm(TR.find(x=>x[0]===r.tr)):(bn?nm(bn):"")),place(r)].filter(Boolean).join(" · "))}</div>${r.tag?`<div class="tg">${esc(r.tag)}</div>`:""}${(r.matches||[]).length?`<div class="mt">${r.matches.map(m=>`<span>${esc(m.n)}${m.f?" · "+esc(m.f):""}</span>`).join("")}</div>`:""}<span class="go">${esc(vis(r.biz))} →</span></div></div></a>`; }
+  return `<a class="sc" href="${url(r.slug)}"><div class="cv" style="background:linear-gradient(135deg,${col},#0E1A4F)"></div><div class="r">${av}<div class="t"><b>${esc(r.name)}</b>${r.verified?`<span class="vf" title="${esc(tx().vft)}">✔ ${esc(tx().vf)}</span>`:""}${r.near===0?`<span class="ny">${esc(tx().ny)}</span>`:""}<div class="m">${esc([(TR.find(x=>x[0]===r.tr&&x[0]!=="other")?nm(TR.find(x=>x[0]===r.tr)):(bn?nm(bn):"")),place(r)].filter(Boolean).join(" · "))}</div>${r.tag?`<div class="tg">${esc(r.tag)}</div>`:""}${r.pft?`<div class="fp">${/from|partir|quote|devis/i.test(r.pft)?"":esc(lg==="fr"?"À partir de ":"From ")}${esc(r.pft)}</div>`:""}${(r.matches||[]).length?`<div class="mt">${r.matches.map(m=>`<span>${esc(m.n)}${m.f?" · "+esc(m.f):""}</span>`).join("")}</div>`:""}<span class="go">${esc(vis(r.biz))} →</span></div></div></a>`; }
 const rpc=(fn,b)=>fetch(BASE+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:ECRICI.key,"Content-Type":"application/json"},body:JSON.stringify(b)});
 const withNear=b=>Object.assign({},b,{p_near_city:cy||null,p_near_country:(co||nco)||null});
-async function call(fn,base){ let r=await rpc(fn,withNear(base)); if(!r.ok&&fn==="market_search") r=await rpc(fn,base); return r; }
+async function call(fn,base){ if(v2){ try{ const r2=await rpc(fn==="market_search"?"market_search2":"market_products2",Object.assign({},withNear(base),{p_sort:sort||"near"})); if(r2.ok){ if($("so")) $("so").hidden=false; return r2; } }catch(e){} v2=false; sort=""; if($("so")) $("so").hidden=true; }
+  let r=await rpc(fn,withNear(base)); if(!r.ok&&fn==="market_search") r=await rpc(fn,base); return r; }
 async function loadProducts(more,my){
   try{ const r=await call("market_products",{p_q:q,p_country:co||null,p_biz:bz||null,p_limit:10,p_offset:poff}); if(!r.ok) throw 0; const j=await r.json(); if(my!==seq) return;
     const ok=j.filter(x=>okImg(x.i)); if(!more){ $("pg").innerHTML=""; $("ps").hidden=!ok.length; }
@@ -134,7 +138,8 @@ async function load(more){ const my=++seq;
     if(!j.length&&!more){ $("r").innerHTML=`<div class="msg"><i>🔎</i><b>${esc(tx().none)}</b>${esc(tx().nones)}<br><a class="cta" href="https://ecrici.com/">${esc(tx().cta)}</a></div>`; return; }
     $("r").insertAdjacentHTML("beforeend",j.map(card).join("")); off+=j.length; $("mr").innerHTML=j.length>=24?`<button class="more" id="mb" type="button">${esc(tx().more)}</button>`:""; if($("mb")) $("mb").onclick=()=>load(true);
   }catch(e){ if(my===seq){ $("r").innerHTML=`<div class="msg"><i>📡</i>${esc(tx().err)}</div>`; $("ps").hidden=true; } } }
-function sync(){ const p=new URLSearchParams(); if(q)p.set("q",q); if(co)p.set("c",co); if(bz)p.set("b",bz); if(lg==="fr")p.set("l","fr"); history.replaceState(null,"",location.pathname+(p.toString()?"?"+p:"")); try{ localStorage.setItem("ecrici-market-co",co); }catch(e){} }
+function sync(){ const p=new URLSearchParams(); if(q)p.set("q",q); if(co)p.set("c",co); if(bz)p.set("b",bz); if(sort)p.set("o",sort); if(lg==="fr")p.set("l","fr"); history.replaceState(null,"",location.pathname+(p.toString()?"?"+p:"")); try{ localStorage.setItem("ecrici-market-co",co); }catch(e){} }
+$("so").addEventListener("change",e=>{ sort=e.target.value; sync(); load(); });
 $("q").addEventListener("input",e=>{ q=e.target.value.trim(); clearTimeout(tm); tm=setTimeout(()=>{ sync(); load(); },350); });
 $("co").addEventListener("change",e=>{ co=e.target.value; sync(); near(); load(); });
 $("ch").addEventListener("click",e=>{ const b=e.target.closest("button[data-b]"); if(!b) return; bz=b.dataset.b; [...$("ch").children].forEach(x=>x.setAttribute("aria-pressed",x===b)); $("q").placeholder=phb(bz); trades(); sync(); load(); });
