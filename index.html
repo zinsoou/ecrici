@@ -1359,6 +1359,7 @@ function viewCustomer(){
         <button class="btn" data-act="sale-for" data-id="${c.id}">${t("new_sale")}</button>
         <button class="btn" data-act="edit-cust" data-id="${c.id}">${t("edit")}</button>
         ${b>0.001?`<button class="btn" data-act="remind" data-id="${c.id}">${t("remind")}</button>`:""}
+        ${revOn()&&txs.some(x=>!x.void&&x.type==="sale")?`<button class="btn" data-act="rev-ask" data-id="${c.id}">★ ${lx("Demander un avis","Ask for a review")}</button>`:""}
         ${txs.some(x=>!x.void)?`<button class="btn" data-act="statement" data-id="${c.id}">${t("st_btn")}</button>`:""}
       </div></div>
     <h2>${t("history")}</h2><div class="card flush">${txs.length?txs.map(rowTx).join(""):`<div class="empty">${t("no_receipts")}</div>`}</div>
@@ -1886,6 +1887,8 @@ const workOn=()=>["repair","services","beauty"].includes(biz())&&tradeOn();
 const galMax=()=>workOn()?12:PHGAL;
 const PFC={plumber:[["Installations","Réparations","Salles de bain","Châteaux d'eau"],["Installations","Repairs","Bathrooms","Water tanks"]],electrician:[["Installations","Éclairage","Réparations","Solaire"],["Installations","Lighting","Repairs","Solar"]],carpenter:[["Meubles","Portes et fenêtres","Cuisines","Sur mesure"],["Furniture","Doors and windows","Kitchens","Custom work"]],painter:[["Intérieur","Extérieur","Décoration"],["Interior","Exterior","Decorative"]],mason:[["Murs","Clôtures","Fondations","Finitions"],["Walls","Fences","Foundations","Finishing"]],tiler:[["Salles de bain","Sols","Terrasses"],["Bathrooms","Floors","Terraces"]],welder:[["Portails","Grilles","Structures","Meubles"],["Gates","Grills","Structures","Furniture"]],mechanic:[["Moteur","Freins","Carrosserie","Entretien"],["Engine","Brakes","Bodywork","Servicing"]],ac:[["Installation","Entretien","Réparation"],["Installation","Maintenance","Repair"]],tailor:[["Robes","Costumes","Uniformes","Tenues traditionnelles"],["Dresses","Suits","Uniforms","Traditional wear"]],hairdresser:[["Tresses","Mèches","Cheveux naturels","Mariée"],["Braids","Weaves","Natural hair","Bridal"]],barber:[["Coupes","Barbes","Enfants"],["Haircuts","Beards","Kids"]],makeup:[["Mariée","Soirée","Quotidien"],["Bridal","Evening","Everyday"]],nails:[["Manucure","Pédicure","Gel"],["Manicure","Pedicure","Gel"]],photo:[["Mariages","Portraits","Événements"],["Weddings","Portraits","Events"]]};
 const pfCats=()=>{ const ks=(()=>{ try{ return trSel(S.shop.cat||{}); }catch(e){ return []; } })(); const o=[]; ks.forEach(k=>{ const r=PFC[k]; if(r) r[L()==="fr"?0:1].forEach(x=>{ if(!o.includes(x)) o.push(x); }); }); return o.length?o:(L()==="fr"?["Avant et après","Réalisations récentes"]:["Before and after","Recent work"]); };
+const revOn=()=>!!(window.__revReq&&isOwner()&&["repair","services","beauty","health","school"].includes(biz())&&S.shop.cat&&S.shop.cat.on&&S.shop.cat.slug);
+const revText=(c,url)=>lx(`Bonjour ${c.name}, merci d'avoir choisi ${S.shop.name}. Pouvez-vous noter notre travail ? Cela prend 20 secondes : ${url}`,`Hello ${c.name}, thank you for choosing ${S.shop.name}. Could you rate our work? It takes 20 seconds: ${url}`);
 function pfBlock(c){ if(!workOn()) return ""; const g=c.gal||[], gm=c.gm||[];
   return `<details class="field" ${(c.about||c.yrs||c.zones||c.certs)?"open":""}><summary style="font-weight:700;cursor:pointer">${lx("Ma présentation professionnelle (facultatif)","My professional profile (optional)")}</summary><div class="form" style="margin-top:8px">
     <div class="field"><label for="c-about">${lx("À propos de moi","About me")}</label><textarea id="c-about" maxlength="400" rows="4" placeholder="${lx("Qui êtes-vous ? Votre parcours, ce qui vous distingue…","Who are you? Your background, what makes your work special…")}">${esc(c.about||"")}</textarea></div>
@@ -2526,6 +2529,14 @@ function _renderModal(){
       </div></div></div>`;
     const nb=layer.querySelector(".rv-body"); if(nb&&keep) nb.scrollTop=keep;
     return;
+  }else if(m.type==="revask"){
+    const c=custById(m.id); if(!c){ ui.modal=null; layer.innerHTML=""; return; }
+    const ph=intlPhone(c.phone);
+    inner=`<div class="dlg"><h2>${lx("Demander un avis","Ask for a review")}</h2><div class="note">${esc(c.name)} ${esc(c.phone||"")}</div>
+      <div class="msg">${esc(m.text)}</div><p class="note" style="margin:0">${lx("Ce lien ne marche qu'une fois, pour un seul avis. Envoyez-le seulement à un vrai client.","This link works once, for one review. Only send it to a real customer.")}</p>
+      <div class="actions"><a class="btn primary" href="https://wa.me/${ph}?text=${encodeURIComponent(m.text)}" target="_blank" rel="noopener">${t("whatsapp")}</a>
+      <button class="btn" data-act="rev-copy">${t("copy")}</button></div>
+      <button class="btn" data-act="close-modal">${t("close")}</button></div>`;
   }else if(m.type==="remind"){
     const c=custById(m.id); if(!c){ ui.modal=null; layer.innerHTML=""; return; }
     const text=remindText(c);
@@ -2780,6 +2791,9 @@ document.addEventListener("click",e=>{
       S.customers=S.customers.filter(c=>!c.example); S.txs=S.txs.filter(x=>!x.example); S.products=S.products.filter(p=>!p.example);
       S.counter=S.txs.reduce((m,x)=>Math.max(m,x.no),0); save(); render(); toast(t("examples_gone")); break;
     case "remind": ui.modal={type:"remind",id}; renderModal(); break;
+    case "rev-ask": { const c=custById(id), slug=S.shop.cat&&S.shop.cat.slug; if(!c||!slug||!window.__revReq) break; toast(lx("Création du lien…","Creating the link…"));
+      window.__revReq(slug).then(tk=>{ if(!tk){ toast(lx("Impossible de créer le lien. Vérifiez la connexion.","Could not create the link. Check your connection.")); return; } const url=location.origin+"/shop.html?s="+slug+"&r="+tk; ui.modal={type:"revask",id:c.id,text:revText(c,url)}; renderModal(); }); break; }
+    case "rev-copy": { if(ui.modal&&ui.modal.text) copyText(ui.modal.text); break; }
     case "copy-msg": { const c=custById(id); copyText(remindText(c)); break; }
     case "statement": ui.modal={type:"statement",id}; renderModal(); break;
     case "copy-statement": { const c=custById(id); if(c) copyText(statementText(c)); break; }

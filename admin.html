@@ -7,35 +7,46 @@
 <title>Ecrici Admin</title>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <style>
-:root{--paper:#f3f5fa;--card:#fff;--ink:#16203f;--muted:#5d6784;--line:#dde2ee;--accent:#2447d6;--accent-ink:#fff;--bad:#b4321f;--bad-bg:#fbe9e5;--ok:#17714a;--ok-bg:#e2f4ea;--warn-bg:#fff3d1;--warn-ink:#6b4b00}
-@media (prefers-color-scheme:dark){:root{--paper:#0f1527;--card:#171f38;--ink:#e8ecf8;--muted:#9aa5c6;--line:#2a3558;--accent:#7d97ff;--accent-ink:#0c1230;--bad:#ff9a88;--bad-bg:#3a1c1a;--ok:#6fd9a2;--ok-bg:#14301f;--warn-bg:#3b2f0d;--warn-ink:#f3d78a;color-scheme:dark}}
+:root{--paper:#f2f4fa;--card:#fff;--ink:#14204a;--muted:#5d6784;--line:#e1e5f0;--accent:#2447d6;--accent-ink:#fff;--soft:#eaf0ff;--bad:#b4321f;--bad-bg:#fbe9e5;--ok:#17714a;--ok-bg:#e2f4ea;--warn-bg:#fff3d1;--warn-ink:#7a5200;--amber:#f2a91b;--sh:0 1px 2px rgba(20,32,74,.06),0 6px 18px rgba(20,32,74,.06)}
+@media (prefers-color-scheme:dark){:root{--paper:#0d1226;--card:#161e3a;--ink:#e8ecf8;--muted:#9aa5c6;--line:#27315a;--accent:#7d97ff;--accent-ink:#0c1230;--soft:#1d2850;--bad:#ff9a88;--bad-bg:#3a1c1a;--ok:#6fd9a2;--ok-bg:#14301f;--warn-bg:#3b2f0d;--warn-ink:#f3d78a;--sh:0 1px 2px rgba(0,0,0,.3);color-scheme:dark}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:max(16px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
-main{max-width:520px;margin:0 auto;display:grid;gap:12px}
-h1{font-size:24px;margin:6px 0 0}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%}
+header.bar{position:sticky;top:0;z-index:5;background:var(--paper);padding:max(12px,env(safe-area-inset-top)) 16px 0;border-bottom:1px solid var(--line)}
+.wrap{max-width:760px;margin:0 auto}
 .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px}
-input{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.3px}.brand i{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#2f55e0,#1f3fbf);display:grid;place-items:center;color:#fff;font-style:normal;font-size:16px}.brand small{font-weight:600;color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin:10px -16px 0;padding:0 16px}.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:700;font-size:15px;padding:10px 12px 12px;border-bottom:3px solid transparent;border-radius:0;display:flex;gap:6px;align-items:center;cursor:pointer}
+.tabs button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent)}
+.tabs .n{background:var(--amber);color:#2b1c00;border-radius:99px;font-size:12px;min-width:20px;padding:1px 6px;text-align:center}
+main{max-width:760px;margin:0 auto;padding:14px 16px max(28px,env(safe-area-inset-bottom));display:grid;gap:12px}
+h1{font-size:24px;margin:6px 0 0}h2{font-size:13px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:10px 2px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:10px;box-shadow:var(--sh)}
+.card.flat{box-shadow:none;background:transparent}
+input,select{font:inherit;width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
 label{font-size:14px;color:var(--muted);display:grid;gap:4px}
-button,a.b{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 12px;cursor:pointer;text-decoration:none;text-align:center;display:inline-block}
-button.p{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-button.d{color:var(--bad)}
-button:disabled{opacity:.5}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-.row>*{flex:1 1 auto}
-.err{color:var(--bad);font-size:14px;min-height:18px}
-.chip{display:inline-block;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:600}
-.pending{background:var(--warn-bg);color:var(--warn-ink)}.active{background:var(--ok-bg);color:var(--ok)}.suspended,.expired{background:var(--bad-bg);color:var(--bad)}
-.sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
-.sum div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 2px}
-.sum b{display:block;font-size:20px}.sum span{font-size:12px;color:var(--muted)}
-.name{font-weight:700;font-size:17px}.muted{color:var(--muted);font-size:14px}
+button,a.b{font:inherit;font-weight:650;font-size:14.5px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 13px;cursor:pointer;text-decoration:none;text-align:center;display:inline-block;min-height:40px}
+button.p{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}button.d{color:var(--bad)}button:disabled{opacity:.5}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1 1 auto}
+.err{color:var(--bad);font-size:14px;min-height:0}.err:empty{display:none}
+.ok{background:var(--ok-bg);color:var(--ok);border-radius:12px;padding:10px 12px;font-size:14.5px;font-weight:600}.ok a{color:inherit}
+.chip{display:inline-block;border-radius:99px;padding:2px 10px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.pending{background:var(--warn-bg);color:var(--warn-ink)}.active{background:var(--ok-bg);color:var(--ok)}.suspended,.expired{background:var(--bad-bg);color:var(--bad)}.neutral{background:var(--soft);color:var(--accent)}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}@media(max-width:480px){.kpi{grid-template-columns:repeat(2,1fr)}}
+.kpi button{padding:12px 6px;display:grid;gap:2px;text-align:center;border-radius:14px;box-shadow:var(--sh)}.kpi b{font-size:24px;letter-spacing:-1px;line-height:1.1}.kpi span{font-size:12px;color:var(--muted);font-weight:600}
+.name{font-weight:750;font-size:16.5px;overflow-wrap:anywhere}.muted{color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.item{display:flex;gap:12px;align-items:flex-start}.av{flex:none;width:42px;height:42px;border-radius:12px;background:var(--soft);color:var(--accent);display:grid;place-items:center;font-weight:800;font-size:17px}
+.grow{flex:1;min-width:0}
+.sec{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.empty{text-align:center;padding:26px 10px;color:var(--muted)}.empty b{display:block;font-size:30px;color:var(--ok)}
+.bar2{height:8px;border-radius:99px;background:var(--soft);overflow:hidden}.bar2 i{display:block;height:100%;background:var(--accent)}
+.star{color:var(--amber);letter-spacing:2px;white-space:nowrap}
+details>summary{cursor:pointer;font-weight:650;color:var(--muted);font-size:14px;list-style:none}details>summary::-webkit-details-marker{display:none}details>summary:after{content:" ▾"}
 [hidden]{display:none!important}
-@media (min-width:700px){main{max-width:720px}}
 </style>
 </head>
 <body>
-<main id="app"></main>
+<div id="app"></div>
 <script src="config.js"></script>
 <script>
 (function(){
@@ -48,7 +59,7 @@ const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
 const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
 let sess=null; try{ sess=JSON.parse(lsGet(SK)); }catch(e){}
-let shops=[], claims=[], branches=[], reps=[], pages=[], q="", filter="all", err="", msg="", msgLink="", lastEmail="";
+let shops=[], claims=[], branches=[], reps=[], pages=[], rvs=[], rvrep={}, q="", pq="", filter="all", rf="reported", tab=lsGet("ecrici-admin-tab")||"today", err="", msg="", msgLink="", lastEmail="";
 
 async function http(path,o){
   o=o||{};
@@ -76,11 +87,135 @@ const rew=cc=>Math.round(P(cc).base*0.6);
 const state=s=>{ if(s.status==="pending") return "pending"; if(s.status==="suspended") return "suspended"; return (s.paid_until&&s.paid_until>=today())?"active":"expired"; };
 const daysLeft=s=>s.paid_until?Math.round((new Date(s.paid_until+"T12:00:00Z")-new Date(today()+"T12:00:00Z"))/864e5):null;
 
+
+const BIZN={shop:"Shop / general trade",electronics:"Electronics",pharmacy:"Pharmacy",food:"Restaurant / food",beauty:"Salon / beauty",health:"Clinic / lab",school:"School / training",repair:"Artisans & repairs",travel:"Travel & tours",services:"Other services",rent:"Rentals",hotel:"Hotel / guesthouse"};
+const bizOf=s=>BIZN[s.biz]||"Not chosen yet";
+const ini=s=>String(s||"?").trim().charAt(0).toUpperCase()||"?";
+const waOf=p=>p?"https://wa.me/"+String(p).replace(/\D/g,""):"";
+const stars=n=>"★".repeat(n)+"☆".repeat(5-n);
+const dshort=d=>{ try{ return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}); }catch(e){ return ""; } };
+function frame(inner){
+  const t=todoCounts();
+  const T=[["today","Today",t.total],["shops","Shops",0],["pages","Pages",t.pg],["reviews","Reviews",t.rv],["stats","Stats",0]];
+  app.innerHTML=`<header class="bar"><div class="wrap"><div class="top"><div class="brand"><i>E</i><span>Ecrici <small>Admin</small></span></div><button id="out">Log out</button></div>
+    <nav class="tabs" role="tablist">${T.map(([k,l,n])=>`<button role="tab" aria-selected="${tab===k}" data-tab="${k}">${l}${n?`<span class="n">${n}</span>`:""}</button>`).join("")}</nav></div></header>
+    <main>${err?`<div class="err" id="er" style="background:var(--bad-bg);padding:10px 12px;border-radius:12px">${esc(err)}</div>`:""}${msg?`<div class="ok">${esc(msg)}${msgLink?` · <a href="${esc(msgLink)}" target="_blank" rel="noopener">Send on WhatsApp</a>`:""}</div>`:""}${inner}</main>`;
+}
+function todoCounts(){
+  const pend=shops.filter(s=>state(s)==="pending").length, br=branches.filter(b=>b.status==="pending").length, mk=shops.filter(s=>s.market_ok===false&&s.market_asked).length, rw=shops.filter(s=>s.ref_status==="due").length;
+  const gp=Object.keys(repsBy()).length, rrep=rvFlag().length;
+  return {pend,br,mk,rw,claims:claims.length,pg:gp,rv:rrep,total:pend+br+mk+rw+claims.length+gp+rrep};
+}
+const repsBy=()=>{ const g={}; reps.forEach(r=>{ (g[r.slug]=g[r.slug]||{slug:r.slug,n:0,why:{}}).n++; g[r.slug].why[r.reason]=(g[r.slug].why[r.reason]||0)+1; }); return g; };
+const rvFlag=()=>rvs.filter(r=>(rvrep[r.id]||0)>0||r.hidden);
+function draw(){ draw0(); const sg=err+"|"+msg; if((err||msg)&&sg!==window.__sg) window.scrollTo(0,0); window.__sg=sg; }
+function draw0(){
+  const v={today:vToday,shops:vShops,pages:vPages,reviews:vReviews,stats:vStats}[tab]||vToday;
+  frame(v());
+  const keep=document.activeElement&&document.activeElement.id;
+  $("#out").onclick=()=>{ sess=null; lsDel(SK); err=""; login(); };
+  const qi=$("#q"); if(qi) qi.oninput=e=>{ q=e.target.value; const pos=e.target.selectionStart; draw(); const n=$("#q"); n.focus(); n.setSelectionRange(pos,pos); };
+  const pi=$("#pq"); if(pi) pi.oninput=e=>{ pq=e.target.value; const pos=e.target.selectionStart; draw(); const n=$("#pq"); n.focus(); n.setSelectionRange(pos,pos); };
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("button,a"); if(!b||!app.contains(b)) return; const d=b.dataset;
+  if(d.tab){ tab=d.tab; lsSet("ecrici-admin-tab",tab); err=""; msg=""; draw(); window.scrollTo(0,0); }
+  else if(d.go){ tab=d.go; if(d.f) filter=d.f; if(d.rf) rf=d.rf; lsSet("ecrici-admin-tab",tab); err=""; msg=""; draw(); window.scrollTo(0,0); }
+  else if(d.f!==undefined&&!d.go){ filter=d.f; draw(); }
+  else if(d.rf){ rf=d.rf; draw(); }
+  else if(d.a) act(d.id,d.a,d.cid);
+  else if(d.ba) bact(d.bid,d.ba);
+  else if(d.pg) pgAct(d.slug,d.pg);
+  else if(d.vf) vfAct(d.slug,d.vf==="on");
+  else if(d.rv) rvAct(d.id,d.rv);
+});
+/* ---- TODAY ---- */
+function vToday(){
+  const t=todoCounts(), out=[];
+  if(claims.length) out.push(`<h2>Payments to check (${claims.length})</h2>`+claims.map(c=>{ const s=shops.find(x=>x.id===c.shop_id)||{}; const amt=fmtAmt(P(s.country).base*c.months,s.country);
+    return `<div class="card"><div class="item"><div class="av">₣</div><div class="grow"><div class="name">${esc(s.name||s.phone||"Unknown")}</div><div class="muted">${c.months} month${c.months>1?"s":""} · ${esc(amt)} · ref: ${esc(c.ref||"none")}</div></div></div><div class="muted">Check the money arrived, then confirm.</div><div class="row"><button class="p" data-id="${esc(c.shop_id)}" data-cid="${esc(c.id)}" data-a="claim-ok">Confirm</button><button data-id="${esc(c.shop_id)}" data-cid="${esc(c.id)}" data-a="claim-no">Reject</button></div></div>`; }).join(""));
+  const pend=shops.filter(s=>state(s)==="pending"); if(pend.length) out.push(`<h2>New shops waiting (${pend.length})</h2>`+pend.map(s=>shopCard(s)).join(""));
+  const mk=shops.filter(s=>s.market_ok===false&&s.market_asked); if(mk.length) out.push(`<h2>Public page requests (${mk.length})</h2>`+mk.map(s=>`<div class="card"><div class="item"><div class="av">${esc(ini(s.name))}</div><div class="grow"><div class="name">${esc(s.name||s.phone)}</div><div class="muted">${esc(bizOf(s))} · wants a public page</div></div></div><div class="row"><button class="p" data-id="${esc(s.id)}" data-a="mkt-on">Allow public page</button>${s.phone?`<a class="b" href="${esc(waOf(s.phone))}" target="_blank" rel="noopener">WhatsApp</a>`:""}</div></div>`).join(""));
+  const br=branches.filter(b=>b.status==="pending"); if(br.length) out.push(`<h2>Extra shop requests (${br.length})</h2>`+br.map(b=>{ const o=shops.find(x=>x.id===b.owner_id)||{}; return `<div class="card"><div class="item"><div class="av">${esc(ini(b.name))}</div><div class="grow"><div class="name">${esc(b.name)}</div><div class="muted">Owner: ${esc(o.name||o.phone||"")}</div></div></div><div class="row"><button class="p" data-bid="${esc(b.id)}" data-ba="on">Activate (+${esc(fmtAmt(P(o.country).extra,o.country))})</button></div></div>`; }).join(""));
+  const due=shops.filter(s=>s.ref_status==="due"); if(due.length) out.push(`<h2>Rewards to pay (${due.length})</h2>`+due.map(s=>`<div class="card"><div class="item"><div class="av">★</div><div class="grow"><div class="name">${esc(s.referred_by)} · ${esc(fmtAmt(rew(s.country),s.country))}</div><div class="muted">for ${esc(s.name||s.phone)}</div></div><button class="p" data-id="${esc(s.id)}" data-a="refpaid">Mark paid</button></div></div>`).join(""));
+  if(t.pg) out.push(`<div class="card"><div class="sec"><div><div class="name">⚠ ${t.pg} reported page${t.pg>1?"s":""}</div><div class="muted">Check them and keep or turn off.</div></div><button class="p" data-go="pages">Open</button></div></div>`);
+  if(t.rv) out.push(`<div class="card"><div class="sec"><div><div class="name">⚠ ${t.rv} review${t.rv>1?"s":""} reported or hidden</div><div class="muted">Keep the honest ones, delete the rest.</div></div><button class="p" data-go="reviews">Open</button></div></div>`);
+  const cnt={pending:0,active:0,expired:0,suspended:0}; shops.forEach(s=>cnt[state(s)]++);
+  const kp=`<div class="kpi">${["active","pending","expired","suspended"].map(k=>`<button data-go="shops" data-f="${k}"><b>${cnt[k]}</b><span>${k}</span></button>`).join("")}</div>`;
+  return kp+(out.length?out.join(""):`<div class="card"><div class="empty"><b>✓</b>All clear. Nothing needs you right now.</div></div>`);
+}
+/* ---- SHOPS ---- */
+function refLine(s){
+  if(!s.referred_by) return "";
+  const amt=fmtAmt(rew(s.country),s.country);
+  const st=s.ref_status==="paid"?`Reward paid (${esc(amt)})`:s.ref_status==="due"?`<b>Reward to pay: ${esc(amt)}</b>`:"Reward starts after first payment";
+  return `<div class="muted">Referred by <b>${esc(s.referred_by)}</b> · ${st}</div>`;
+}
+function shopsBlock(s){
+  const bs=brOf(s.id), n=1+bs.filter(b=>b.status==="active").length; if(!bs.length) return "";
+  return `<div class="muted"><b>${n} shop${n>1?"s":""}</b> · ${esc(fmtAmt(P(s.country).base+P(s.country).extra*(n-1),s.country))} / month</div>`+bs.map(b=>`<div class="card flat" style="padding:10px;gap:8px;border-style:dashed"><div class="sec"><div class="name" style="font-size:15px">${esc(b.name)}</div><span class="chip ${b.status==="active"?"active":b.status==="pending"?"pending":"suspended"}">${esc(b.status)}</span></div>
+    <div class="row">${b.status==="pending"?`<button class="p" data-bid="${esc(b.id)}" data-ba="on">Activate (+${esc(fmtAmt(P(s.country).extra,s.country))})</button>`:""}${b.status==="suspended"?`<button data-bid="${esc(b.id)}" data-ba="on">Reactivate</button>`:""}${b.status==="active"?`<button class="d" data-bid="${esc(b.id)}" data-ba="off">Suspend</button>`:""}${b.status!=="active"?`<button class="d" data-bid="${esc(b.id)}" data-ba="del">Delete</button>`:""}</div></div>`).join("");
+}
+function shopCard(s){
+  const st=state(s), dl=daysLeft(s), wa=waOf(s.phone);
+  const info=s.paid_until?`Paid until ${s.paid_until}${dl!=null?` (${dl>=0?dl+" days left":Math.abs(dl)+" days ago"})`:""}`:"Not paid yet";
+  return `<div class="card" data-shop="${esc(s.id)}"><div class="item"><div class="av">${esc(ini(s.name))}</div><div class="grow"><div class="name">${esc(s.name||"(no name)")}</div><div class="muted">+${esc(s.phone)} · ${esc(s.country)} · ${esc(bizOf(s))}</div></div><span class="chip ${st}">${st}</span></div>
+    <div class="muted">${esc(info)}</div>${s.market_ok===false?`<div class="muted"><b>Public page: ${s.market_asked?"WAITING for you":"not allowed yet"}</b></div>`:""}${refLine(s)}${shopsBlock(s)}
+    <div class="row">${st==="pending"?`<button class="p" data-id="${esc(s.id)}" data-a="trial">Approve · 7 days</button>`:""}<button data-id="${esc(s.id)}" data-a="m1">+1 month</button><button data-id="${esc(s.id)}" data-a="m3">+3 months</button><button data-id="${esc(s.id)}" data-a="m12">+12 months</button></div>
+    <details><summary>More actions</summary><div class="row" style="margin-top:8px">${wa?`<a class="b" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>`:""}${s.market_ok===false?`<button class="p" data-id="${esc(s.id)}" data-a="mkt-on">Allow public page</button>`:`<button data-id="${esc(s.id)}" data-a="mkt-off">Stop public page</button>`}${s.ref_status==="due"?`<button class="p" data-id="${esc(s.id)}" data-a="refpaid">Mark reward paid</button>`:""}<button data-id="${esc(s.id)}" data-a="pw">Reset password</button>${s.status==="suspended"?`<button data-id="${esc(s.id)}" data-a="react">Reactivate</button>`:`<button class="d" data-id="${esc(s.id)}" data-a="susp">Suspend</button>`}${s.status==="suspended"?`<button class="d" data-id="${esc(s.id)}" data-a="del">Delete forever</button>`:""}</div></details></div>`;
+}
+function vShops(){
+  const order={pending:0,expired:1,suspended:2,active:3}, pk=s=>brOf(s.id).some(b=>b.status==="pending")?-1:order[state(s)];
+  const list=shops.filter(s=>(filter==="all"||state(s)===filter)&&(!q||(s.name+" "+s.phone+" "+(s.referred_by||"")+" "+bizOf(s)).toLowerCase().includes(q.toLowerCase()))).sort((a,b)=>pk(a)-pk(b)||String(b.created_at).localeCompare(String(a.created_at)));
+  return `<input id="q" type="search" placeholder="Search name, phone, type or referrer" value="${esc(q)}"><div class="row">${["all","pending","active","expired","suspended"].map(k=>`<button data-f="${k}" class="${filter===k?"p":""}">${k}</button>`).join("")}</div><div class="muted">${list.length} shop${list.length===1?"":"s"}</div>${list.map(shopCard).join("")||`<div class="card"><div class="empty">No shops here yet.</div></div>`}`;
+}
+/* ---- PAGES ---- */
+function vPages(){
+  const g=repsBy(), live=pages.filter(p=>p.active&&!p.blocked), inMk=live.filter(p=>p.listed), nv=live.filter(p=>p.verified).length;
+  const flagged=Object.values(g).sort((a,b)=>b.n-a.n).concat(pages.filter(p=>p.blocked&&!g[p.slug]).map(p=>({slug:p.slug,n:0,why:{}})));
+  const kp=`<div class="kpi"><button data-go="pages"><b>${live.length}</b><span>live</span></button><button data-go="pages"><b>${inMk.length}</b><span>in Market</span></button><button data-go="pages"><b>${nv}</b><span>verified</span></button><button data-go="pages"><b style="color:${flagged.length?"var(--bad)":"inherit"}">${flagged.length}</b><span>to check</span></button></div>`;
+  const fl=flagged.length?`<h2>To check</h2>`+flagged.map(r=>{ const p=pages.find(x=>x.slug===r.slug)||{}; const link="/shop.html?s="+encodeURIComponent(r.slug);
+    return `<div class="card"><div class="item"><div class="av">${esc(ini(p.name||r.slug))}</div><div class="grow"><div class="name">${esc(p.name||r.slug)}</div><div class="muted">${esc(r.slug)} · ${r.n} report${r.n===1?"":"s"}${Object.keys(r.why).length?": "+Object.entries(r.why).map(([k,v])=>esc(k)+" ×"+v).join(", "):""}</div></div>${p.blocked?`<span class="chip suspended">OFF</span>`:""}</div><div class="row"><a class="b" href="${link}" target="_blank" rel="noopener">View page</a><button class="${p.blocked?"p":"d"}" data-pg="${p.blocked?"on":"off"}" data-slug="${esc(r.slug)}">${p.blocked?"Turn back on":"Turn off"}</button>${r.n?`<button data-pg="clear" data-slug="${esc(r.slug)}">Dismiss reports</button>`:""}</div></div>`; }).join(""):"";
+  const list=live.filter(p=>!pq||((p.name||"")+" "+p.slug+" "+(p.phone||"")).toLowerCase().includes(pq.toLowerCase())).sort((a,b)=>(a.verified?1:0)-(b.verified?1:0)).slice(0,40);
+  const vf=`<h2>Verified badge</h2><div class="muted">Call the owner and check the shop first (phone, photo or ID). Then tap Verify. Verified pages show a green badge and come first in Market.</div><input id="pq" type="search" placeholder="Search pages" value="${esc(pq)}">`+list.map(p=>`<div class="card"><div class="item"><div class="av">${esc(ini(p.name||p.slug))}</div><div class="grow"><div class="name">${esc(p.name||p.slug)}${p.verified?` <span class="chip active">✔ Verified</span>`:""}</div><div class="muted">${esc(p.slug)}${p.phone?" · "+esc(p.phone):""}${p.listed?" · in Market":""}</div></div></div><div class="row"><a class="b" href="/shop.html?s=${encodeURIComponent(p.slug)}" target="_blank" rel="noopener">View page</a><button class="${p.verified?"":"p"}" data-vf="${p.verified?"off":"on"}" data-slug="${esc(p.slug)}">${p.verified?"Remove badge":"Verify"}</button></div></div>`).join("")+(live.length>40&&!pq?`<div class="muted">Showing 40 of ${live.length}. Use search.</div>`:"")+(!live.length?`<div class="card"><div class="empty">No live pages yet.</div></div>`:"");
+  return kp+fl+vf;
+}
+/* ---- REVIEWS ---- */
+function vReviews(){
+  const fl=rvFlag(), shown=rf==="reported"?fl:rf==="hidden"?rvs.filter(r=>r.hidden):rvs;
+  const kp=`<div class="kpi"><button data-rf="reported"><b style="color:${fl.length?"var(--bad)":"inherit"}">${fl.length}</b><span>to check</span></button><button data-rf="hidden"><b>${rvs.filter(r=>r.hidden).length}</b><span>hidden</span></button><button data-rf="all"><b>${rvs.length}</b><span>all reviews</span></button><button data-rf="all"><b>${rvs.length?(rvs.reduce((a,r)=>a+r.rating,0)/rvs.length).toFixed(1):"–"}</b><span>average</span></button></div>`;
+  const tabs=`<div class="row">${[["reported","To check"],["hidden","Hidden"],["all","All"]].map(([k,l])=>`<button data-rf="${k}" class="${rf===k?"p":""}">${l}</button>`).join("")}</div>`;
+  const cards=shown.slice(0,60).map(r=>{ const p=pages.find(x=>x.slug===r.slug)||{}, n=rvrep[r.id]||0;
+    return `<div class="card"><div class="sec"><div><span class="star">${stars(r.rating)}</span> <span class="muted">${esc(r.name||"Customer")} · ${esc(dshort(r.done_at))}</span></div>${r.hidden?`<span class="chip suspended">HIDDEN</span>`:n?`<span class="chip pending">${n} report${n>1?"s":""}</span>`:""}</div>
+      ${r.body?`<div>${esc(r.body)}</div>`:`<div class="muted">(no comment)</div>`}<div class="muted">For <b>${esc(p.name||r.slug)}</b> · <a href="/shop.html?s=${encodeURIComponent(r.slug)}" target="_blank" rel="noopener">view page</a></div>
+      <div class="row">${r.hidden||n?`<button class="p" data-rv="keep" data-id="${esc(r.id)}">Keep (show, clear reports)</button>`:""}${r.hidden?"":`<button data-rv="hide" data-id="${esc(r.id)}">Hide</button>`}<button class="d" data-rv="del" data-id="${esc(r.id)}">Delete</button></div></div>`; }).join("");
+  return kp+tabs+(cards||`<div class="card"><div class="empty"><b>✓</b>${rf==="reported"?"No reviews to check.":"Nothing here yet."}</div></div>`)+(shown.length>60?`<div class="muted">Showing 60 of ${shown.length}.</div>`:"");
+}
+async function rvAct(id,a){
+  const r0=rvs.find(x=>x.id===id); if(!r0) return; err=""; msg=""; msgLink="";
+  if(a==="del"&&!confirm("Delete this review for good?")) return;
+  const res=a==="del"?await api("/rest/v1/rpc/admin_review_delete",{method:"POST",body:{p_id:id}}):await api("/rest/v1/rpc/admin_review_set",{method:"POST",body:{p_id:id,p_hide:a==="hide"}});
+  if(!res.ok){ err=res.status===401?"Session ended. Log in again.":"Not saved. Run upgrade-v131-admin-reviews.sql in Supabase first."; draw(); return; }
+  if(a==="del"){ rvs=rvs.filter(x=>x.id!==id); delete rvrep[id]; msg="Review deleted."; }
+  else if(a==="hide"){ r0.hidden=true; msg="Review hidden."; }
+  else { r0.hidden=false; delete rvrep[id]; msg="Review kept and shown."; }
+  draw();
+}
+/* ---- STATS ---- */
+function vStats(){
+  const g={}; shops.filter(s=>s.referred_by).forEach(s=>{ const k=s.referred_by.trim().toLowerCase(); (g[k]=g[k]||{name:s.referred_by.trim(),list:[]}).list.push(s); });
+  const rows=Object.values(g).map(r=>({name:r.name,n:r.list.length,paid:r.list.filter(s=>s.ref_status==="due"||s.ref_status==="paid").length,owe:r.list.filter(s=>s.ref_status==="due").map(s=>fmtAmt(rew(s.country),s.country)).join(" + ")})).sort((a,b)=>b.paid-a.paid||b.n-a.n);
+  const c={}; shops.forEach(s=>{ const k=bizOf(s); c[k]=(c[k]||0)+1; }); const bz=Object.entries(c).sort((a,b)=>b[1]-a[1]), mx=Math.max(1,...bz.map(x=>x[1]));
+  const cc={}; shops.forEach(s=>{ cc[s.country||"?"]=(cc[s.country||"?"]||0)+1; });
+  return `<div class="card"><div class="name">Businesses by type</div>${bz.map(([k,n])=>`<div><div class="sec"><span class="muted">${esc(k)}</span><b>${n}</b></div><div class="bar2"><i style="width:${Math.round(n/mx*100)}%"></i></div></div>`).join("")||`<div class="muted">No shops yet.</div>`}</div>
+    <div class="card"><div class="name">Countries</div><div class="muted">${Object.entries(cc).sort((a,b)=>b[1]-a[1]).map(([k,n])=>esc(k)+": <b>"+n+"</b>").join(" · ")||"–"}</div></div>
+    <div class="card"><div class="name">Referrals</div>${rows.length?rows.map(r=>`<div class="muted"><b>${esc(r.name)}</b>: ${r.n} signed up, ${r.paid} paid${r.owe?` · to pay ${esc(r.owe)}`:""}</div>`).join(""):`<div class="muted">No referrals yet.</div>`}</div>`;
+}
 function login(){
-  app.innerHTML=`<h1>Ecrici Admin</h1><div class="card">
+  app.innerHTML=`<main style="max-width:420px;padding-top:12vh"><div class="brand" style="font-size:24px"><i>E</i><span>Ecrici <small>Admin</small></span></div><div class="card">
     <label>Admin email<input id="em" type="email" autocomplete="username" value="${esc(lastEmail)}"></label>
     <label>Password<input id="pw" type="password" autocomplete="current-password"></label>
-    <div class="err" id="er">${esc(err)}</div><button class="p" id="go">Log in</button></div>`;
+    <div class="err" id="er">${esc(err)}</div><button class="p" id="go">Log in</button></div></main>`;
   const go=async()=>{
     err=""; lastEmail=$("#em").value.trim(); const r=await http("/auth/v1/token?grant_type=password",{method:"POST",body:{email:lastEmail,password:$("#pw").value}});
     if(!r.ok||!r.json||!r.json.access_token){ err=r.status===0?"No internet connection.":"Wrong email or password."; login(); return; }
@@ -89,7 +224,7 @@ function login(){
   $("#go").onclick=go; $("#pw").onkeydown=e=>{ if(e.key==="Enter") go(); };
 }
 async function load(){
-  app.innerHTML=`<h1>Ecrici Admin</h1><p class="muted">Loading…</p>`;
+  app.innerHTML=`<main><div class="brand" style="font-size:22px"><i>E</i><span>Ecrici <small>Admin</small></span></div><p class="muted">Loading…</p></main>`;
   const r=await api("/rest/v1/shops?select=*&order=created_at.desc");
   if(r.status===401){ err="Session ended. Log in again."; login(); return; }
   if(!r.ok){ err="Could not load ("+r.status+")."; login(); return; }
@@ -98,48 +233,9 @@ async function load(){
   const rc=await api("/rest/v1/pay_claims?select=*&status=eq.pending&order=created_at.asc"); claims=(rc.ok&&Array.isArray(rc.json))?rc.json:[];
   const rr=await api("/rest/v1/catalog_reports?select=*&order=created_at.desc&limit=500"); reps=(rr.ok&&Array.isArray(rr.json))?rr.json:[];
   let rp=await api("/rest/v1/catalogs?select=slug,shop_id,active,blocked,listed,verified,created_at,name:data->>name,phone:data->>phone&order=created_at.desc&limit=1000"); if(!rp.ok) rp=await api("/rest/v1/catalogs?select=slug,shop_id,active,blocked,listed,name:data->>name&limit=1000"); pages=(rp.ok&&Array.isArray(rp.json))?rp.json:[];
+  const rv=await api("/rest/v1/catalog_reviews?select=id,slug,rating,name,body,done_at,hidden&done_at=not.is.null&order=done_at.desc&limit=300"); rvs=(rv.ok&&Array.isArray(rv.json))?rv.json:[];
+  const rq=await api("/rest/v1/catalog_review_reports?select=review_id&limit=2000"); rvrep={}; if(rq.ok&&Array.isArray(rq.json)) rq.json.forEach(x=>{ rvrep[x.review_id]=(rvrep[x.review_id]||0)+1; });
   draw();
-}
-function draw(){ draw0(); const sg=err+"|"+msg; if((err||msg)&&sg!==window.__sg) window.scrollTo(0,0); window.__sg=sg; }
-function draw0(){
-  const cnt={pending:0,active:0,expired:0,suspended:0}; shops.forEach(s=>cnt[state(s)]++); const reqs=branches.filter(b=>b.status==="pending").length;
-  const order={pending:0,expired:1,suspended:2,active:3}, pk=s=>brOf(s.id).some(b=>b.status==="pending")?-1:order[state(s)];
-  const list=shops.filter(s=>(filter==="all"||state(s)===filter)&&(!q||(s.name+" "+s.phone+" "+(s.referred_by||"")+" "+bizOf(s)).toLowerCase().includes(q.toLowerCase())))
-    .sort((a,b)=>pk(a)-pk(b)||String(b.created_at).localeCompare(String(a.created_at)));
-  app.innerHTML=`<div class="top"><h1>Ecrici Admin</h1><button id="out">Log out</button></div>
-    <div class="sum">${["pending","active","expired","suspended"].map(k=>`<div><b>${cnt[k]}</b><span>${k}</span></div>`).join("")}</div>${claimBox()}${pageBox()}${verifyBox()}${refBox()}${refSummary()}${bizSummary()}${reqs?`<div class="muted"><b>${reqs}</b> extra shop request${reqs>1?"s":""} waiting for activation</div>`:""}
-    <input id="q" placeholder="Search name, phone, type or referrer" value="${esc(q)}">
-    <div class="row">${["all","pending","active","expired","suspended"].map(k=>`<button data-f="${k}" class="${filter===k?"p":""}">${k}</button>`).join("")}</div>
-    <div class="err" id="er">${esc(err)}</div>${msg?`<div class="muted">${esc(msg)}${msgLink?` <a href="${esc(msgLink)}" target="_blank" rel="noopener">Send on WhatsApp</a>`:""}</div>`:""}
-    ${list.map(card).join("")||`<p class="muted">No shops here yet.</p>`}`;
-  $("#out").onclick=()=>{ sess=null; lsDel(SK); err=""; login(); };
-  $("#q").oninput=e=>{ q=e.target.value; const pos=e.target.selectionStart; draw(); const n=$("#q"); n.focus(); n.setSelectionRange(pos,pos); };
-  app.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{ filter=b.dataset.f; draw(); });
-  app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(b.dataset.id,b.dataset.a,b.dataset.cid));
-  app.querySelectorAll("[data-ba]").forEach(b=>b.onclick=()=>bact(b.dataset.bid,b.dataset.ba));
-  app.querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>pgAct(b.dataset.slug,b.dataset.pg));
-  app.querySelectorAll("[data-vf]").forEach(b=>b.onclick=()=>vfAct(b.dataset.slug,b.dataset.vf==="on"));
-}
-function refSummary(){
-  const g={}; shops.filter(s=>s.referred_by).forEach(s=>{ const k=s.referred_by.trim().toLowerCase(); (g[k]=g[k]||{name:s.referred_by.trim(),list:[]}).list.push(s); });
-  const rows=Object.values(g).map(r=>{ const paid=r.list.filter(s=>s.ref_status==="due"||s.ref_status==="paid"), owe=r.list.filter(s=>s.ref_status==="due");
-    return {name:r.name,n:r.list.length,paid:paid.length,owe:owe.map(s=>fmtAmt(rew(s.country),s.country)).join(" + ")}; }).sort((a,b)=>b.paid-a.paid||b.n-a.n);
-  if(!rows.length) return "";
-  const tot=rows.reduce((a,r)=>a+r.n,0);
-  return `<details class="card"><summary class="name">Referrals: ${tot} shop${tot>1?"s":""} from ${rows.length} referrer${rows.length>1?"s":""}</summary>${rows.map(r=>`<div class="muted"><b>${esc(r.name)}</b>: ${r.n} signed up, ${r.paid} paid${r.owe?` · to pay ${esc(r.owe)}`:""}</div>`).join("")}</details>`;
-}
-function pageBox(){
-  const g={}; reps.forEach(r=>{ (g[r.slug]=g[r.slug]||{slug:r.slug,n:0,why:{}}).n++; g[r.slug].why[r.reason]=(g[r.slug].why[r.reason]||0)+1; });
-  const blocked=pages.filter(p=>p.blocked&&!g[p.slug]).map(p=>({slug:p.slug,n:0,why:{}}));
-  const rows=Object.values(g).sort((a,b)=>b.n-a.n).concat(blocked), live=pages.filter(p=>p.active&&!p.blocked).length;
-  if(!pages.length&&!rows.length) return "";
-  return `<details class="card" ${rows.length?"open":""}><summary class="name">Online pages: ${live} live · ${pages.filter(p=>p.listed&&p.active&&!p.blocked).length} in Market${Object.keys(g).length?` · <span style="color:#b91c1c">⚠ ${Object.keys(g).length} reported</span>`:""}</summary>${rows.map(r=>{ const p=pages.find(x=>x.slug===r.slug)||{}; const link="/shop.html?s="+encodeURIComponent(r.slug);
-    return `<div class="muted"><b>${esc(p.name||r.slug)}</b> (${esc(r.slug)}) · ${r.n} report${r.n===1?"":"s"}${Object.keys(r.why).length?": "+Object.entries(r.why).map(([k,v])=>esc(k)+" ×"+v).join(", "):""}${p.blocked?" · <b>TURNED OFF</b>":""}<br><a href="${link}" target="_blank" rel="noopener">View page</a> <button class="p" data-pg="${p.blocked?"on":"off"}" data-slug="${esc(r.slug)}">${p.blocked?"Turn back on":"Turn off"}</button> ${r.n?`<button data-pg="clear" data-slug="${esc(r.slug)}">Dismiss reports</button>`:""}</div>`; }).join("")||`<div class="muted">No reports. Nothing to check.</div>`}</details>`;
-}
-function verifyBox(){
-  const ok=pages.filter(p=>p.active&&!p.blocked); if(!ok.length) return "";
-  const nv=ok.filter(p=>p.verified).length, list=ok.slice().sort((a,b)=>(a.verified?1:0)-(b.verified?1:0)).slice(0,40);
-  return `<details class="card"><summary class="name">Verified shops: ${nv} of ${ok.length}</summary><div class="muted">Call the owner and check the shop first (phone, photo or ID). Then tap Verify. Verified shops show a green badge and come first in Market.</div>${list.map(p=>`<div class="muted"><b>${esc(p.name||p.slug)}</b> (${esc(p.slug)})${p.phone?" · "+esc(p.phone):""}${p.verified?" · <b style=\"color:#067647\">✔ VERIFIED</b>":""}<br><a href="/shop.html?s=${encodeURIComponent(p.slug)}" target="_blank" rel="noopener">View page</a> <button class="${p.verified?"":"p"}" data-vf="${p.verified?"off":"on"}" data-slug="${esc(p.slug)}">${p.verified?"Remove badge":"Verify"}</button></div>`).join("")}${ok.length>40?`<div class="muted">Showing 40 of ${ok.length}.</div>`:""}</details>`;
 }
 async function vfAct(slug,on){
   err=""; msg="";
@@ -154,48 +250,6 @@ async function pgAct(slug,a){
   if(!r.ok){ err="Run the admin SQL for pages in Supabase first."; draw(); return; }
   if(a==="on"){ await api("/rest/v1/catalog_reports?slug=eq."+encodeURIComponent(slug),{method:"DELETE"}); reps=reps.filter(x=>x.slug!==slug); }
   const p=pages.find(x=>x.slug===slug); if(p) p.blocked=a==="off"; msg=(a==="off"?"Page turned off: ":"Page turned back on: ")+slug; draw();
-}
-function claimBox(){
-  if(!claims.length) return "";
-  return `<div class="card"><div class="name">Payment claims to check (${claims.length})</div>${claims.map(c=>{ const s=shops.find(x=>x.id===c.shop_id)||{}; const amt=fmtAmt(P(s.country).base*c.months,s.country);
-    return `<div class="muted"><b>${esc(s.name||s.phone||"Unknown")}</b> · ${c.months} month${c.months>1?"s":""} · ${esc(amt)} · ref: ${esc(c.ref||"none")}<br>Check the money arrived, then <button class="p" data-id="${esc(c.shop_id)}" data-cid="${esc(c.id)}" data-a="claim-ok">Confirm</button> <button data-id="${esc(c.shop_id)}" data-cid="${esc(c.id)}" data-a="claim-no">Reject</button></div>`; }).join("")}</div>`;
-}
-function refBox(){
-  const due=shops.filter(s=>s.ref_status==="due"); if(!due.length) return "";
-  const tot={}; due.forEach(s=>{ const c=P(s.country).cur; tot[c]=(tot[c]||0)+rew(s.country); });
-  return `<div class="card"><div class="name">Rewards to pay (${due.length})</div>${due.map(s=>`<div class="muted">${esc(s.referred_by)} · ${esc(fmtAmt(rew(s.country),s.country))} · for ${esc(s.name||s.phone)} <button class="p" data-id="${esc(s.id)}" data-a="refpaid">Mark paid</button></div>`).join("")}</div>`;
-}
-const BIZN={shop:"Shop / general trade",electronics:"Electronics",pharmacy:"Pharmacy",food:"Restaurant / food",beauty:"Salon / beauty",health:"Clinic / lab",school:"School / training",repair:"Artisans & repairs",travel:"Travel & tours",services:"Other services",rent:"Rentals",hotel:"Hotel / guesthouse"};
-const bizOf=s=>BIZN[s.biz]||"Not chosen yet";
-function bizSummary(){
-  const c={}; shops.forEach(s=>{ const k=bizOf(s); c[k]=(c[k]||0)+1; });
-  const rows=Object.entries(c).sort((a,b)=>b[1]-a[1]); if(!rows.length) return "";
-  return `<div class="card"><div class="name">Businesses by type</div><div class="muted">${rows.map(([k,n])=>`${esc(k)}: <b>${n}</b>`).join(" · ")}</div></div>`;
-}
-function card(s){
-  const st=state(s), dl=daysLeft(s), wa=s.phone?`https://wa.me/${String(s.phone).replace(/\D/g,"")}`:"";
-  const info=s.paid_until?`Paid until ${s.paid_until}${dl!=null?` (${dl>=0?dl+" days left":Math.abs(dl)+" days ago"})`:""}`:"Not paid yet";
-  return `<div class="card" data-shop="${esc(s.id)}"><div class="top"><div><div class="name">${esc(s.name||"(no name)")}</div><div class="muted">+${esc(s.phone)} · ${esc(s.country)} · ${esc(bizOf(s))}</div></div><span class="chip ${st}">${st}</span></div>
-    <div class="muted">${esc(info)}</div>${s.market_ok===false?`<div class="muted"><b>Public page: ${s.market_asked?"WAITING for you":"not allowed yet"}</b></div>`:""}${refLine(s)}${shopsBlock(s)}
-    <div class="row">${st==="pending"?`<button class="p" data-id="${esc(s.id)}" data-a="trial">Approve · 7 days</button>`:""}
-      <button data-id="${esc(s.id)}" data-a="m1">+1 month</button><button data-id="${esc(s.id)}" data-a="m3">+3 months</button><button data-id="${esc(s.id)}" data-a="m12">+12 months</button></div>
-    <div class="row">${s.market_ok===false?`<button class="p" data-id="${esc(s.id)}" data-a="mkt-on">Allow public page</button>`:`<button data-id="${esc(s.id)}" data-a="mkt-off">Stop public page</button>`}</div>
-    <div class="row">${wa?`<a class="b" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`:""}
-      <button data-id="${esc(s.id)}" data-a="pw">Reset password</button>
-      ${s.status==="suspended"?`<button data-id="${esc(s.id)}" data-a="react">Reactivate</button>`:`<button class="d" data-id="${esc(s.id)}" data-a="susp">Suspend</button>`}
-      ${s.status==="suspended"?`<button class="d" data-id="${esc(s.id)}" data-a="del">Delete forever</button>`:""}</div></div>`;
-}
-function refLine(s){
-  if(!s.referred_by) return "";
-  const amt=fmtAmt(rew(s.country),s.country);
-  const st=s.ref_status==="paid"?`Reward paid (${esc(amt)})`:s.ref_status==="due"?`<b>Reward to pay: ${esc(amt)}</b> <button class="p" data-id="${esc(s.id)}" data-a="refpaid">Mark paid</button>`:"Reward starts after the first payment";
-  return `<div class="muted">Referred by <b>${esc(s.referred_by)}</b> · ${st}</div>`;
-}
-function shopsBlock(s){
-  const bs=brOf(s.id), n=1+bs.filter(b=>b.status==="active").length;
-  if(!bs.length) return "";
-  return `<div class="muted"><b>${n} shop${n>1?"s":""}</b> · ${esc(fmtAmt(P(s.country).base+P(s.country).extra*(n-1),s.country))} / month</div>`+bs.map(b=>`<div class="card" style="padding:10px;gap:8px"><div class="top"><div class="name" style="font-size:15px">${esc(b.name)}</div><span class="chip ${b.status==="active"?"active":b.status==="pending"?"pending":"suspended"}">${esc(b.status)}</span></div>
-    <div class="row">${b.status==="pending"?`<button class="p" data-bid="${esc(b.id)}" data-ba="on">Activate (+${esc(fmtAmt(P(s.country).extra,s.country))})</button>`:""}${b.status==="suspended"?`<button data-bid="${esc(b.id)}" data-ba="on">Reactivate</button>`:""}${b.status==="active"?`<button class="d" data-bid="${esc(b.id)}" data-ba="off">Suspend</button>`:""}${b.status!=="active"?`<button class="d" data-bid="${esc(b.id)}" data-ba="del">Delete</button>`:""}</div></div>`).join("");
 }
 async function bact(id,a){
   const b=branches.find(x=>x.id===id); if(!b) return; err=""; msg=""; msgLink="";
@@ -267,7 +321,7 @@ async function act(id,a,cid){
   if(!r.ok||!Array.isArray(r.json)||!r.json.length){ err=r.status===401?"Session ended. Log in again.":"Not saved. This account may not be an admin (see the guide)."; draw(); return; }
   Object.assign(s,r.json[0]); msg="Saved: "+(s.name||s.phone); draw();
 }
-if(!CFG.url||/PASTE/.test(CFG.url+CFG.key)){ app.innerHTML=`<h1>Ecrici Admin</h1><div class="card"><p>config.js is not filled in yet.</p></div>`; }
+if(!CFG.url||/PASTE/.test(CFG.url+CFG.key)){ app.innerHTML=`<main><h1>Ecrici Admin</h1><div class="card"><p>config.js is not filled in yet.</p></div></main>`; }
 else if(sess) load(); else login();
 })();
 </script>

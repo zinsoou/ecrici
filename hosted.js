@@ -542,6 +542,7 @@ async function catPublish(force) {
 }
 window.__catPub = catPublish;
 window.__waAdmin = txt => waLink(txt);
+window.__revReq = async function (slug) { if (!active || !sess || member) return null; try { const r = await api("/rest/v1/rpc/review_request_new", { method: "POST", body: { p_slug: slug } }); return r.ok && typeof r.json === "string" ? r.json : null; } catch (e) { return null; } };
 window.__catInfo = async function () { if (!active || !sess || member) return null; const id = lid || shopId; if (!id) return null; try { const r = await api("/rest/v1/catalogs?shop_id=eq." + id + "&select=updated_at"); return r.ok && Array.isArray(r.json) ? (r.json[0] || null) : null; } catch (e) { return null; } };
 /* product photos: small public JPEGs in the "catalog" bucket, one folder per shop */
 /* a small thumbnail (about 400 px) is saved next to every product photo so pages load fast on slow phones */
