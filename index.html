@@ -353,6 +353,7 @@ details.mo{margin:4px 0}details.mo>summary{cursor:pointer;font-weight:600;paddin
 .rv-more{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 body.rvopen .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))}
 @media (max-height:520px){.rv-foot .in{grid-template-columns:2fr 3fr;align-items:center}.rv-more{grid-column:1/-1}}
+.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex-basis:100%;margin-top:6px}.btnrow .btn{width:100%;margin:0;justify-content:center}.btnrow .btn:last-child:nth-child(odd){grid-column:1/-1}
 </style>
 
 <div class="wrap" id="app"></div>
@@ -1651,7 +1652,7 @@ function spHear(text){
 function viewStock(){
   const _q=(ui.psearch||"").toLowerCase().trim(); const all0=[...S.products].sort((a,b)=>a.name.localeCompare(b.name)); const lim=ui.plim||100; const fl=_q?all0.filter(p=>p.name.toLowerCase().includes(_q)):all0; const list=fl.slice(0,lim);
   const val=S.products.reduce((s,p)=>s+(p.svc?0:Math.max(0,p.qty)*p.price),0);
-  let h=`<section class="sec"><h2 style="flex-wrap:wrap">${t("stock")}${isOwner()?`<span style="display:flex;gap:6px;flex-wrap:wrap;flex-basis:100%;justify-content:flex-end">${spOn()?`<button class="btn small primary" data-act="svc-pick">${lx("Choisir dans une liste","Choose from a list")}</button>`:ppOn()?`<button class="btn small primary" data-act="pp-open">${lx("Choisir dans une liste","Choose from a list")}</button>`:""}${ppOn()?"":`<button class="btn small" data-act="bulk-add">${t("bulk_btn")}</button>`}<button class="btn small${spOn()||ppOn()?"":" primary"}" data-act="add-product">${t("add_product")}</button></span>`:""}</h2>`;
+  let h=`<section class="sec"><h2 style="flex-wrap:wrap">${t("stock")}${isOwner()?`<span class="btnrow">${spOn()?`<button class="btn small primary" data-act="svc-pick">${lx("Choisir dans une liste","Choose from a list")}</button>`:ppOn()?`<button class="btn small primary" data-act="pp-open">${lx("Choisir dans une liste","Choose from a list")}</button>`:""}${ppOn()?"":`<button class="btn small" data-act="bulk-add">${t("bulk_btn")}</button>`}<button class="btn small${spOn()||ppOn()?"":" primary"}" data-act="add-product">${t("add_product")}</button></span>`:""}</h2>`;
   if(isOwner()&&list.length&&!nostock()) h+=`<div class="card"><div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${t("stock_value")}</div><div class="num" style="font-size:1.35rem;margin-top:4px">${money(val)}</div></div>`;
   { const hb=howBtn(); if(hb) h+=`<p style="margin:0 0 10px">${hb}</p>`; }
   if(S.products.length>8) h+=`<input id="f-psearch" data-pps="1" value="${esc(ui.psearch||"")}" placeholder="${lx("Rechercher un produit…","Search products…")}" aria-label="${lx("Rechercher","Search")}" autocomplete="off" style="margin:0 0 10px">`;
