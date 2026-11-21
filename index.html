@@ -1241,7 +1241,7 @@ function rentDue(k){ return S.customers.filter(c=>(+c.rent||0)>0&&!S.txs.some(x=
 function rentRun(k){
   const list=rentDue(k); if(!list.length) return 0;
   list.forEach(c=>{ const lines=[{d:`${lx("Loyer","Rent")}${c.unit?" · "+c.unit:""} · ${monthName(k)}`,q:1,p:+c.rent,pid:null,c:0}];
-    S.txs.push({id:uid(),no:++S.counter,type:"sale",cust:c.id,date:new Date().toISOString(),lines,total:+c.rent,paid:0,due:"",note:"",rentMonth:k,by:me()?me().name:""}); });
+    S.txs.push({id:uid(),no:++S.counter,type:"sale",bz:biz(),cust:c.id,date:new Date().toISOString(),lines,total:+c.rent,paid:0,due:"",note:"",rentMonth:k,by:me()?me().name:""}); });
   save(); return list.length;
 }
 function homeGuide(){
@@ -2202,7 +2202,7 @@ function receiptLines(x,kind){
   }
   if(x.note) out.push("",x.note);
   if(x.cust&&balanceOf(x.cust,x.no)>0.001) out.push("-----",`${kind==="invoice"?t("balance_now"):t("balance_after")}: ${money(Math.max(0,balanceOf(x.cust,x.no)))}`);
-  out.push("",kind==="invoice"?t("invoice_note"):(sh.footer||t("default_footer")));
+  out.push("",sh.footer||t("default_footer"));
   return out;
 }
 const receiptText=(x,kind)=>receiptLines(x,kind).join("\n");
@@ -2263,7 +2263,8 @@ const DOCW={ shop:["Client","Customer","Article","Item"], electronics:["Client",
  food:["Client","Customer","Plat / boisson","Dish / drink"], beauty:["Client","Client","Prestation","Service"], health:["Patient","Patient","Soin","Service"],
  hotel:["Client","Guest","Chambre / service","Room / service"], school:["Élève","Student","Frais","Fee"], rent:["Locataire","Tenant","Désignation","Charge"],
  repair:["Client","Customer","Service / pièce","Service / part"], services:["Client","Client","Prestation","Service"], travel:["Client","Client","Voyage / service","Trip / service"] };
-function docModel(x,kind){
+function docModel(x,kind){ const b=x.bz; if(b&&b!==S.shop.biz&&BIZ[b]){ const o=S.shop.biz; S.shop.biz=b; try{ return docModel0(x,kind); }finally{ S.shop.biz=o; } } return docModel0(x,kind); }
+function docModel0(x,kind){
   const sh=S.shop, W=DOCW[biz()]||DOCW.shop, sale=x.type==="sale", inv=(kind==="invoice"&&sale); kind=inv?"invoice":"receipt";
   const owe=sale?Math.max(0,inv?oweNow(x):x.total-x.paid):0, paid=sale?x.total-owe:x.amount, due=sale&&owe>0.001;
   const bal=x.cust?Math.max(0,inv?balanceOf(x.cust):balanceOf(x.cust,x.no)):0; /* an invoice is live: it shows the balance today */
@@ -2276,7 +2277,9 @@ function docModel(x,kind){
   const rows=sale?x.lines.map(l=>({d:l.d||t("goods"),det:lnEx(l),qt:String(qLab(l)),u:money(l.p),a:money(l.q*l.p)}))
     :[{d:lx("Paiement reçu","Payment received"),det:"",qt:"",u:"",a:money(x.amount)}];
   const tot=[];
-  if(sale){ tot.push([lx("Total","Total"),money(x.total),"b"]);
+  if(sale){ const sub=x.lines.reduce((a,l)=>a+l.q*l.p,0), dsc=+x.disc>0?+x.disc:0, tx=+x.tax>0?+x.tax:0, fe=+x.fee>0?+x.fee:0;
+    if(dsc||tx||fe){ tot.push([lx("Sous-total","Subtotal"),money(sub)]); if(dsc) tot.push([lx("Remise","Discount"),"- "+money(dsc)]); if(fe) tot.push([x.feen||lx("Frais supplémentaires","Additional charges"),money(fe)]); if(tx) tot.push([x.taxn||lx("Taxe","Tax"),money(tx)]); }
+    tot.push([lx("Total","Total"),money(x.total),"b"]);
     if(inv){ if(paid>0.001) tot.push([lx("Déjà payé","Paid so far"),money(paid)]); }
     else if(paid>0.001) tot.push([lx("Montant payé","Amount paid"),money(paid)]);
     if(x.method&&x.paid>0&&!inv) tot.push([lx("Mode de paiement","Payment method"),t(x.method),"s"]);
@@ -2291,7 +2294,7 @@ function docModel(x,kind){
     by:x.by||"", itemH:sale?W[L()==="fr"?2:3]:lx("Détail","Details"), noq:!sale, rows, tot,
     dueTxt:(inv&&due)?(x.due?fmtDay(x.due):t("due_rcpt")):(due&&x.due?fmtDay(x.due):""), dueLab:inv?lx("Échéance","Payment due"):lx("À payer avant le","Pay by"),
     pay:(inv&&sale&&payLines().length)?payLines():[], noPay:(inv&&sale&&!payLines().length&&!x.void&&owe>0.001),
-    note:x.note||"", foot:inv?t("invoice_note"):(sh.footer||t("default_footer"))};
+    note:x.note||"", foot:sh.footer||t("default_footer")};
 }
 const DOC_CSS=`
 .doc{background:#fff;color:#16203f;border-radius:8px;border-top:4px solid var(--acc);padding:18px 16px 16px;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-wrap:anywhere;box-shadow:0 1px 3px rgba(12,18,40,.12),0 10px 30px rgba(12,18,40,.08)}
@@ -2357,55 +2360,52 @@ function docHtml(m){
   ${m.note?`<div class="nt">${esc(m.note)}</div>`:""}
   <div class="ft">${esc(m.foot)}</div></article>`;
 }
-function docPdf(m){
-  const W=595.28, H=841.89, M=42, IW=W-2*M, BOT=H-62, sh=m.sh;
+function docPdfBuild(m,W,HP,fit){
+  const sh=m.sh, M=W>500?42:30, IW=W-2*M, BOT=HP-62;
   const h2=h=>[0,2,4].map(k=>parseInt(h.substr(k,2),16)/255), A=h2(m.acc.replace("#","")), INK=h2("16203f"), MUT=h2("5d6784"), LINE=h2("e3e6ee"), SOFT=h2("f2f4fa"), RED=h2("b4321f"), WHITE=[1,1,1];
-  const mix=(a,p)=>a.map(v=>v*(1-p)+p), rg=a=>a.map(v=>v.toFixed(3)).join(" "), Y=v=>(H-v).toFixed(2);
+  const mix=(a,p)=>a.map(v=>v*(1-p)+p), rg=a=>a.map(v=>v.toFixed(3)).join(" "), Y=v=>"@"+v.toFixed(2);
   const pages=[]; let ops, y;
   const txt=(s,xx,yy,f,z,c,al)=>{ const w=pdfW(s,f,z), px=al==="r"?xx-w:al==="c"?xx-w/2:xx; ops.push(`${rg(c)} rg BT /${f} ${z} Tf 1 0 0 1 ${px.toFixed(2)} ${Y(yy)} Tm (${pdfEsc(s)}) Tj ET`); };
   const ln=(x1,x2,yy,c,w)=>ops.push(`${rg(c)} RG ${w} w ${x1} ${Y(yy)} m ${x2} ${Y(yy)} l S`);
-  const rr=(x1,yy,w,h,r,fill,stroke,lw)=>{ const k=0.5523*r, X0=x1, X1=x1+w, Y0=H-(yy+h), Y1=H-yy;
-    ops.push(`${fill?rg(fill)+" rg ":""}${stroke?rg(stroke)+" RG "+lw+" w ":""}${X0+r} ${Y0} m ${X1-r} ${Y0} l ${X1-r+k} ${Y0} ${X1} ${Y0+r-k} ${X1} ${Y0+r} c ${X1} ${Y1-r} l ${X1} ${Y1-r+k} ${X1-r+k} ${Y1} ${X1-r} ${Y1} c ${X0+r} ${Y1} l ${X0+r-k} ${Y1} ${X0} ${Y1-r+k} ${X0} ${Y1-r} c ${X0} ${Y0+r} l ${X0} ${Y0+r-k} ${X0+r-k} ${Y0} ${X0+r} ${Y0} c h ${fill&&stroke?"B":fill?"f":"S"}`); };
+  const rr=(x1,yy,w,h,r,fill,stroke,lw)=>{ const k=0.5523*r, X0=x1, X1=x1+w, T=yy, B=yy+h, P=(a,b)=>`${a.toFixed(2)} ${Y(b)}`;
+    ops.push(`${fill?rg(fill)+" rg ":""}${stroke?rg(stroke)+" RG "+lw+" w ":""}${P(X0+r,B)} m ${P(X1-r,B)} l ${P(X1-r+k,B)} ${P(X1,B-r+k)} ${P(X1,B-r)} c ${P(X1,T+r)} l ${P(X1,T+r-k)} ${P(X1-r+k,T)} ${P(X1-r,T)} c ${P(X0+r,T)} l ${P(X0+r-k,T)} ${P(X0,T+r-k)} ${P(X0,T+r)} c ${P(X0,B-r)} l ${P(X0,B-r+k)} ${P(X0+r-k,B)} ${P(X0+r,B)} c h ${fill&&stroke?"B":fill?"f":"S"}`); };
+  const circ=(cx,cy,r)=>{ const k=0.5523*r; return `${cx} ${Y(cy-r)} m ${cx+k} ${Y(cy-r)} ${cx+r} ${Y(cy-k)} ${cx+r} ${Y(cy)} c ${cx+r} ${Y(cy+k)} ${cx+k} ${Y(cy+r)} ${cx} ${Y(cy+r)} c ${cx-k} ${Y(cy+r)} ${cx-r} ${Y(cy+k)} ${cx-r} ${Y(cy)} c ${cx-r} ${Y(cy-k)} ${cx-k} ${Y(cy-r)} ${cx} ${Y(cy-r)} c`; };
   const logo=sh.logoData&&/^data:image\/jpeg;base64,/.test(sh.logoData)?sh.logoData:""; let lw=0, lh=0, bin="";
   if(logo){ try{ bin=atob(logo.split(",")[1]); for(let q=2;q<bin.length-9;){ if(bin.charCodeAt(q)!==255){ q++; continue; } const mk=bin.charCodeAt(q+1); if(mk>=0xC0&&mk<=0xC2){ lh=bin.charCodeAt(q+5)*256+bin.charCodeAt(q+6); lw=bin.charCodeAt(q+7)*256+bin.charCodeAt(q+8); break; } q+=2+bin.charCodeAt(q+2)*256+bin.charCodeAt(q+3); } }catch(e){ lw=0; } }
   const useLogo=!!(logo&&lw&&lh);
-  const AR=W-M-8, UR=AR-92, QR=UR-96, DW=(m.noq?AR-100:QR-46)-(M+8);
+  const wide=W>500, AR=W-M-8, UR=AR-(wide?92:78), QR=UR-(wide?96:64), DW=(m.noq?AR-100:QR-(wide?46:40))-(M+8);
   const tableHead=()=>{ rr(M,y,IW,22,5,SOFT); const ty=y+14.5; txt(m.itemH.toUpperCase(),M+8,ty,"F2",7.5,MUT); if(!m.noq){ txt(lx("QTÉ","QTY"),QR,ty,"F2",7.5,MUT,"r"); txt(lx("PRIX UNIT.","UNIT PRICE"),UR,ty,"F2",7.5,MUT,"r"); } txt(lx("MONTANT","AMOUNT"),AR,ty,"F2",7.5,MUT,"r"); y+=22; };
   const newPage=(cont)=>{ ops=[]; pages.push(ops); rr(0,0,W,5,0,A); y=M;
     if(cont){ txt(sh.name,M,y+8,"F2",10,INK); txt(m.title+" · "+m.no,W-M,y+8,"F2",9,A,"r"); y+=20; ln(M,W-M,y,LINE,0.8); y+=12; } };
   newPage(false);
-  // header
-  y=M-6; const LX=M+(useLogo||true?52:0), nameW=IW*0.56-52; const hs=[]; 
+  y=M-6; const LX=M+52, nameW=IW*0.56-52, hs=[];
   pdfWrap(sh.name,"F2",15,nameW).forEach(s=>hs.push([s,"F2",15,INK,18])); m.contact.forEach(c=>pdfWrap(c,"F1",9,nameW).forEach(s=>hs.push([s,"F1",9,MUT,12])));
-  let cy=y+14; const hy0=cy; hs.forEach(h=>{ txt(h[0],LX,cy+h[2]*0.3,h[1],h[2],h[3]); cy+=h[4]; });
-  const cx=M+22, cyy=y+25, cr=22, k=0.5523*cr;
-  if(useLogo){ ops.push(`q ${cx} ${Y(cyy-cr)} m ${cx+k} ${Y(cyy-cr)} ${cx+cr} ${Y(cyy-k)} ${cx+cr} ${Y(cyy)} c ${cx+cr} ${Y(cyy+k)} ${cx+k} ${Y(cyy+cr)} ${cx} ${Y(cyy+cr)} c ${cx-k} ${Y(cyy+cr)} ${cx-cr} ${Y(cyy+k)} ${cx-cr} ${Y(cyy)} c ${cx-cr} ${Y(cyy-k)} ${cx-k} ${Y(cyy-cr)} ${cx} ${Y(cyy-cr)} c h W n ${2*cr} 0 0 ${2*cr} ${cx-cr} ${Y(cyy+cr)} cm /Im1 Do Q`); }
-  else{ ops.push(`${rg(mix(A,0.86))} rg ${cx} ${Y(cyy-cr)} m ${cx+k} ${Y(cyy-cr)} ${cx+cr} ${Y(cyy-k)} ${cx+cr} ${Y(cyy)} c ${cx+cr} ${Y(cyy+k)} ${cx+k} ${Y(cyy+cr)} ${cx} ${Y(cyy+cr)} c ${cx-k} ${Y(cyy+cr)} ${cx-cr} ${Y(cyy+k)} ${cx-cr} ${Y(cyy)} c ${cx-cr} ${Y(cyy-k)} ${cx-k} ${Y(cyy-cr)} ${cx} ${Y(cyy-cr)} c f`); txt(initialsOf(sh.name),cx,cyy+5,"F2",14,A,"c"); }
-  const tl=pdfWrap(m.title,"F2",21,IW*0.42);
-  let ry=y+22; tl.forEach(s=>{ txt(s,W-M,ry,"F2",21,A,"r"); ry+=24; }); ry-=4; txt(m.no,W-M,ry+8,"F2",11,INK,"r"); txt(m.date,W-M,ry+22,"F1",9.5,MUT,"r"); ry+=26;
+  let cy=y+14; hs.forEach(h=>{ txt(h[0],LX,cy+h[2]*0.3,h[1],h[2],h[3]); cy+=h[4]; });
+  const cx=M+22, cyy=y+25, cr=22;
+  if(useLogo) ops.push(`q ${circ(cx,cyy,cr)} h W n ${2*cr} 0 0 ${2*cr} ${cx-cr} ${Y(cyy+cr)} cm /Im1 Do Q`);
+  else{ ops.push(`${rg(mix(A,0.86))} rg ${circ(cx,cyy,cr)} f`); txt(initialsOf(sh.name),cx,cyy+5,"F2",14,A,"c"); }
+  const tz=wide?21:17, tl=pdfWrap(m.title,"F2",tz,IW*0.45);
+  let ry=y+22; tl.forEach(s=>{ txt(s,W-M,ry,"F2",tz,A,"r"); ry+=tz+3; }); ry-=4; txt(m.no,W-M,ry+8,"F2",11,INK,"r"); txt(m.date,W-M,ry+22,"F1",9.5,MUT,"r"); ry+=26;
   y=Math.max(cy,ry,y+50)+10; ln(M,W-M,y,LINE,0.8); y+=16;
-  // status + party
   const sl=m.st[0], sw=pdfW(sl,"F2",9)+22, SC=h2(m.st[1].replace("#",""));
   rr(M,y,sw,18,9,null,SC,1.2); txt(sl,M+sw/2,y+12.5,"F2",9,SC,"c");
-  if(m.void){ txt(fmtDate(m.void.date)+(m.void.by?" · "+m.void.by:"")+(m.void.reason?" — "+m.void.reason:""),M+sw+10,y+12.5,"F1",8.5,RED); }
+  if(m.void) txt(fmtDate(m.void.date)+(m.void.by?" · "+m.void.by:"")+(m.void.reason?" — "+m.void.reason:""),M+sw+10,y+12.5,"F1",8.5,RED);
   y+=18+16;
   if(m.party||m.by){ const top=y; let ly=y;
     if(m.party){ txt(m.party.lab.toUpperCase(),M,ly+7,"F2",7.5,MUT); ly+=20; pdfWrap(m.party.name,"F2",11.5,IW*0.55).forEach(s=>{ txt(s,M,ly,"F2",11.5,INK); ly+=14; }); if(m.party.phone){ txt(m.party.phone,M,ly,"F1",9.5,MUT); ly+=13; } }
     if(m.by){ txt(t("served_by").toUpperCase(),W-M,top+7,"F2",7.5,MUT,"r"); txt(m.by,W-M,top+20,"F1",10,INK,"r"); ly=Math.max(ly,top+26); }
     y=ly+6; ln(M,W-M,y,LINE,0.8); y+=14; }
-  // table
-  const hasRows=m.rows.length; tableHead();
+  tableHead();
   m.rows.forEach(r=>{ const dl=pdfWrap(r.d,"F2",10,DW), tl2=r.det?pdfWrap(r.det,"F1",8.5,DW):[], rh=19+13*(dl.length-1)+(tl2.length?12+11*(tl2.length-1):0)+11;
     if(y+rh>BOT-30){ newPage(true); tableHead(); }
     let yy=y+19; dl.forEach(s=>{ txt(s,M+8,yy,"F2",10,INK); yy+=13; }); yy-=1; tl2.forEach(s=>{ txt(s,M+8,yy,"F1",8.5,MUT); yy+=11; });
     if(!m.noq){ txt(r.qt,QR,y+19,"F1",10,INK,"r"); txt(r.u,UR,y+19,"F1",10,INK,"r"); } txt(r.a,AR,y+19,"F2",10,INK,"r");
     y+=rh; ln(M,W-M,y,LINE,0.6); });
-  // totals (kept together)
-  const TW=250, TX=W-M-TW; let th=14; m.tot.forEach(r=>{ th+=(r[2]==="hl"||r[2]==="red")?36:(r[2]==="b"?28:20); }); if(m.dueTxt) th+=22;
-  if(y+th>BOT-20){ newPage(true); }
+  const TW=wide?250:Math.round(IW*0.66), TX=W-M-TW; let th=14; m.tot.forEach(r=>{ th+=(r[2]==="hl"||r[2]==="red")?36:(r[2]==="b"?28:20); }); if(m.dueTxt) th+=22;
+  if(y+th>BOT-20) newPage(true);
   y+=14;
   m.tot.forEach(r=>{ const kd=r[2]||"";
-    if(kd==="b"){ ln(TX,W-M,y,A,1.6); y+=19; txt(r[0],TX+8,y,"F2",11.5,INK); txt(r[1],AR,y,"F2",12,INK,"r"); y+=9; }
+    if(kd==="b"){ if(y>0&&m.tot.indexOf(r)>0) y+=8; ln(TX,W-M,y,A,1.6); y+=19; txt(r[0],TX+8,y,"F2",11.5,INK); txt(r[1],AR,y,"F2",12,INK,"r"); y+=9; }
     else if(kd==="hl"){ y+=4; rr(TX,y,TW,30,7,A); txt(r[0],TX+12,y+19,"F2",10.5,WHITE); txt(r[1],W-M-12,y+19,"F2",12,WHITE,"r"); y+=36; }
     else if(kd==="red"){ y+=4; rr(TX,y,TW,30,7,null,RED,1.1); txt(r[0],TX+12,y+19,"F2",10.5,RED); txt(r[1],W-M-12,y+19,"F2",12,RED,"r"); y+=36; }
     else if(kd==="s"||kd==="m"){ y+=17; txt(r[0],TX+8,y,"F1",9,MUT); txt(r[1],AR,y,"F1",9,MUT,"r"); }
@@ -2416,23 +2416,26 @@ function docPdf(m){
   if(m.pay.length) block(t("pay_t"),m.pay,9.5);
   if(m.note) block(lx("Note","Note"),[m.note],9.5);
   { const fl=pdfWrap(m.foot,"F1",9.5,IW); if(y+10+fl.length*13>BOT) newPage(true); y+=12; ln(M,W-M,y,LINE,0.8); y+=6; fl.forEach(s=>{ y+=14; txt(s,W/2,y,"F1",9.5,MUT,"c"); }); }
-  // page footers
-  const N=pages.length; pages.forEach((p,i)=>{ ops=p; ln(M,W-M,H-46,LINE,0.6); txt(sh.name+" · "+m.title+" "+m.no,M,H-32,"F1",8,MUT); txt(lx("Page ","Page ")+(i+1)+" / "+N,W-M,H-32,"F1",8,MUT,"r"); });
-  // assemble
+  const N=pages.length;
+  if(fit&&N>1) return {n:N};
+  const HF=(fit&&N===1)?Math.min(HP,Math.max(330,Math.ceil(y+58))):HP;
+  pages.forEach((p,i)=>{ ops=p; ln(M,W-M,HF-46,LINE,0.6); txt(sh.name+" · "+m.title+" "+m.no,M,HF-32,"F1",8,MUT); if(N>1) txt(lx("Page ","Page ")+(i+1)+" / "+N,W-M,HF-32,"F1",8,MUT,"r"); });
   const objs=[null,null,"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>","<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"];
   if(useLogo) objs.push(`<< /Type /XObject /Subtype /Image /Width ${lw} /Height ${lh} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bin.length} >>\nstream\n${bin}\nendstream`);
-  const kids=[]; pages.forEach(p=>{ let cs=p.join("\n"); if(!useLogo) cs=cs.replace(/\/Im1 Do/g,""); const pid=objs.length+1; kids.push(pid+" 0 R");
-    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W.toFixed(2)} ${H.toFixed(2)}] /Contents ${pid+1} 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R >>${useLogo?" /XObject << /Im1 5 0 R >>":""} >> >>`); objs.push(`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`); });
+  const kids=[]; pages.forEach(p=>{ let cs=p.join("\n").replace(/@(-?[\d.]+)/g,(a,v)=>(HF-parseFloat(v)).toFixed(2)); if(!useLogo) cs=cs.replace(/\/Im1 Do/g,""); const pid=objs.length+1; kids.push(pid+" 0 R");
+    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W.toFixed(2)} ${HF.toFixed(2)}] /Contents ${pid+1} 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R >>${useLogo?" /XObject << /Im1 5 0 R >>":""} >> >>`); objs.push(`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`); });
   objs[0]="<< /Type /Catalog /Pages 2 0 R >>"; objs[1]=`<< /Type /Pages /Kids [${kids.join(" ")}] /Count ${kids.length} >>`;
   let pdf="%PDF-1.4\n", offs=[]; objs.forEach((o,i)=>{ offs.push(pdf.length); pdf+=(i+1)+" 0 obj\n"+o+"\nendobj\n"; });
   const xr=pdf.length; pdf+="xref\n0 "+(objs.length+1)+"\n0000000000 65535 f \n"+offs.map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("")+"trailer\n<< /Size "+(objs.length+1)+" /Root 1 0 R >>\nstartxref\n"+xr+"\n%%EOF";
-  const u=new Uint8Array(pdf.length); for(let i=0;i<pdf.length;i++) u[i]=pdf.charCodeAt(i)&255; return new Blob([u],{type:"application/pdf"});
+  const u=new Uint8Array(pdf.length); for(let i=0;i<pdf.length;i++) u[i]=pdf.charCodeAt(i)&255; return {n:N,blob:new Blob([u],{type:"application/pdf"})};
 }
-async function receiptPdf(id,share){
+/* short documents: one compact A5-width page fitted to the content; long ones (or fmt "a4"): standard A4 pages */
+function docPdf(m,fmt){ if(fmt!=="a4"){ const r=docPdfBuild(m,419.53,595.28,true); if(r.blob) return r.blob; } return docPdfBuild(m,595.28,841.89,false).blob; }
+async function receiptPdf(id,share,fmt){
   const x=S.txs.find(y=>y.id===id); if(!x) return; const k=ui.modal&&ui.modal.kind;
   const kind=(k==="invoice"&&x.type==="sale")?"invoice":"receipt";
   const name=docFile(x,kind,"pdf");
-  let blob; try{ blob=docPdf(docModel(x,kind)); }catch(e){ try{ logErr("pdf",e); }catch(_){} toast(lx("Impossible de créer le PDF.","Could not create the PDF.")); return; }
+  let blob; try{ blob=docPdf(docModel(x,kind),fmt); }catch(e){ try{ logErr("pdf",e); }catch(_){} toast(lx("Impossible de créer le PDF.","Could not create the PDF.")); return; }
   const file=new File([blob],name,{type:"application/pdf"});
   if(share&&navigator.canShare&&navigator.canShare({files:[file]})){
     try{ await navigator.share({files:[file],title:name}); return; }catch(e){ if(e&&e.name==="AbortError") return; }
@@ -2486,7 +2489,7 @@ function _renderModal(){
         ${x.type==="sale"?`<div class="seg" role="group"><button class="pill" data-act="set-doc" data-k="receipt" ${kind==="receipt"?'aria-pressed="true"':""}>${t("receipt")}</button><button class="pill" data-act="set-doc" data-k="invoice" ${kind==="invoice"?'aria-pressed="true"':""}>${t("invoice")}</button></div>`:`<b class="rv-t">${esc(dm.title)}</b>`}<span class="rv-sp"></span></div>
       <div class="rv-body" tabindex="-1">${docHtml(dm)}${dvBlock(x)}<p class="note rv-n">${t("wa_note")}</p></div>
       <div class="rv-foot"><div class="in">
-        ${more?`<div class="rv-more"><a class="btn" href="${sms}">${t("sms")}</a><button class="btn" data-act="copy-receipt" data-id="${x.id}">${t("copy")}</button><button class="btn" data-act="txt-receipt" data-id="${x.id}">${lx("Texte (.txt)","Text (.txt)")}</button>${(!x.void&&canCancel(x))?`<button class="btn danger" data-act="ask-cancel" data-id="${x.id}">${t("cancel_entry")}</button>`:""}</div>`:""}
+        ${more?`<div class="rv-more"><a class="btn" href="${sms}">${t("sms")}</a><button class="btn" data-act="copy-receipt" data-id="${x.id}">${t("copy")}</button><button class="btn" data-act="pdf-a4" data-id="${x.id}">PDF A4</button>${(!x.void&&canCancel(x))?`<button class="btn danger" data-act="ask-cancel" data-id="${x.id}">${t("cancel_entry")}</button>`:""}</div>`:""}
         <a class="btn primary wa" href="${wa}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2.5A9.5 9.5 0 0 0 3.9 16.9L2.6 21.4l4.6-1.2A9.5 9.5 0 1 0 12 2.5zm0 2a7.500 7.500 0 1 1-3.900 13.900l-.3-.2-2.200.6.600-2.100-.2-.3A7.500 7.500 0 0 1 12 4.500z"/></svg>${lx("Envoyer sur WhatsApp","Send on WhatsApp")}</a>
         <div class="rv-row"><button class="btn" data-act="pdf-share" data-id="${x.id}">PDF</button>${window.print?`<button class="btn" data-act="doc-print" data-id="${x.id}">${lx("Imprimer","Print")}</button>`:""}<button class="btn" data-act="rv-more" aria-expanded="${more}">${lx("Plus","More")} ${more?"▾":"▴"}</button></div>
       </div></div></div>`;
@@ -2695,7 +2698,7 @@ function saveSale(kind){
     S.customers.push(c); custId=c.id;
   }
   if(!custId&&total-paid>0.001){ d.err=t("err_cust"); $("#s-err").textContent=d.err; return; }
-  const x={id:uid(),no:++S.counter,type:"sale",cust:custId,date:new Date().toISOString(),lines,total,paid,...(paid>0?{method:d.method||S.shop.lastMethod||"cash"}:{}),due:(total-paid>0.001&&/^\d{4}-\d{2}-\d{2}$/.test(d.due||""))?d.due:"",note:d.note.trim(),by:me()?me().name:""};
+  const x={id:uid(),no:++S.counter,type:"sale",bz:biz(),cust:custId,date:new Date().toISOString(),lines,total,paid,...(paid>0?{method:d.method||S.shop.lastMethod||"cash"}:{}),due:(total-paid>0.001&&/^\d{4}-\d{2}-\d{2}$/.test(d.due||""))?d.due:"",note:d.note.trim(),by:me()?me().name:""};
   for(const pid in need){ const pr=S.products.find(y=>y.id===pid); if(pr&&!pr.svc) pr.qty=Math.round((pr.qty-need[pid])*1000)/1000; }
   if(expOn()) x.lines.forEach(l=>{ const pr=l.pid&&S.products.find(y=>y.id===l.pid); if(!pr||pr.svc) return; const bt=takeBatches(pr,l.q); if(bt.length){ l.bt=bt; const ns=[...new Set(bt.map(b=>b.n).filter(Boolean))]; if(ns.length) l.sn=ns.join(", "); else delete l.sn; const es=bt.map(b=>b.e).filter(Boolean).sort(); if(es.length) l.w=fmtExp(es[0]); else delete l.w; } });
   if(x.method) S.shop.lastMethod=x.method;
@@ -2826,10 +2829,10 @@ document.addEventListener("click",e=>{
     case "toggle-doc": ui.modal.kind=ui.modal.kind==="invoice"?"receipt":"invoice"; renderModal(); break;
     case "set-accent": { const c=el.dataset.c; if(ACCENTS.includes(c)){ S.shop.accent=c; save(); document.querySelectorAll("[data-act=set-accent]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.c===c))); } break; }
     case "pdf-share": receiptPdf(id,true); break;
+    case "pdf-a4": receiptPdf(id,true,"a4"); break;
     case "doc-print": printDoc(id); break;
     case "rv-more": ui.modal.more=!ui.modal.more; renderModal(); break;
     case "pdf-dl": receiptPdf(id,false); break;
-    case "txt-receipt": { const x=S.txs.find(y=>y.id===id); const k=ui.modal&&ui.modal.kind; saveFile(docFile(x,k==="invoice"?"invoice":"receipt","txt"),receiptText(x,k)); break; }
     case "bulk-add": ui.modal={type:"bulk"}; renderModal(); break;
     case "save-bulk": saveBulk(); break;
     case "add-product": ui.modal={type:"product",id:null}; renderModal(); break;
