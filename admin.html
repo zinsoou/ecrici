@@ -59,7 +59,7 @@ const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
 const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
 let sess=null; try{ sess=JSON.parse(lsGet(SK)); }catch(e){}
-let shops=[], claims=[], branches=[], reps=[], pages=[], rvs=[], rvrep={}, q="", pq="", filter="all", rf="reported", tab=lsGet("ecrici-admin-tab")||"today", err="", msg="", msgLink="", lastEmail="";
+let shops=[], claims=[], branches=[], reps=[], pages=[], rvs=[], rvrep={}, promos={}, pmOpen="", pmItems=[], pmSel=[], pmNoSql=false, q="", pq="", filter="all", rf="reported", tab=lsGet("ecrici-admin-tab")||"today", err="", msg="", msgLink="", lastEmail="";
 
 async function http(path,o){
   o=o||{};
@@ -128,6 +128,8 @@ document.addEventListener("click",e=>{
   else if(d.pg) pgAct(d.slug,d.pg);
   else if(d.vf) vfAct(d.slug,d.vf==="on");
   else if(d.rv) rvAct(d.id,d.rv);
+  else if(d.pm) pmAct(d.slug,d.pm,d.days);
+  else if(d.pmi!==undefined) pmTog(d.pmi);
 });
 /* ---- TODAY ---- */
 function vToday(){
@@ -178,8 +180,56 @@ function vPages(){
     return `<div class="card"><div class="item"><div class="av">${esc(ini(p.name||r.slug))}</div><div class="grow"><div class="name">${esc(p.name||r.slug)}</div><div class="muted">${esc(r.slug)} · ${r.n} report${r.n===1?"":"s"}${Object.keys(r.why).length?": "+Object.entries(r.why).map(([k,v])=>esc(k)+" ×"+v).join(", "):""}</div></div>${p.blocked?`<span class="chip suspended">OFF</span>`:""}</div><div class="row"><a class="b" href="${link}" target="_blank" rel="noopener">View page</a><button class="${p.blocked?"p":"d"}" data-pg="${p.blocked?"on":"off"}" data-slug="${esc(r.slug)}">${p.blocked?"Turn back on":"Turn off"}</button>${r.n?`<button data-pg="clear" data-slug="${esc(r.slug)}">Dismiss reports</button>`:""}</div></div>`; }).join(""):"";
   const list=live.filter(p=>!pq||((p.name||"")+" "+p.slug+" "+(p.phone||"")).toLowerCase().includes(pq.toLowerCase())).sort((a,b)=>(a.verified?1:0)-(b.verified?1:0)).slice(0,40);
   const vf=`<h2>Verified badge</h2><div class="muted">Call the owner and check the shop first (phone, photo or ID). Then tap Verify. Verified pages show a green badge and come first in Market.</div><input id="pq" type="search" placeholder="Search pages" value="${esc(pq)}">`+list.map(p=>`<div class="card"><div class="item"><div class="av">${esc(ini(p.name||p.slug))}</div><div class="grow"><div class="name">${esc(p.name||p.slug)}${p.verified?` <span class="chip active">✔ Verified</span>`:""}</div><div class="muted">${esc(p.slug)}${p.phone?" · "+esc(p.phone):""}${p.listed?" · in Market":""}</div></div></div><div class="row"><a class="b" href="/shop.html?s=${encodeURIComponent(p.slug)}" target="_blank" rel="noopener">View page</a><button class="${p.verified?"":"p"}" data-vf="${p.verified?"off":"on"}" data-slug="${esc(p.slug)}">${p.verified?"Remove badge":"Verify"}</button></div></div>`).join("")+(live.length>40&&!pq?`<div class="muted">Showing 40 of ${live.length}. Use search.</div>`:"")+(!live.length?`<div class="card"><div class="empty">No live pages yet.</div></div>`:"");
-  return kp+fl+vf;
+  return kp+fl+vPromo(live)+vf;
 }
+/* ---- PROMOTIONS ---- */
+const pmFeat=p=>{ const x=promos[p.slug]; return x&&x.feat_until&&x.feat_until>=today()?x.feat_until:""; };
+const pmBoost=p=>{ const x=promos[p.slug]; return ((x&&x.boost)||[]).filter(b=>b&&b.until>=today()); };
+function vPromo(live){
+  const act=live.filter(p=>pmFeat(p)||pmBoost(p).length);
+  const cand=live.filter(p=>p.verified&&p.listed&&!act.includes(p)).filter(p=>!pq||((p.name||"")+" "+p.slug).toLowerCase().includes(pq.toLowerCase())).slice(0,15);
+  const card=p=>{ const f=pmFeat(p), bs=pmBoost(p), open=pmOpen===p.slug;
+    let h=`<div class="card"><div class="item"><div class="av">${esc(ini(p.name||p.slug))}</div><div class="grow"><div class="name">${esc(p.name||p.slug)}</div><div class="muted">${esc(p.slug)}${p.city?" · "+esc(p.city):""}${f?" · Featured until "+esc(f):""}${bs.length?" · "+bs.length+" boosted":""}</div></div></div>`;
+    if(!open) return h+`<div class="row"><button data-pm="open" data-slug="${esc(p.slug)}">Manage promotion</button></div></div>`;
+    const eligible=p.verified&&p.logo&&/^https:\/\//.test(p.logo);
+    h+=`<div class="muted" style="margin:8px 0 4px"><b>Featured page</b> (on top in its city, marked Sponsored)</div>`;
+    h+=eligible?`<div class="row">${[7,14,30].map(n=>`<button class="p" data-pm="feat" data-days="${n}" data-slug="${esc(p.slug)}">${f?"Extend ":""}${n} days</button>`).join("")}${f?`<button class="d" data-pm="unfeat" data-slug="${esc(p.slug)}">Remove</button>`:""}</div>`:`<div class="muted">Needs the Verified badge and a logo first.</div>`;
+    h+=`<div class="muted" style="margin:12px 0 4px"><b>Boost products or services</b> (up to 3, first in Popular products)</div>`;
+    if(bs.length) h+=`<div class="muted">Active: ${bs.map(b=>esc(b.n)+" (until "+esc(b.until)+")").join(", ")}</div>`;
+    h+=pmItems.length?pmItems.map((n,i)=>`<div class="row" style="margin:4px 0"><button data-pmi="${i}" class="${pmSel.includes(i)?"p":""}" style="text-align:left">${pmSel.includes(i)?"✔ ":""}${esc(n)}</button></div>`).join(""):`<div class="muted">Loading items…</div>`;
+    h+=`<div class="row" style="margin-top:8px">${[7,14,30].map(n=>`<button class="p" data-pm="boost" data-days="${n}" data-slug="${esc(p.slug)}">Boost ${n} days</button>`).join("")}${bs.length?`<button class="d" data-pm="unboost" data-slug="${esc(p.slug)}">Clear boosts</button>`:""}</div>`;
+    return h+`<div class="row" style="margin-top:8px"><button data-pm="close" data-slug="${esc(p.slug)}">Close</button></div></div>`; };
+  const cur=pmOpen&&!act.concat(cand).some(p=>p.slug===pmOpen)?live.filter(p=>p.slug===pmOpen):[];
+  return `<h2>Featured &amp; boosts</h2><div class="muted">Paid promotion. Agree the price with the owner, receive payment, then activate here. Max 5 featured pages per city.</div>${pmNoSql?`<div class="err" style="background:var(--bad-bg);padding:10px 12px;border-radius:12px;margin:8px 0">Run upgrade-v135-featured.sql in Supabase first.</div>`:""}`
+   +(act.length?`<div class="muted" style="margin-top:8px">Active now</div>`+act.map(card).join(""):"")
+   +cur.map(card).join("")
+   +`<div class="muted" style="margin-top:8px">Verified pages in Market (use search below)</div>`+(cand.map(card).join("")||`<div class="card"><div class="empty">No verified Market pages yet.</div></div>`);
+}
+async function pmAct(slug,a,days){
+  err=""; msg="";
+  const p=pages.find(x=>x.slug===slug)||{};
+  if(a==="close"){ pmOpen=""; draw(); return; }
+  if(a==="open"){ pmOpen=slug; pmItems=[]; pmSel=[]; draw();
+    const r=await api("/rest/v1/catalogs?slug=eq."+encodeURIComponent(slug)+"&select=items:data->items");
+    const it=(r.ok&&r.json&&r.json[0]&&Array.isArray(r.json[0].items))?r.json[0].items:[];
+    pmItems=[...new Set(it.map(x=>String((x&&x.n)||"").trim()).filter(Boolean))].slice(0,60); if(pmOpen===slug) draw(); return; }
+  const x=promos[slug]||{}; let feat=x.feat_until&&x.feat_until>=today()?x.feat_until:null, bs=pmBoost(p);
+  const until=n=>{ const d=new Date(); d.setUTCDate(d.getUTCDate()+Number(n)); return d.toISOString().slice(0,10); };
+  if(a==="feat"){ const base=feat&&feat>today()?feat:today(); const d=new Date(base+"T12:00:00Z"); d.setUTCDate(d.getUTCDate()+Number(days)); feat=d.toISOString().slice(0,10); }
+  else if(a==="unfeat") feat=null;
+  else if(a==="unboost") bs=[];
+  else if(a==="boost"){ if(!pmSel.length){ err="Tap up to 3 items to boost first."; draw(); return; } bs=pmSel.slice(0,3).map(i=>({n:pmItems[i],until:until(days)})); }
+  const r=await api("/rest/v1/rpc/admin_promo_set",{method:"POST",body:{p_slug:slug,p_feat:feat,p_boost:bs}});
+  const res=r.ok?String(r.json==null?"":r.json).replace(/^"|"$/g,""):"";
+  if(!r.ok){ err=r.status===404?"Run upgrade-v135-featured.sql in Supabase first.":r.status===401?"Session ended. Log in again.":"Not saved."; draw(); return; }
+  if(res==="not_eligible"){ err="This page needs the Verified badge and a logo first."; draw(); return; }
+  if(res==="city_full"){ err="This city already has 5 featured pages. Wait for one to end."; draw(); return; }
+  if(res==="not_listed"){ err="The page must be live and in Market first."; draw(); return; }
+  if(res&&res!=="ok"){ err="Not saved ("+res+")."; draw(); return; }
+  const rp=await api("/rest/v1/catalog_promos?select=*&limit=1000"); promos={}; if(rp.ok&&Array.isArray(rp.json)) rp.json.forEach(y=>{ promos[y.slug]=y; });
+  pmSel=[]; msg=a==="feat"?"Featured until "+feat+": "+slug:a==="unfeat"?"Featured removed: "+slug:a==="boost"?"Boost active: "+slug:"Boosts cleared: "+slug; draw();
+}
+function pmTog(i){ i=Number(i); const k=pmSel.indexOf(i); if(k>=0) pmSel.splice(k,1); else if(pmSel.length<3) pmSel.push(i); draw(); }
 /* ---- REVIEWS ---- */
 function vReviews(){
   const fl=rvFlag(), shown=rf==="reported"?fl:rf==="hidden"?rvs.filter(r=>r.hidden):rvs;
@@ -232,7 +282,8 @@ async function load(){
   const rb=await api("/rest/v1/branches?select=*&order=created_at.asc"); branches=(rb.ok&&Array.isArray(rb.json))?rb.json:[];
   const rc=await api("/rest/v1/pay_claims?select=*&status=eq.pending&order=created_at.asc"); claims=(rc.ok&&Array.isArray(rc.json))?rc.json:[];
   const rr=await api("/rest/v1/catalog_reports?select=*&order=created_at.desc&limit=500"); reps=(rr.ok&&Array.isArray(rr.json))?rr.json:[];
-  let rp=await api("/rest/v1/catalogs?select=slug,shop_id,active,blocked,listed,verified,created_at,name:data->>name,phone:data->>phone&order=created_at.desc&limit=1000"); if(!rp.ok) rp=await api("/rest/v1/catalogs?select=slug,shop_id,active,blocked,listed,name:data->>name&limit=1000"); pages=(rp.ok&&Array.isArray(rp.json))?rp.json:[];
+  let rp=await api("/rest/v1/catalogs?select=slug,shop_id,active,blocked,listed,verified,created_at,city,country,logo:data->>logo,name:data->>name,phone:data->>phone&order=created_at.desc&limit=1000"); if(!rp.ok) rp=await api("/rest/v1/catalogs?select=slug,shop_id,active,blocked,listed,verified,created_at,name:data->>name,phone:data->>phone&order=created_at.desc&limit=1000"); if(!rp.ok) rp=await api("/rest/v1/catalogs?select=slug,shop_id,active,blocked,listed,name:data->>name&limit=1000"); pages=(rp.ok&&Array.isArray(rp.json))?rp.json:[];
+  const rpm=await api("/rest/v1/catalog_promos?select=*&limit=1000"); promos={}; pmNoSql=!rpm.ok; if(rpm.ok&&Array.isArray(rpm.json)) rpm.json.forEach(x=>{ promos[x.slug]=x; });
   const rv=await api("/rest/v1/catalog_reviews?select=id,slug,rating,name,body,done_at,hidden&done_at=not.is.null&order=done_at.desc&limit=300"); rvs=(rv.ok&&Array.isArray(rv.json))?rv.json:[];
   const rq=await api("/rest/v1/catalog_review_reports?select=review_id&limit=2000"); rvrep={}; if(rq.ok&&Array.isArray(rq.json)) rq.json.forEach(x=>{ rvrep[x.review_id]=(rvrep[x.review_id]||0)+1; });
   draw();
