@@ -355,7 +355,7 @@ async function submitAuth() {
         if (!jr.ok && !/already in a team/i.test(m)) { authErrText = /already has a shop/i.test(m) ? g("e_hasshop") : g("e_invite"); busyAuth = false; drawGate(); return; }
       }
       if (su) { try { if (!S.shop.name || S.shop.name === "Ma Boutique") S.shop.name = form.name.trim().toUpperCase(); S.shop.country = form.country; if (!langTouched) S.shop.lang = cLang(form.country); S.shop.phone = id; try { lsSet("ecrici-biz", form.biz || "shop"); } catch (e) {} S.shop.biz = form.biz || "shop"; if (form.biz && form.biz !== "shop") { S.shop.biz = form.biz; S.customers = S.customers.filter(c => !c.example); S.txs = S.txs.filter(x => !x.example); S.products = S.products.filter(x => !x.example); if (!S.txs.length) S.counter = 0; } } catch (e) {} }
-      if (su) { try { lsSet("ecrici-ref", ""); form.ref = ""; } catch (e) {} }
+      if (su) { try { lsSet("ecrici-ref", ""); form.ref = ""; } catch (e) {} lsDel("ecrici-tour-seen"); S.shop.tourDone = false; }
       busyAuth = false; await enter(); return;
     }
   } catch (e) { authErrText = e.offline ? g("offline") : g("e_other"); }
