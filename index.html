@@ -1020,7 +1020,7 @@ function tourSteps(){
    [lx("Soyez trouvé sur Ecrici Market","Be found on Ecrici Market"),lx("Cochez « Me lister dans Ecrici Market » : de nouveaux clients de votre ville vous trouvent, sans publicité à payer.","Tick “List me in Ecrici Market”: new customers in your city find you, with no ads to pay for."),'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5"/>',"#c2410c"]];
   base.splice(6,0,...ins); return base;
 }
-const tourKey=()=>"ecrici-tour:"+String((S&&S.shop&&S.shop.phone)||"").replace(/\D/g,"");
+const tourKey=()=>"ecrici-tour-seen";
 const tourSeen=()=>{ try{ return localStorage.getItem(tourKey())==="1"; }catch(e){ return false; } };
 function tourClose(done){ if(done!==false){ S.shop.tourDone=true; try{ localStorage.setItem(tourKey(),"1"); }catch(e){} save(); } ui.tour=null; const el=document.getElementById("tour"); if(el) el.remove(); }
 function drawTour(){
