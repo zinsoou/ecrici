@@ -1106,12 +1106,9 @@ function viewHome(){
   }
   if(isOwner()&&canInstall()) bn.push(`<div class="banner"><span>${t("inst_txt")}</span><span style="display:flex;gap:6px">${deferredInstall?`<button class="btn small primary" data-act="install-app">${t("inst_btn")}</button>`:""}<button class="btn small" data-act="install-off">${t("inst_later")}</button></span></div>`);
   if(!S.customers.length&&!S.txs.length&&!S.products.length) bn.push(`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`);
-  const _guide=homeGuide();
-  if(_guide){ const _ex=bn.find(x=>/clear-examples|load-examples/.test(x)); if(_ex) h+=_ex; h+=_guide; }
-  else { const _setup=lnCard(); const _bn=bn.filter(x=>!(/ln-open/.test(_setup)&&/install-off/.test(x)));
-    if(_bn.length) h+=_bn[0];
-    h+=_setup+(_setup&&/ln-open/.test(_setup)?"":riderCard())+rentCard()+hotelCard()+memCard()+apptCard()+jobCard()+expiryCard(); }
-  h=`<section class="sec"><button class="btn primary" data-act="quick-open" style="width:100%;padding:14px;font-size:1.05rem">⚡ ${lx("Reçu rapide","Quick receipt")}</button></section>`+h;
+  const _setup=lnCard(); const _bn=bn.filter(x=>!(/ln-open/.test(_setup)&&/install-off/.test(x)));
+  if(_bn.length) h+=_bn[0];
+  h+=_setup+(_setup&&/ln-open/.test(_setup)?"":homeGuide()+riderCard())+rentCard()+hotelCard()+memCard()+apptCard()+jobCard()+expiryCard();
   h+=`<section class="sec"><h2>${t("today")}<span>${new Date().toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{weekday:"long",day:"numeric",month:"long"})}</span></h2>
     <div class="sum">
       <div class="card"><div class="lbl">${t("sold")}</div><div class="val num">${money(sold)}</div></div>
@@ -2688,14 +2685,6 @@ function _renderModal(){
       ${biz()==="rent"?`<div class="grid2"><div class="field"><label for="c-unit">${lx("Logement","Unit")}</label><input id="c-unit" autocomplete="off" placeholder="${lx("Ex. Chambre 3","e.g. Flat 3B")}"></div><div class="field"><label for="c-rent">${lx("Loyer par mois","Rent per month")}</label><input id="c-rent" inputmode="decimal" placeholder="${esc(ph("price"))}" autocomplete="off"></div></div>`:""}
       <div class="err" id="c-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-cust">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
-  }else if(m.type==="quick"){
-    inner=`<div class="dlg form"><h2>⚡ ${lx("Reçu rapide","Quick receipt")}</h2><p class="muted" style="margin:0 0 10px">${lx("Un montant, c'est tout. Le reçu est créé tout de suite.","Just an amount. The receipt is created right away.")}</p>
-      <div class="field"><label for="q-amt">${lx("Montant","Amount")}</label><input id="q-amt" inputmode="decimal" autocomplete="off" placeholder="ex. 5000"></div>
-      <div class="field"><label for="q-what">${lx("Pour quoi ? (facultatif)","For what? (optional)")}</label><input id="q-what" autocomplete="off" placeholder="${esc(ph("name"))}"></div>
-      <div class="field"><label for="q-name">${lx("Nom du client (facultatif)","Customer name (optional)")}</label><input id="q-name" autocomplete="off"></div>
-      <label class="chk"><input type="checkbox" id="q-cr"> ${lx("Pas encore payé (à crédit)","Not paid yet (on credit)")}</label>
-      <div class="err" id="q-err" role="alert"></div>
-      <div class="actions"><button class="btn primary" data-act="quick-save">${lx("Créer le reçu","Create receipt")}</button><button class="btn" data-act="close-modal">${lx("Annuler","Cancel")}</button></div></div>`;
   }else if(m.type==="trade"){
     inner=`<div class="dlg form"><h2>${sellGrp()?lx("Que vendez-vous surtout ?","What do you mainly sell?"):kindGrp()?lx("Quel type d'établissement ?","What kind of place is it?"):lx("Quel est votre métier ?","What is your trade?")}</h2>
       <p class="muted" style="margin:0 0 10px">${sellGrp()||kindGrp()?lx("Les clients pourront vous trouver plus facilement dans le Market.","Customers will find you more easily in the Market."):lx("Les mots de l'application s'adaptent à votre métier, et les clients vous trouvent plus facilement.","The app wording adapts to your trade, and customers find you more easily.")}</p>
@@ -2899,18 +2888,6 @@ document.addEventListener("click",e=>{
     case "sp-page": ui.modal=null; renderModal(); ui.view="set"; (ui.setOpen=ui.setOpen||{}).cat=true; render(); break;
     case "trade-toggle": { const k=el.dataset.k, a=(ui.trSel=ui.trSel||[]); const i=a.indexOf(k); if(i>=0) a.splice(i,1); else if(a.length<3) a.push(k); else toast(lx("3 choix maximum","3 choices maximum")); renderModal(); break; }
     case "trade-done": { const a=(ui.trSel||[]).filter(k=>TRADES.some(x=>x[0]===k)); if(a.length){ S.shop.cat=S.shop.cat||{}; S.shop.cat.trs=a.slice(0,3); S.shop.cat.tr=a[0]; try{ nicheExamples(); }catch(e){} save(); } ui.trSel=[]; ui.modal=null; closeModalSafe(); if(spOn()&&!S.products.length) setTimeout(spOpen,150); break; }
-    case "quick-open": ui.modal={type:"quick"}; renderModal(); setTimeout(()=>{ const e=$("#q-amt"); if(e) e.focus(); },60); break;
-    case "quick-save": { const amt=parseAmt($("#q-amt").value), what=$("#q-what").value.trim(), nm=$("#q-name").value.trim(), cr=$("#q-cr").checked, qe=$("#q-err");
-      if(!(amt>0)){ qe.textContent=lx("Entrez un montant.","Enter an amount."); break; }
-      if(cr&&!nm){ qe.textContent=t("err_cust"); break; }
-      const ex=nm?S.customers.find(c=>c.name.trim().toLowerCase()===nm.toLowerCase()):null;
-      ui.draft=newDraft(ex?ex.id:""); const d=ui.draft; if(nm&&!ex){ d.newCust=true; d.nc={name:nm,phone:""}; }
-      d.lines=[{d:what||t("sale"),q:"1",p:String(amt),pid:null,auto:false}]; d.mode=cr?"credit":"full";
-      ui.modal=null; renderModal();
-      let z=$("#s-err"), made=false; if(!z){ z=document.createElement("div"); z.id="s-err"; z.style.display="none"; document.body.appendChild(z); made=true; }
-      saveSale(); if(made&&z.parentNode) z.remove();
-      if(ui.draft&&ui.draft.err){ toast(ui.draft.err); ui.draft=null; }
-      break; }
     case "trade-later": ui.trSel=[]; ui.modal=null; closeModalSafe(); break;
     case "lang": S.shop.lang=L()==="fr"?"en":"fr"; save(); render(); break;
     case "clear-examples":
