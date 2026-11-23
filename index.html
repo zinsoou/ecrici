@@ -1003,7 +1003,7 @@ function _render(){
   const v=ui.view;
   const who=(S.shop.staffOn||window.__member)?me():null;
   let html=`<header class="top"><div class="brand"><h1>${esc(S.shop.name)}</h1><small>${esc(cName(C()))}${who?` · ${esc(who.name)}`:""} · <span id="status"></span></small></div>
-    <div class="chips" style="flex-wrap:wrap;justify-content:flex-end">${isOwner()?`<button class="pill" data-act="tab" data-v="set" ${ui.view==="set"?'aria-pressed="true"':""}>${t("set_btn")}</button>`:""}${window.__shopChip?window.__shopChip():""}${who?`<button class="pill" data-act="lock">${window.__member?t("member_out"):t("lock")}</button>`:""}<button class="pill" data-act="lang" aria-label="${t("language")}">${L()==="fr"?"English":"Français"}</button></div></header>`;
+    <div class="chips" style="flex-wrap:wrap;justify-content:flex-end">${isOwner()?`<button class="pill" data-act="tab" data-v="set" ${ui.view==="set"?'aria-pressed="true"':""}>⚙ ${t("set_btn")}</button>`:""}${window.__shopChip?window.__shopChip():""}${who?`<button class="pill" data-act="lock">${window.__member?t("member_out"):t("lock")}</button>`:""}<button class="pill" data-act="lang" aria-label="${t("language")}">${L()==="fr"?"English":"Français"}</button></div></header>`;
   if(v==="home") html+=viewHome();
   else if(v==="sale") html+=viewSale();
   else if(v==="stock") html+=viewStock();
@@ -1106,9 +1106,12 @@ function viewHome(){
   }
   if(isOwner()&&canInstall()) bn.push(`<div class="banner"><span>${t("inst_txt")}</span><span style="display:flex;gap:6px">${deferredInstall?`<button class="btn small primary" data-act="install-app">${t("inst_btn")}</button>`:""}<button class="btn small" data-act="install-off">${t("inst_later")}</button></span></div>`);
   if(!S.customers.length&&!S.txs.length&&!S.products.length) bn.push(`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`);
-  const _setup=lnCard(); const _bn=bn.filter(x=>!(/ln-open/.test(_setup)&&/install-off/.test(x)));
-  if(_bn.length) h+=_bn[0];
-  h+=_setup+(_setup&&/ln-open/.test(_setup)?"":homeGuide()+riderCard())+rentCard()+hotelCard()+memCard()+apptCard()+jobCard()+expiryCard();
+  const _guide=homeGuide();
+  if(_guide){ const _ex=bn.find(x=>/clear-examples|load-examples/.test(x)); if(_ex) h+=_ex; h+=_guide; }
+  else { const _setup=lnCard(); const _bn=bn.filter(x=>!(/ln-open/.test(_setup)&&/install-off/.test(x)));
+    if(_bn.length) h+=_bn[0];
+    h+=_setup+(_setup&&/ln-open/.test(_setup)?"":riderCard())+rentCard()+hotelCard()+memCard()+apptCard()+jobCard()+expiryCard(); }
+  h=`<section class="sec"><button class="btn primary" data-act="quick-open" style="width:100%;padding:14px;font-size:1.05rem">⚡ ${lx("Reçu rapide","Quick receipt")}</button></section>`+h;
   h+=`<section class="sec"><h2>${t("today")}<span>${new Date().toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{weekday:"long",day:"numeric",month:"long"})}</span></h2>
     <div class="sum">
       <div class="card"><div class="lbl">${t("sold")}</div><div class="val num">${money(sold)}</div></div>
@@ -1121,7 +1124,7 @@ function viewHome(){
   else h+=late.map(x=>`<div class="row" style="cursor:default"><div class="main"><div class="name">${esc(x.c.name)}</div>
       <div class="sub"><span class="badge late">${x.od?t("overdue_d",x.od.days):x.age+" "+t("days")}</span></div></div>
       <div class="amt"><div class="num" style="color:var(--owed)">${money(x.b)}</div>
-      <button class="btn small primary" data-act="remind" data-id="${x.c.id}" style="margin-top:6px">${t("remind")}</button></div></div>`).join("");
+      <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px"><button class="btn small" data-act="new-payment" data-id="${x.c.id}">${lx("Paiement","Payment")}</button><button class="btn small primary" data-act="remind" data-id="${x.c.id}">${t("remind")}</button></div></div></div>`).join("");
   h+=`</div></section>`;
   h+=catNote();
   const lowp=S.products.filter(p=>!p.svc&&p.qty<=p.low).sort((a,b)=>a.qty-b.qty).slice(0,8);
@@ -1141,16 +1144,18 @@ function prefillFor(cid){ const d=ui.draft; if(!d||!cid) return; if(!(draftEmpty
     d.lines=[{d:c.unit?c.unit+" · "+rl:rl,q:"1",p:String(c.rent),pid:pr?pr.id:null,auto:!!pr}]; d.mode="full"; d.af=JSON.stringify(d.lines); } }
 function draftTotal(){ return ui.draft.lines.reduce((s,l)=>s+(parseAmt(l.q)||0)*parseAmt(l.p),0); }
 function draftPaid(){ const d=ui.draft,tot=draftTotal(); return d.mode==="full"?tot:d.mode==="credit"?0:Math.min(parseAmt(d.part),tot); }
+function custOptsHtml(d){ const q=(d.csq||"").trim().toLowerCase();
+  return `<option value="">${t("walkin")}</option>`+S.customers.filter(c=>!q||c.id===d.cust||[c.name,c.phone,c.cls,c.unit].some(v=>String(v||"").toLowerCase().includes(q))).map(c=>`<option value="${c.id}" ${d.cust===c.id?"selected":""}>${esc(c.name)}</option>`).join(""); }
 function viewSale(){
   if(!ui.draft) ui.draft=newDraft();
   const d=ui.draft;
-  const opts=`<option value="">${t("walkin")}</option>`+S.customers.map(c=>`<option value="${c.id}" ${d.cust===c.id?"selected":""}>${esc(c.name)}</option>`).join("");
+  const opts=custOptsHtml(d);
   return `<section class="sec"><h2>${t("new_sale")}</h2><div class="card form">
     <div class="field"><label for="f-cust">${t("customer")}</label>
       ${d.newCust?`<div class="grid2"><input id="nc-name" data-bind="nc.name" value="${esc(d.nc.name)}" placeholder="${t("name")}" autocomplete="off">
         <input id="nc-phone" data-bind="nc.phone" value="${esc(d.nc.phone)}" placeholder="${esc(C().ph)}" inputmode="tel" autocomplete="off"></div>
         <button class="btn small ghost" data-act="sale-existing" style="justify-self:start">${t("existing_customer")}</button>`
-      :`<select id="f-cust" data-bind="cust">${opts}</select>
+      :`${S.customers.length>=6?`<input id="f-csq" type="search" value="${esc(d.csq||"")}" placeholder="${lx("Rechercher un client…","Search a customer…")}" autocomplete="off" aria-label="${lx("Rechercher un client","Search a customer")}">`:""}<select id="f-cust" data-bind="cust" ${(d.csq||"").trim()?'size="5"':""}>${opts}</select>
         <button class="btn small ghost" data-act="sale-newcust" style="justify-self:start">${t("new_customer")}</button>${(()=>{ if(!d.cust||biz()==="pharmacy"||biz()==="hotel"||!draftEmpty(d)) return ""; const ls=lastSaleOf(d.cust); if(!ls) return ""; return `<button class="btn small" data-act="repeat-last" style="justify-self:start">↻ ${lx("Comme la dernière fois","Same as last time")} · ${money(ls.total)}</button>`; })()}`}
     </div>
     <div class="field${S.products.length?" items":""}">${S.products.length?`<button type="button" class="pk-tg" data-act="pk-toggle" aria-expanded="${d.pkClosed?"false":"true"}"><span>${t("pick_lab")}</span><span class="pk-ar" aria-hidden="true"></span></button>`:`<span class="lab">${t("items")}</span>`}${S.products.length?`<input id="pk-inline" type="search" data-bind="pq" value="${esc(d.pq||"")}" placeholder="${esc(t("pick_q"))}" autocomplete="off" aria-label="${esc(t("pick_q"))}">
@@ -1163,6 +1168,7 @@ function viewSale(){
         <button class="pill" data-act="mode" data-m="credit" aria-pressed="${d.mode==="credit"}">${t("pay_credit")}</button>
         <button class="pill" data-act="mode" data-m="part" aria-pressed="${d.mode==="part"}">${t("pay_part")}</button>
       </div>
+      <p class="note" style="margin:6px 0 0">${d.mode==="full"?lx("Le client a tout payé maintenant.","The customer paid everything now."):d.mode==="credit"?lx("Le client paiera plus tard. Quand il paie : ouvrez le client, puis « Enregistrer un paiement ».","The customer will pay later. When they pay: open the customer, then “Record a payment”."):lx("Entrez ce que le client donne maintenant. Le reste sera à payer plus tard.","Enter what the customer pays now. The rest is paid later.")}</p>
       ${d.mode==="part"?`<input id="f-part" data-bind="part" value="${esc(d.part)}" inputmode="decimal" placeholder="${t("amount")}" aria-label="${t("amount")}">`:""}
       ${d.mode!=="credit"?`<div class="seg" style="margin-top:6px" role="group" aria-label="${t("method")}">${["cash","momo","transfer"].map(k=>`<button class="pill" data-act="smethod" data-m="${k}" aria-pressed="${(d.method||S.shop.lastMethod||"cash")===k}">${t(k)}</button>`).join("")}</div>`:""}
       <div class="total" style="border-top:1px dashed var(--line);margin-top:4px"><span>${t("balance_left")}</span><span class="num" id="s-left"></span></div>
@@ -2000,7 +2006,7 @@ const kindGrp=()=>["food","health","hotel","school","travel","rent"].includes(gr
 const sellGrp=()=>grpOf()==="shop"||grpOf()==="elec";
 const tradesFor=()=>{ const g=GROUPS[grpOf()]||[]; return TRADES.filter(x=>g.includes(x[0])||x[0]==="other").map(x=>(x[0]==="other"&&(sellGrp()||kindGrp()))?["other","Autre","Other"]:x); };
 const tradeOn=()=>!!grpOf();
-function askTrade(){ try{ if(!tradeOn()||!isOwner()) return; S.shop.cat=S.shop.cat||{}; const c=S.shop.cat; if(c.tr||(c.trs&&c.trs.length)||c.trAsked) return; c.trAsked=1; save(); ui.trSel=[]; ui.modal={type:"trade"}; renderModal(); }catch(e){} }
+function askTrade(){ try{ if(!tradeOn()||!isOwner()) return; S.shop.cat=S.shop.cat||{}; const c=S.shop.cat; if(c.tr||(c.trs&&c.trs.length)||c.trAsked) return; if(!S.txs.some(x=>!x.example)) return; c.trAsked=1; save(); ui.trSel=[]; ui.modal={type:"trade"}; renderModal(); }catch(e){} }
 function closeModalSafe(){ ui.modal=null; renderModal(); render(); }
 const trSel=c=>{ c=c||{}; const a=(Array.isArray(c.trs)&&c.trs.length)?c.trs:(c.tr?[c.tr]:[]); return a.filter(k=>TRADES.some(x=>x[0]===k)).slice(0,3); };
 function trsGrab(){ const c0=S.shop.cat||{}; const prev=trSel(Object.assign({},c0,ui.cd&&ui.cd.trs?{trs:ui.cd.trs}:{})); if(!$("#c-trs")) return prev; const el=[...document.querySelectorAll("#c-trs input:checked")].map(i=>i.value); const keep=prev.filter(k=>el.includes(k)); return keep.concat(el.filter(k=>!keep.includes(k))).slice(0,3); }
@@ -2682,6 +2688,14 @@ function _renderModal(){
       ${biz()==="rent"?`<div class="grid2"><div class="field"><label for="c-unit">${lx("Logement","Unit")}</label><input id="c-unit" autocomplete="off" placeholder="${lx("Ex. Chambre 3","e.g. Flat 3B")}"></div><div class="field"><label for="c-rent">${lx("Loyer par mois","Rent per month")}</label><input id="c-rent" inputmode="decimal" placeholder="${esc(ph("price"))}" autocomplete="off"></div></div>`:""}
       <div class="err" id="c-err" role="alert"></div>
       <div class="actions"><button class="btn primary" data-act="save-cust">${t("save")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
+  }else if(m.type==="quick"){
+    inner=`<div class="dlg form"><h2>⚡ ${lx("Reçu rapide","Quick receipt")}</h2><p class="muted" style="margin:0 0 10px">${lx("Un montant, c'est tout. Le reçu est créé tout de suite.","Just an amount. The receipt is created right away.")}</p>
+      <div class="field"><label for="q-amt">${lx("Montant","Amount")}</label><input id="q-amt" inputmode="decimal" autocomplete="off" placeholder="ex. 5000"></div>
+      <div class="field"><label for="q-what">${lx("Pour quoi ? (facultatif)","For what? (optional)")}</label><input id="q-what" autocomplete="off" placeholder="${esc(ph("name"))}"></div>
+      <div class="field"><label for="q-name">${lx("Nom du client (facultatif)","Customer name (optional)")}</label><input id="q-name" autocomplete="off"></div>
+      <label class="chk"><input type="checkbox" id="q-cr"> ${lx("Pas encore payé (à crédit)","Not paid yet (on credit)")}</label>
+      <div class="err" id="q-err" role="alert"></div>
+      <div class="actions"><button class="btn primary" data-act="quick-save">${lx("Créer le reçu","Create receipt")}</button><button class="btn" data-act="close-modal">${lx("Annuler","Cancel")}</button></div></div>`;
   }else if(m.type==="trade"){
     inner=`<div class="dlg form"><h2>${sellGrp()?lx("Que vendez-vous surtout ?","What do you mainly sell?"):kindGrp()?lx("Quel type d'établissement ?","What kind of place is it?"):lx("Quel est votre métier ?","What is your trade?")}</h2>
       <p class="muted" style="margin:0 0 10px">${sellGrp()||kindGrp()?lx("Les clients pourront vous trouver plus facilement dans le Market.","Customers will find you more easily in the Market."):lx("Les mots de l'application s'adaptent à votre métier, et les clients vous trouvent plus facilement.","The app wording adapts to your trade, and customers find you more easily.")}</p>
@@ -2885,6 +2899,18 @@ document.addEventListener("click",e=>{
     case "sp-page": ui.modal=null; renderModal(); ui.view="set"; (ui.setOpen=ui.setOpen||{}).cat=true; render(); break;
     case "trade-toggle": { const k=el.dataset.k, a=(ui.trSel=ui.trSel||[]); const i=a.indexOf(k); if(i>=0) a.splice(i,1); else if(a.length<3) a.push(k); else toast(lx("3 choix maximum","3 choices maximum")); renderModal(); break; }
     case "trade-done": { const a=(ui.trSel||[]).filter(k=>TRADES.some(x=>x[0]===k)); if(a.length){ S.shop.cat=S.shop.cat||{}; S.shop.cat.trs=a.slice(0,3); S.shop.cat.tr=a[0]; try{ nicheExamples(); }catch(e){} save(); } ui.trSel=[]; ui.modal=null; closeModalSafe(); if(spOn()&&!S.products.length) setTimeout(spOpen,150); break; }
+    case "quick-open": ui.modal={type:"quick"}; renderModal(); setTimeout(()=>{ const e=$("#q-amt"); if(e) e.focus(); },60); break;
+    case "quick-save": { const amt=parseAmt($("#q-amt").value), what=$("#q-what").value.trim(), nm=$("#q-name").value.trim(), cr=$("#q-cr").checked, qe=$("#q-err");
+      if(!(amt>0)){ qe.textContent=lx("Entrez un montant.","Enter an amount."); break; }
+      if(cr&&!nm){ qe.textContent=t("err_cust"); break; }
+      const ex=nm?S.customers.find(c=>c.name.trim().toLowerCase()===nm.toLowerCase()):null;
+      ui.draft=newDraft(ex?ex.id:""); const d=ui.draft; if(nm&&!ex){ d.newCust=true; d.nc={name:nm,phone:""}; }
+      d.lines=[{d:what||t("sale"),q:"1",p:String(amt),pid:null,auto:false}]; d.mode=cr?"credit":"full";
+      ui.modal=null; renderModal();
+      let z=$("#s-err"), made=false; if(!z){ z=document.createElement("div"); z.id="s-err"; z.style.display="none"; document.body.appendChild(z); made=true; }
+      saveSale(); if(made&&z.parentNode) z.remove();
+      if(ui.draft&&ui.draft.err){ toast(ui.draft.err); ui.draft=null; }
+      break; }
     case "trade-later": ui.trSel=[]; ui.modal=null; closeModalSafe(); break;
     case "lang": S.shop.lang=L()==="fr"?"en":"fr"; save(); render(); break;
     case "clear-examples":
@@ -3119,6 +3145,7 @@ document.addEventListener("click",async e=>{
 document.addEventListener("input",e=>{
   const el=e.target;
   if(el.dataset&&el.dataset.spk){ spPrice(el.dataset.spk,el.value); return; }
+  if(el.id==="f-csq"){ const d=ui.draft; if(d){ d.csq=el.value; const sel=$("#f-cust"); if(sel){ sel.innerHTML=custOptsHtml(d); if(el.value.trim()) sel.setAttribute("size","5"); else sel.removeAttribute("size"); } } return; }
   if(el.id==="pk-inline"){ ui.draft.pq=el.value; const B=$("#pk-inl"); if(B) B.innerHTML=pickList(el.value,true); pkVis(); return; }
   if(el.dataset&&el.dataset.pp&&ui.modal&&ui.modal.type==="ppick"){ const v=(ui.modal.vals[el.dataset.i]=ui.modal.vals[el.dataset.i]||{}); v[el.dataset.pp]=el.value; return; }
   if(el.id==="pp-q"&&ui.modal&&ui.modal.type==="ppick"){ const L2=$("#pp-list"); if(L2) L2.innerHTML=ppList(ui.modal,el.value); return; }
@@ -3131,7 +3158,7 @@ document.addEventListener("input",e=>{
 document.addEventListener("change",e=>{
   const el=e.target;
   if(el.id==="pr-name"&&ppOn()&&ui.modal&&ui.modal.type==="product"&&!ui.modal.id){ const hit=sugAll().find(x=>x[0].toLowerCase()===el.value.trim().toLowerCase()); if(hit){ const ce=$("#pr-cat"); if(ce&&!ce.value) ce.value=hit[1].slice(0,24); }  const be=$("#pr-br"); if(be&&!be.value){ const bo=brandOf({name:el.value}); if(bo) be.value=bo; } }
-  if(el.dataset&&el.dataset.bind==="cust"){ setBind("cust",el.value); if(ui.draft){ const _b=JSON.stringify(ui.draft.lines); prefillFor(el.value); if(JSON.stringify(ui.draft.lines)!==_b){ render(); } else if(ui.view==="sale") render(); } }
+  if(el.dataset&&el.dataset.bind==="cust"){ setBind("cust",el.value); if(ui.draft){ ui.draft.csq=""; const _b=JSON.stringify(ui.draft.lines); prefillFor(el.value); if(JSON.stringify(ui.draft.lines)!==_b){ render(); } else if(ui.view==="sale") render(); } }
   if(el.id==="pr-img"&&el.files&&el.files[0]&&ui.modal&&ui.modal.type==="product"){ const m=ui.modal, files=[...el.files]; el.value="";
     const room=Math.min(PHMAX-m.ph.length, PHSHOP-phTotal(m.id)-m.ph.length); if(room<=0){ toast(lx("Limite de photos atteinte.","Photo limit reached.")); return; }
     (async()=>{ let bad=0; for(const f of files.slice(0,room)){ await new Promise(r=>resizeImg(f,800,b=>{ if(!b||b.size>280000){ bad++; return r(); } m.ph.push({b,pv:URL.createObjectURL(b)}); r(); })); }
