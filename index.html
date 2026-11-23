@@ -326,6 +326,7 @@ details.acc>:not(summary):not(.card){padding:12px 16px}
 @keyframes veilIn{from{opacity:0}to{opacity:1}}
 @keyframes sheetIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.veil,.sheet{animation:none}}
+.rr,.rr .sheet,.rr .rv-body{animation:none!important}
 @media (hover:hover){ .row:hover{background:var(--paper)} .btn:hover,.pill:hover{filter:brightness(.96)} .tabs button:hover{background:var(--paper)} }
 
 @media (prefers-reduced-motion:no-preference){.veil{animation:fade .12s ease-out}@keyframes fade{from{opacity:0}to{opacity:1}}}
@@ -2596,7 +2597,12 @@ function renderModal(){ _renderModal(); try{ histSync(); }catch(_){} }
 function _renderModal(){
   const m=ui.modal, layer=$("#layer");
   document.body.classList.toggle("rvopen",!!(m&&m.type==="receipt"));
-  if(!m){ layer.innerHTML=""; return; }
+  if(!m){ layer.innerHTML=""; delete layer.dataset.mt; return; }
+  /* same popup drawn again (a chip tapped, a choice made): keep it still, no re-animation, keep scroll and focus */
+  const _was=layer.dataset.mt===m.type&&!!layer.firstElementChild, _sv=layer.querySelector(".veil,.rv"), _sc=_was&&_sv?_sv.scrollTop:0, _ae=_was&&document.activeElement&&document.activeElement.id?document.activeElement.id:"";
+  let _ss=0,_se=0; try{ if(_ae){ const a0=document.activeElement; _ss=a0.selectionStart; _se=a0.selectionEnd; } }catch(e){}
+  layer.dataset.mt=m.type;
+  const _after=()=>{ if(!_was) return; const v=layer.querySelector(".veil,.rv"); if(v){ v.classList.add("rr"); v.scrollTop=_sc; } if(_ae){ const e=document.getElementById(_ae); if(e&&e.focus){ try{ e.focus({preventScroll:true}); if(_ss!=null&&e.setSelectionRange) e.setSelectionRange(_ss,_se); }catch(x){} } } };
   let inner="";
   if(m.type==="receipt"){
     const x=S.txs.find(y=>y.id===m.id); if(!x){ ui.modal=null; layer.innerHTML=""; return; }
@@ -2620,7 +2626,7 @@ function _renderModal(){
         <div class="rv-row"><button class="btn" data-act="pdf-share" data-id="${x.id}">PDF</button>${window.print?`<button class="btn" data-act="doc-print" data-id="${x.id}">${lx("Imprimer","Print")}</button>`:""}<button class="btn" data-act="rv-more" aria-expanded="${more}">${lx("Plus","More")} ${more?"▾":"▴"}</button></div>
       </div></div></div>`;
     const nb=layer.querySelector(".rv-body"); if(nb&&keep) nb.scrollTop=keep;
-    return;
+    _after(); return;
   }else if(m.type==="promo"){
     const dys=[7,14,30], boost=m.kind==="boost", txt=promoText(m), ready=!boost||(m.sel||[]).length>0;
     inner=`<div class="dlg"><h2>⭐ ${lx("Mettre en avant","Promote my "+(pgSell()?"shop":"page"))}</h2>
@@ -2791,7 +2797,7 @@ function _renderModal(){
   layer.innerHTML=`<div class="veil" data-act="veil"><div class="sheet" role="dialog" aria-modal="true"><div class="xrow"><button class="xbtn" data-act="close-modal" aria-label="${t("close")}"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></button></div>${inner}</div></div>`;
   if(layer.querySelector(".dxin")){const xr=layer.querySelector(".xrow");if(xr)xr.remove();}
   else{const xr=layer.querySelector(".xrow"),card=layer.querySelector(".sheet > .dlg");if(xr&&card){const xb=xr.querySelector(".xbtn");xb.classList.add("in");card.insertBefore(xb,card.firstChild);xr.remove();}}
-  const first=layer.querySelector("input"); if(first&&m.type!=="receipt"&&m.type!=="svcpick") first.focus();
+  if(_was) _after(); else { const first=layer.querySelector("input"); if(first&&m.type!=="receipt"&&m.type!=="svcpick") first.focus(); }
 }
 
 /* ---------- actions ---------- */
