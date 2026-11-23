@@ -612,6 +612,21 @@ BIZ.rent.fr.tab_stock="Biens"; BIZ.rent.fr.stock="Biens"; BIZ.rent.fr.add_produc
  rent:{fr:{no_products:"Aucun bien pour l'instant. Ajoutez votre premier bien (chambre, appartement, boutique…)."},en:{no_products:"No units yet. Add your first unit (room, apartment, shop…)."}},
  travel:{fr:{no_products:"Aucun voyage pour l'instant. Ajoutez votre premier voyage ou service."},en:{no_products:"No trips yet. Add your first trip or service."}}};
  Object.keys(W).forEach(k=>{ if(!BIZ[k]) return; ["fr","en"].forEach(l=>{ Object.assign(BIZ[k][l],W[k][l]); }); }); })();
+/* v148: wording that matches each business (saved messages, hints, errors) */
+(function(){ const X={
+ rent:[["Locataire ajouté","Bien enregistré","Touchez le logement dans la liste pour l'ajouter.","Choisissez un locataire (le loyer se remplit seul) ou touchez un logement dans la liste."],["Tenant added","Unit saved","Tap the unit in the list to add it.","Choose a tenant (the rent fills itself in) or tap a unit in the list."]],
+ hotel:[["Client ajouté","Chambre enregistrée","Touchez une chambre : 1 nuit à partir d'aujourd'hui. Touchez encore pour ajouter une nuit.","Touchez une chambre dans la liste, puis choisissez les dates."],["Guest added","Room saved","Tap a room: 1 night starting today. Tap again to add a night.","Tap a room in the list, then choose the dates."]],
+ school:[["Élève ajouté","Frais enregistrés",null,"Touchez un type de frais dans la liste pour l'ajouter."],["Student added","Fee saved",null,"Tap a fee type in the list to add it."]],
+ health:[["Patient ajouté","Soin enregistré",null,"Touchez un soin dans la liste pour l'ajouter."],["Patient added","Service saved",null,"Tap a service in the list to add it."]],
+ beauty:[["Client ajouté","Service enregistré",null,"Touchez un service dans la liste pour l'ajouter."],["Client added","Service saved",null,"Tap a service in the list to add it."]],
+ repair:[["Client ajouté","Service enregistré",null,"Touchez un service dans la liste, ou écrivez-le avec son prix."],["Customer added","Service saved",null,"Tap a service in the list, or type it with its price."]],
+ services:[["Client ajouté","Service enregistré",null,"Touchez un service dans la liste, ou écrivez-le avec son prix."],["Customer added","Service saved",null,"Tap a service in the list, or type it with its price."]],
+ travel:[["Client ajouté","Voyage enregistré",null,"Touchez un voyage dans la liste pour l'ajouter."],["Customer added","Trip saved",null,"Tap a trip in the list to add it."]],
+ food:[["Client ajouté","Plat enregistré",null,"Touchez un plat dans la liste pour l'ajouter."],["Customer added","Item saved",null,"Tap a dish in the list to add it."]],
+ pharmacy:[["Client ajouté","Médicament enregistré",null,"Touchez un produit dans la liste pour l'ajouter."],["Customer added","Medicine saved",null,"Tap a product in the list to add it."]],
+ electronics:[["Client ajouté","Article enregistré",null,"Touchez un article dans la liste pour l'ajouter."],["Customer added","Item saved",null,"Tap an item in the list to add it."]],
+ shop:[["Client ajouté","Produit enregistré",null,"Touchez un produit dans la liste pour l'ajouter."],["Customer added","Product saved",null,"Tap a product in the list to add it."]]};
+ Object.keys(X).forEach(k=>{ if(!BIZ[k]) return; [["fr",0],["en",1]].forEach(([l,i])=>{ const r=X[k][i]; const o={cust_saved:r[0],product_saved:r[1],err_total:r[3]}; if(r[2]) o.pick_hint=r[2]; Object.assign(BIZ[k][l],o); }); }); })();
 const biz = () => (S&&S.shop&&BIZ[S.shop.biz])?S.shop.biz:"shop";
 /* Tutorial videos (YouTube). Leave "" until the video is uploaded: the button stays hidden. */
 const VIDEOS={
@@ -1118,6 +1133,12 @@ function viewHome(){
 
 /* --- sale form --- */
 function newDraft(custId){ return {cust:custId||"",newCust:false,nc:{name:"",phone:""},lines:[{d:"",q:"1",p:"",pid:null,auto:false}],mode:"full",part:"",due:"",note:"",err:"",pq:""}; }
+function monthLabel(){ return new Date().toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{month:"long",year:"numeric"}); }
+function lastSaleOf(cid){ return S.txs.filter(x=>x.cust===cid&&x.type==="sale"&&!x.void&&x.lines&&x.lines.length).sort((a,b)=>b.no-a.no)[0]||null; }
+function draftEmpty(d){ return d.lines.every(l=>!String(l.d||"").trim()&&!parseAmt(l.p)); }
+function prefillFor(cid){ const d=ui.draft; if(!d||!cid) return; if(!(draftEmpty(d)||(d.af&&JSON.stringify(d.lines)===d.af))) return; const c=custById(cid); if(!c) return;
+  if(biz()==="rent"&&+c.rent>0){ const pr=S.products.find(p=>c.unit&&p.name.toLowerCase()===String(c.unit).toLowerCase()); const rl=lx("Loyer","Rent")+" "+monthLabel();
+    d.lines=[{d:c.unit?c.unit+" · "+rl:rl,q:"1",p:String(c.rent),pid:pr?pr.id:null,auto:!!pr}]; d.mode="full"; d.af=JSON.stringify(d.lines); } }
 function draftTotal(){ return ui.draft.lines.reduce((s,l)=>s+(parseAmt(l.q)||0)*parseAmt(l.p),0); }
 function draftPaid(){ const d=ui.draft,tot=draftTotal(); return d.mode==="full"?tot:d.mode==="credit"?0:Math.min(parseAmt(d.part),tot); }
 function viewSale(){
@@ -1130,7 +1151,7 @@ function viewSale(){
         <input id="nc-phone" data-bind="nc.phone" value="${esc(d.nc.phone)}" placeholder="${esc(C().ph)}" inputmode="tel" autocomplete="off"></div>
         <button class="btn small ghost" data-act="sale-existing" style="justify-self:start">${t("existing_customer")}</button>`
       :`<select id="f-cust" data-bind="cust">${opts}</select>
-        <button class="btn small ghost" data-act="sale-newcust" style="justify-self:start">${t("new_customer")}</button>`}
+        <button class="btn small ghost" data-act="sale-newcust" style="justify-self:start">${t("new_customer")}</button>${(()=>{ if(!d.cust||biz()==="pharmacy"||biz()==="hotel"||!draftEmpty(d)) return ""; const ls=lastSaleOf(d.cust); if(!ls) return ""; return `<button class="btn small" data-act="repeat-last" style="justify-self:start">↻ ${lx("Comme la dernière fois","Same as last time")} · ${money(ls.total)}</button>`; })()}`}
     </div>
     <div class="field${S.products.length?" items":""}">${S.products.length?`<button type="button" class="pk-tg" data-act="pk-toggle" aria-expanded="${d.pkClosed?"false":"true"}"><span>${t("pick_lab")}</span><span class="pk-ar" aria-hidden="true"></span></button>`:`<span class="lab">${t("items")}</span>`}${S.products.length?`<input id="pk-inline" type="search" data-bind="pq" value="${esc(d.pq||"")}" placeholder="${esc(t("pick_q"))}" autocomplete="off" aria-label="${esc(t("pick_q"))}">
       <div class="card flush" id="pk-inl">${pickList(d.pq,true)}</div><p class="note pk-hint" style="margin:0">${t("pick_hint")}</p>`:""}<div class="lines" id="lines">${linesHtml()}</div>
@@ -1259,10 +1280,10 @@ function pickAdd(id){
   if(expOn()&&pr.qty>0&&sellable(pr)<=0){ toast(lx(`${pr.name} est périmé. Retirez-le du stock.`,`${pr.name} has expired. Remove it from stock.`)); return false; }
   const ex=d.lines.find(l=>l.pid===id), have=pickQty(id);
   if(!pr.svc&&have+1>sellable(pr)){ toast(t("err_stock",pr.name,sellable(pr))); return false; }
-  if(ex){ ex.q=String((parseAmt(ex.q)||0)+1); return true; }
+  if(ex){ if(biz()==="hotel"&&ex.ci&&ex.co){ ex.co=dayAdd(ex.co,1); ex.q=String(daysBetween(ex.ci,ex.co)); return true; } ex.q=String((parseAmt(ex.q)||0)+1); return true; }
   let l=d.lines.find(x=>!x.d.trim()&&!parseAmt(x.p));
   if(!l){ l={d:"",q:"1",p:"",pid:null,auto:false}; d.lines.push(l); }
-  l.d=pr.name; l.pid=pr.id; l.q="1"; l.p=String(pr.price); l.auto=true; if(expOn()){ const nb=nextBatch(pr); if(nb&&(nb.n||nb.e)){ l.sn=nb.n||""; l.w=nb.e?fmtExp(nb.e):""; l.open=true; } } return true;
+  l.d=pr.name; l.pid=pr.id; l.q="1"; l.p=String(pr.price); l.auto=true; if(biz()==="hotel"){ l.ci=todayKey(); l.co=dayAdd(todayKey(),1); l.open=true; } if(expOn()){ const nb=nextBatch(pr); if(nb&&(nb.n||nb.e)){ l.sn=nb.n||""; l.w=nb.e?fmtExp(nb.e):""; l.open=true; } } return true;
 }
 function lineHint(l){ const p=l.pid&&S.products.find(x=>x.id===l.pid); if(!p||p.svc) return ""; const q=parseAmt(l.q)||0; return `${t("in_stock")}: ${sellable(p)}`+(q>sellable(p)?" ⚠":""); }
 function updateSaleTotals(){
@@ -2796,7 +2817,7 @@ const phoneBad=v=>{ const d=String(v||"").replace(/\D/g,""); return d.length>0&&
 const PHBAD=()=>lx("Numéro de téléphone invalide (8 à 15 chiffres).","Invalid phone number (8 to 15 digits).");
 const qLab=l=>(l.ci&&l.co?`${l.q} ${Number(l.q)===1?lx("nuit","night"):lx("nuits","nights")}`:l.q);
 function saveSale(kind){
-  const d=ui.draft; d.err="";
+  const d=ui.draft; d.err=""; if(biz()==="rent"&&d.cust&&draftEmpty(d)) prefillFor(d.cust);
   const lines=d.lines.map(l=>({...((l.sn||"").trim()?{sn:l.sn.trim()}:{}),...(l.ci?{ci:l.ci}:{}),...(l.co?{co:l.co}:{}),...((l.w||"").trim()?{w:l.w.trim()}:{}),d:l.d.trim(),q:parseAmt(l.q)||0,p:parseAmt(l.p),pid:l.pid||null,c:(()=>{const pr=l.pid&&S.products.find(z=>z.id===l.pid);return pr&&pr.cost>0?pr.cost:0;})()})).filter(l=>l.q>0&&l.p>0);
   const total=lines.reduce((s,l)=>s+l.q*l.p,0);
   if(!lines.length||total<=0){ d.err=t("err_total"); $("#s-err").textContent=d.err; return; }
@@ -2940,7 +2961,7 @@ document.addEventListener("click",e=>{
     case "pay-method": document.querySelectorAll("#p-method .pill").forEach(b=>b.setAttribute("aria-pressed",String(b===el))); break;
     case "save-payment": savePayment(id); break;
     case "mem-wa": { const c=custById(id), m=c&&memInfo(id); if(c&&m&&c.phone){ const d=daysBetween(todayKey(),m.end); const msg=lx(`Bonjour ${c.name}, votre abonnement « ${m.pkg} » chez ${S.shop.name} ${d<0?"a expiré le":"expire le"} ${fmtDay(m.end)}. Voulez-vous le renouveler ? Merci !`,`Hello ${c.name}, your “${m.pkg}” membership at ${S.shop.name} ${d<0?"expired on":"expires on"} ${fmtDay(m.end)}. Would you like to renew it? Thank you!`); window.open("https://wa.me/"+intlPhone(c.phone)+"?text="+encodeURIComponent(msg),"_blank","noopener"); } break; }
-    case "sale-for": ui.draft=newDraft(id); ui.view="sale"; ui.custId=null; render(); window.scrollTo(0,0); break;
+    case "sale-for": ui.draft=newDraft(id); prefillFor(id); ui.view="sale"; ui.custId=null; render(); window.scrollTo(0,0); break;
     case "sale-newcust": ui.draft.newCust=true; render(); $("#nc-name")&&$("#nc-name").focus(); break;
     case "sale-existing": ui.draft.newCust=false; render(); break;
     case "pick-open": ui.modal={type:"pick"}; renderModal(); { const f=$("#pk-q"); f&&f.focus(); } break;
@@ -2952,6 +2973,7 @@ document.addEventListener("click",e=>{
     case "biz-no": S.shop.biz="shop"; try{ localStorage.setItem("ecrici-biz","shop"); }catch(e){} save(); render(); break;
     case "line-det": ui.draft.lines[+el.dataset.i].open=true; render(); break;
     case "del-line": ui.draft.lines.splice(+el.dataset.i,1); render(); break;
+    case "repeat-last": { const d=ui.draft, ls=d&&lastSaleOf(d.cust); if(ls){ d.lines=ls.lines.map(l=>({d:l.d,q:String(l.q),p:String(l.p),pid:l.pid||null,auto:!!l.pid})); d.mode="full"; d.af=JSON.stringify(d.lines); } render(); break; }
     case "mode": ui.draft.mode=el.dataset.m; render(); break;
     case "smethod": ui.draft.method=el.dataset.m; render(); break;
     case "save-sale": saveSale(el.dataset.k); break;
@@ -3109,7 +3131,7 @@ document.addEventListener("input",e=>{
 document.addEventListener("change",e=>{
   const el=e.target;
   if(el.id==="pr-name"&&ppOn()&&ui.modal&&ui.modal.type==="product"&&!ui.modal.id){ const hit=sugAll().find(x=>x[0].toLowerCase()===el.value.trim().toLowerCase()); if(hit){ const ce=$("#pr-cat"); if(ce&&!ce.value) ce.value=hit[1].slice(0,24); }  const be=$("#pr-br"); if(be&&!be.value){ const bo=brandOf({name:el.value}); if(bo) be.value=bo; } }
-  if(el.dataset&&el.dataset.bind==="cust"){ setBind("cust",el.value); }
+  if(el.dataset&&el.dataset.bind==="cust"){ setBind("cust",el.value); if(ui.draft){ const _b=JSON.stringify(ui.draft.lines); prefillFor(el.value); if(JSON.stringify(ui.draft.lines)!==_b){ render(); } else if(ui.view==="sale") render(); } }
   if(el.id==="pr-img"&&el.files&&el.files[0]&&ui.modal&&ui.modal.type==="product"){ const m=ui.modal, files=[...el.files]; el.value="";
     const room=Math.min(PHMAX-m.ph.length, PHSHOP-phTotal(m.id)-m.ph.length); if(room<=0){ toast(lx("Limite de photos atteinte.","Photo limit reached.")); return; }
     (async()=>{ let bad=0; for(const f of files.slice(0,room)){ await new Promise(r=>resizeImg(f,800,b=>{ if(!b||b.size>280000){ bad++; return r(); } m.ph.push({b,pv:URL.createObjectURL(b)}); r(); })); }
