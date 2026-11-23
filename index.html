@@ -755,6 +755,17 @@ const sugFlat=k=>{ const r=[]; (SUG[k]||[]).forEach(c=>c[2].forEach(x=>r.push([x
 const sugEx=k=>{ const f=sugFlat(k), p=SUGP[k]; if(!f.length||!p) return null; return p.map(r=>{ const x=f[Math.min(r[0],f.length-1)]; return [x[0],x[1],r[1]]; }); };
 const EXI={"Riz 25 kg":0,"Huile 5 L":1,"Sucre 1 kg":2,"Savon":1,"Ciment (sac)":0,"Boîtes de tomate":2,"Eau 1,5 L":1,"Pain":2,"Lait en poudre":0};
 /* while only example data is present, show examples that fit the chosen business type */
+const EX_NAMES={
+ electronics:[["Mme Adjovi","Koffi (étudiant)","Mama Fatou","Séraphin"],["Mme Adjovi","Koffi (student)","Mama Fatou","Séraphin"]],
+ food:[["Mme Adjovi","Koffi (bureau)","Mama Fatou","Séraphin"],["Mme Adjovi","Koffi (office)","Mama Fatou","Séraphin"]],
+ pharmacy:[["Mme Adjovi","M. Koffi","Mama Fatou","Séraphin"],["Mme Adjovi","Mr Koffi","Mama Fatou","Séraphin"]],
+ beauty:[["Mme Adjovi","Reine","Mama Fatou","Séraphine"],["Mme Adjovi","Reine","Mama Fatou","Séraphine"]],
+ health:[["Mme Adjovi","M. Koffi","Mama Fatou","Séraphin"],["Mme Adjovi","Mr Koffi","Mama Fatou","Séraphin"]],
+ school:[["Mme Adjovi (parent)","M. Koffi (parent)","Mama Fatou (parent)","Séraphin (parent)"],["Mrs Adjovi (parent)","Mr Koffi (parent)","Mama Fatou (parent)","Séraphin (parent)"]],
+ repair:[["Mme Adjovi","Koffi (taxi)","Mama Fatou","Séraphin"],["Mme Adjovi","Koffi (taxi driver)","Mama Fatou","Séraphin"]],
+ travel:[["Mme Adjovi","M. Koffi","Mama Fatou","Séraphin"],["Mme Adjovi","Mr Koffi","Mama Fatou","Séraphin"]],
+ rent:[["Mme Adjovi (Appt 2)","Koffi (Studio 1)","Mama Fatou (Appt 4)","Séraphin (Villa)"],["Mrs Adjovi (Apt 2)","Koffi (Studio 1)","Mama Fatou (Apt 4)","Séraphin (Villa)"]],
+ hotel:[["Mme Adjovi","Koffi (entreprise)","Mama Fatou","Séraphin"],["Mrs Adjovi","Koffi (company)","Mama Fatou","Séraphin"]]};
 function nicheExamples(){
   if(S.txs.some(x=>!x.example)||S.customers.some(c=>!c.example)||S.products.some(p=>!p.example)) return;
   const k=biz(), L=S.shop.lang==="en"?1:0, T=(function(){ try{ const tk=trKey(); return (tk&&sugEx(tk))||EXN[k]; }catch(e){ return EXN[k]; } })();
@@ -764,6 +775,7 @@ function nicheExamples(){
   const svcN=T&&NOSTOCK.includes(k);
   S.products.forEach(p=>{ const o=p.eo; if(!T){ p.name=o.n; p.price=o.p; p.qty=o.q; p.low=o.l; p.cost=o.c; p.svc=false; return; } const it=T[EXI[o.n]]; p.name=it[L]; p.price=it[2]; p.cost=svcN?0:Math.round(it[2]*.7); p.svc=!!svcN; p.qty=svcN?0:o.q; p.low=svcN?0:o.l; });
   const seen=new Set(), held=[]; S.products=S.products.filter(p=>{ const n=p.name.toLowerCase(); if(seen.has(n)){ held.push(p); return false; } seen.add(n); return true; }); S.exHold=held;
+  try{ const nm=EX_NAMES[k]; if(nm){ let j=0; S.customers.forEach(c=>{ if(c.example&&j<4){ c.name=nm[L][j++]; } }); } }catch(e){}
   S.txs.forEach(x=>{ if(x.type!=="sale") return; x.lines.forEach(l=>{ const o=l.eo; if(!T){ l.d=o.d; l.p=o.p; l.q=o.q; l.c=o.c; return; } const it=T[EXI[o.d]]; l.d=it[L]; l.p=it[2]; l.q=svcN?Math.min(o.q,2):o.q; l.c=svcN?0:Math.round(it[2]*.7); }); x.total=x.lines.reduce((a,l)=>a+l.q*l.p,0); if(x.paid>x.total) x.paid=x.total; });
 }
 function balanceOf(custId, uptoNo){
@@ -990,24 +1002,36 @@ function _render(){
     .map(([k,l])=>`<button data-act="tab" data-v="${k}" ${(v==="bc"?"cust":v)===k?'aria-current="page"':""}>${icons[k]}${t(l)}</button>`).join("");
   renderModal(); updateStatus();
   if(v==="sale"){ updateSaleTotals(); pkVis(); }
-  try{ maybeTour(); }catch(e){}
+  try{ maybeTour(); }catch(e){} try{ const _t=document.getElementById("tour"); if(ui.tour&&_t&&_t.dataset.lg!==L()) drawTour(); }catch(e){}
 }
 
 /* ---------- welcome tour ---------- */
 const TOUR_IC=['<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z"/><path d="M9 8h7M9 12h7M9 16h4"/>','<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>','<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>','<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/>','<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.2c2.9.2 5 2.5 5 5.3"/>','<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>','<path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1.2"/>','<path d="M3 9l1.5-5h15L21 9v1a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9z"/><path d="M5 12v8h14v-8M10 20v-5h4v5"/>','<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>'];
 const TOUR_BG=["#2447d6","#2447d6","#2447d6","#0f766e","#c2410c","#15803d","#2447d6","#6d28d9","#15803d"];
+const TOUR_V={sell:["envoient leur commande","send their order"],beauty:["réservent","book"],travel:["réservent","book"],hotel:["réservent","book"],repair:["demandent un devis","ask for a quote"],services:["demandent un devis","ask for a quote"],health:["prennent rendez-vous","book an appointment"],school:["inscrivent leur enfant","enrol their child"],rent:["demandent une visite","ask for a visit"]};
+function tourSteps(){
+  const base=(sellTour()?t("tour"):TOUR_GEN[L()]).map((r,i)=>[r[0],r[1],TOUR_IC[i],TOUR_BG[i]]);
+  const shopT=sellTour();
+  base[0][1]=shopT?lx("Moins de dettes perdues, plus de clients : le cahier de votre boutique sur votre téléphone. 30 jours gratuits. Une visite d'une minute.","Fewer lost debts, more customers: your shop's notebook on your phone. 30 days free. A one-minute tour."):lx("Moins de dettes perdues, plus de clients : le cahier de votre activité sur votre téléphone. 30 jours gratuits. Une visite d'une minute.","Fewer lost debts, more customers: your business notebook on your phone. 30 days free. A one-minute tour.");
+  const last=base.length-1; if(!shopT) base[last][1]=lx("Essayez avec des exemples pour voir comment ça marche, ou commencez directement avec votre activité.","Try it with example data to see how it works, or start straight away with your own business."); base[last][1]=base[last][1]+" "+lx("Vos 30 jours gratuits sont inclus.","Your 30 free days are included.");
+  if(biz()==="pharmacy"){ base[1][0]=lx("Ajoutez vos médicaments","Add your medicines"); base[1][1]=lx("Dans Articles, notez le nom, le prix, le stock et la date de péremption de chaque lot.","In Items, add the name, price, stock and expiry date of each batch."); return base; }
+  const v=TOUR_V[pgK()]||TOUR_V.sell, ic1=base[1][2], ic2=base[4][2];
+  const ins=[[lx("Votre page en ligne, gratuite","Your free online page"),lx("Dans Réglages › Ma page en ligne : un lien à partager sur WhatsApp. Vos clients voient vos prix et "+v[0]+". Votre stock et vos coûts restent privés.","In Settings › My online page: one link to share on WhatsApp. Your customers see your prices and "+v[1]+". Your stock and costs stay private."),'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',"#0f766e"],
+   [lx("Soyez trouvé sur Ecrici Market","Be found on Ecrici Market"),lx("Cochez « Me lister dans Ecrici Market » : de nouveaux clients de votre ville vous trouvent, sans publicité à payer.","Tick “List me in Ecrici Market”: new customers in your city find you, with no ads to pay for."),'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5"/>',"#c2410c"]];
+  base.splice(6,0,...ins); return base;
+}
 function tourClose(done){ if(done!==false){ S.shop.tourDone=true; save(); } ui.tour=null; const el=document.getElementById("tour"); if(el) el.remove(); }
 function drawTour(){
   let el=document.getElementById("tour");
   if(!ui.tour){ if(el) el.remove(); return; }
-  const st=biz()==="shop"?t("tour"):TOUR_GEN[L()], i=Math.max(0,Math.min(st.length-1,ui.tour.i)), last=i===st.length-1, c=TOUR_BG[i];
-  if(!el){ el=document.createElement("div"); el.id="tour"; document.body.appendChild(el); }
+  const st=tourSteps(), i=Math.max(0,Math.min(st.length-1,ui.tour.i)), last=i===st.length-1, c=st[i][3];
+  if(!el){ el=document.createElement("div"); el.id="tour"; document.body.appendChild(el); } el.dataset.lg=L();
   el.innerHTML=`<div class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-h">
-    <div class="tour-art" style="--tc:${c}"><i class="tc1"></i><i class="tc2"></i><div class="tour-ic"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TOUR_IC[i]}</svg></div>
+    <div class="tour-art" style="--tc:${c}"><i class="tc1"></i><i class="tc2"></i><div class="tour-ic"><svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${st[i][2]}</svg></div>
       ${last?"":`<button class="tour-skip" data-act="tour-skip">${t("tour_skip")}</button>`}</div>
     <div class="tour-body" key="${i}"><h2 id="tour-h">${esc(st[i][0])}</h2><p>${esc(st[i][1])}</p></div>
     <div class="tour-dots" aria-hidden="true">${st.map((_,k)=>`<span class="${k===i?"on":""}"></span>`).join("")}</div>
-    <div class="tour-btns">${last?`${biz()==="shop"?`<button class="btn" data-act="tour-try">${t("tour_try")}</button>`:""}<button class="btn primary" data-act="tour-own">${biz()==="shop"?t("tour_own"):lx("Commencer","Get started")}</button>`
+    <div class="tour-btns">${last?`<button class="btn" data-act="tour-try">${t("tour_try")}</button><button class="btn primary" data-act="tour-own">${sellTour()?t("tour_own"):lx("Commencer avec mon activité","Start with my business")}</button>`
       :`<button class="btn ghost" data-act="tour-back" ${i?"":"hidden"}>${t("tour_back")}</button><button class="btn primary" data-act="tour-next">${t("tour_next")}</button>`}</div></div>`;
   const b=el.querySelector(".tour-btns .primary"); if(b) try{ b.focus({preventScroll:true}); }catch(e){}
 }
@@ -1019,8 +1043,8 @@ function maybeTour(){
 (function(){ let x0=null;
   document.addEventListener("touchstart",e=>{ x0=ui.tour&&e.target.closest("#tour")?e.touches[0].clientX:null; },{passive:true});
   document.addEventListener("touchend",e=>{ if(x0===null||!ui.tour) return; const dx=e.changedTouches[0].clientX-x0; x0=null;
-    if(Math.abs(dx)>60){ const n=(biz()==="shop"?t("tour"):TOUR_GEN[L()]).length; ui.tour.i=Math.max(0,Math.min(n-1,ui.tour.i+(dx<0?1:-1))); drawTour(); } },{passive:true});
-  document.addEventListener("keydown",e=>{ if(!ui.tour) return; const n=(biz()==="shop"?t("tour"):TOUR_GEN[L()]).length;
+    if(Math.abs(dx)>60){ const n=tourSteps().length; ui.tour.i=Math.max(0,Math.min(n-1,ui.tour.i+(dx<0?1:-1))); drawTour(); } },{passive:true});
+  document.addEventListener("keydown",e=>{ if(!ui.tour) return; const n=tourSteps().length;
     if(e.key==="Escape") tourClose(); else if(e.key==="ArrowRight"){ ui.tour.i=Math.min(n-1,ui.tour.i+1); drawTour(); } else if(e.key==="ArrowLeft"){ ui.tour.i=Math.max(0,ui.tour.i-1); drawTour(); } });
 })();
 
@@ -1064,7 +1088,7 @@ function viewHome(){
     if(since>=30||(since>=5&&days>=3)||(since>=1&&days>=7)) bn.push(`<div class="banner"><span>${t("backup_banner",since)}</span><button class="btn small primary" data-act="backup-now">${t("backup_now")}</button></div>`);
   }
   if(isOwner()&&canInstall()) bn.push(`<div class="banner"><span>${t("inst_txt")}</span><span style="display:flex;gap:6px">${deferredInstall?`<button class="btn small primary" data-act="install-app">${t("inst_btn")}</button>`:""}<button class="btn small" data-act="install-off">${t("inst_later")}</button></span></div>`);
-  if(biz()==="shop"&&!S.customers.length&&!S.txs.length&&!S.products.length) bn.push(`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`);
+  if(!S.customers.length&&!S.txs.length&&!S.products.length) bn.push(`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`);
   const _setup=lnCard(); const _bn=bn.filter(x=>!(/ln-open/.test(_setup)&&/install-off/.test(x)));
   if(_bn.length) h+=_bn[0];
   h+=_setup+(_setup&&/ln-open/.test(_setup)?"":homeGuide()+riderCard())+rentCard()+hotelCard()+memCard()+apptCard()+jobCard()+expiryCard();
@@ -1881,14 +1905,49 @@ const dtList=()=>{ try{ if(DTR[trKey()]) return DTR[trKey()]; }catch(e){} const 
 const dtLab=k=>{ const r=dtList().find(x=>x[0]===k); return r?lx(r[1],r[2]):""; };
 const descOf=p=>(+p.dur>0?[durTxt(p.dur)]:[]).concat((p.dt||[]).map(dtLab).filter(Boolean)).concat(p.desc?[String(p.desc)]:[]).join(" · ").slice(0,160);
 const HRS_=()=>[["Lun-Sam 8h-19h","Mon-Sat 8am-7pm"],["Lun-Sam 8h-20h","Mon-Sat 8am-8pm"],["Tous les jours 8h-20h","Every day 8am-8pm"],["Tous les jours 7h-22h","Every day 7am-10pm"],["24h/24, 7j/7","Open 24/7"],["Sur rendez-vous","By appointment"]].map(r=>lx(r[0],r[1]));
-const TAGS_=()=>[["Livraison à domicile","Home delivery"],["Ouvert 7j/7","Open 7 days a week"],["Meilleurs prix","Best prices"],["Paiement à la livraison","Pay on delivery"],["Réponse rapide sur WhatsApp","Quick replies on WhatsApp"]].map(r=>lx(r[0],r[1]));
+const pgK=()=>["shop","electronics","food","pharmacy"].includes(biz())?"sell":biz();
+const pgSell=()=>pgK()==="sell";
+const sellTour=()=>["shop","electronics","pharmacy","food"].includes(biz());
+const PG_TAGS={
+ sell:[["Livraison à domicile","Home delivery"],["Ouvert 7j/7","Open 7 days a week"],["Meilleurs prix","Best prices"],["Paiement à la livraison","Pay on delivery"],["Réponse rapide sur WhatsApp","Quick replies on WhatsApp"]],
+ beauty:[["Sur rendez-vous","By appointment"],["Sans rendez-vous accepté","Walk-ins welcome"],["Service à domicile","Home service"],["Ouvert 7j/7","Open 7 days a week"],["Réponse rapide sur WhatsApp","Quick replies on WhatsApp"]],
+ repair:[["Devis gratuit","Free quote"],["Intervention rapide","Fast response"],["Service à domicile","Home service"],["Travail garanti","Work guaranteed"],["Réponse rapide sur WhatsApp","Quick replies on WhatsApp"]],
+ health:[["Sur rendez-vous","By appointment"],["Sans rendez-vous accepté","Walk-ins welcome"],["Urgences","Emergencies"],["Ouvert 7j/7","Open 7 days a week"],["Réponse rapide sur WhatsApp","Quick replies on WhatsApp"]],
+ school:[["Inscriptions ouvertes","Enrolment open"],["Enseignants qualifiés","Qualified teachers"],["Petits effectifs","Small classes"],["Visite sur rendez-vous","Visits by appointment"],["Réponse rapide sur WhatsApp","Quick replies on WhatsApp"]],
+ travel:[["Devis gratuit","Free quote"],["Aide pour le visa","Visa help"],["Tarifs de groupe","Group rates"],["Ouvert 7j/7","Open 7 days a week"],["Réponse rapide sur WhatsApp","Quick replies on WhatsApp"]],
+ rent:[["Visite sur demande","Visits on request"],["Quartier sécurisé","Secure area"],["Disponible maintenant","Available now"],["Sans frais d'agence","No agency fee"],["Réponse rapide sur WhatsApp","Quick replies on WhatsApp"]],
+ hotel:[["Wi-Fi gratuit","Free Wi-Fi"],["Petit-déjeuner inclus","Breakfast included"],["Navette aéroport","Airport pickup"],["Réception 24h/24","Reception 24/7"],["Réponse rapide sur WhatsApp","Quick replies on WhatsApp"]]};
+PG_TAGS.services=PG_TAGS.repair;
+const TAGS_=()=>(PG_TAGS[pgK()]||PG_TAGS.sell).map(r=>lx(r[0],r[1]));
+const PG_PH={sell:["ex. Livraison à Cotonou et Calavi","e.g. Delivery in Lagos and Abuja"],beauty:["ex. Coiffure et soins à Cotonou","e.g. Hair and beauty care in Lagos"],repair:["ex. Plomberie rapide à Cotonou et Calavi","e.g. Fast plumbing in Lagos and Abuja"],health:["ex. Consultations du lundi au samedi","e.g. Consultations Monday to Saturday"],school:["ex. Inscriptions ouvertes pour la rentrée","e.g. Enrolment open for the new term"],travel:["ex. Voyages et visas au départ de Cotonou","e.g. Trips and visas from Lagos"],rent:["ex. Appartements meublés à Cotonou","e.g. Furnished apartments in Lagos"],hotel:["ex. Chambres climatisées au centre-ville","e.g. Air-conditioned rooms in the city centre"]};
+PG_PH.services=PG_PH.repair;
+const pgPh=()=>{ const r=PG_PH[pgK()]||PG_PH.sell; return lx(r[0],r[1]); };
+const PG_INTRO={
+ sell:["Vos clients voient vos prix et vous envoient leur commande sur WhatsApp. Le stock et les coûts ne sont jamais affichés.","Your customers see your prices and send you their order on WhatsApp. Your stock numbers and costs are never shown."],
+ beauty:["Vos clients voient vos services et vos prix, et vous écrivent sur WhatsApp pour réserver. Vos coûts ne sont jamais affichés.","Your customers see your services and prices, and message you on WhatsApp to book. Your costs are never shown."],
+ repair:["Vos clients voient vos services, vos réalisations et vos prix, et vous demandent un devis sur WhatsApp. Vos coûts ne sont jamais affichés.","Your customers see your services, your work and your prices, and ask you for a quote on WhatsApp. Your costs are never shown."],
+ health:["Vos clients voient vos services et vous écrivent sur WhatsApp pour prendre rendez-vous. Les notes de vos patients ne sont jamais affichées.","Your patients see your services and message you on WhatsApp to book an appointment. Your patients' notes are never shown."],
+ school:["Les parents voient vos frais et vous écrivent sur WhatsApp pour inscrire leur enfant. Les données des élèves ne sont jamais affichées.","Parents see your fees and message you on WhatsApp to enrol their child. Student records are never shown."],
+ travel:["Vos clients voient vos voyages et vos prix, et vous écrivent sur WhatsApp pour réserver. Vos coûts ne sont jamais affichés.","Your customers see your trips and prices, and message you on WhatsApp to book. Your costs are never shown."],
+ rent:["Les visiteurs voient vos logements et vos loyers, et vous écrivent sur WhatsApp pour visiter. Les données de vos locataires ne sont jamais affichées.","Visitors see your units and rents, and message you on WhatsApp to visit. Your tenants' details are never shown."],
+ hotel:["Vos clients voient vos chambres et vos prix, et vous écrivent sur WhatsApp pour réserver. Les données de vos clients ne sont jamais affichées.","Your guests see your rooms and prices, and message you on WhatsApp to book. Your guests' details are never shown."]};
+PG_INTRO.services=PG_INTRO.repair;
+const PG_WA={sell:["commandes","orders"],beauty:["réservations","bookings"],repair:["devis","quotes"],services:["devis","quotes"],health:["rendez-vous","appointments"],school:["inscriptions","enrolments"],travel:["réservations","bookings"],rent:["visites","visits"],hotel:["réservations","bookings"]};
+const PG_PHOTO={sell:[["Photos de votre boutique (jusqu'à 8)","Photos of your shop (up to 8)"],["Devanture, intérieur, rayons… affichées en haut de votre page.","Shop front, inside, shelves… shown at the top of your page."]],
+ food:[["Photos de votre restaurant (jusqu'à 8)","Photos of your restaurant (up to 8)"],["Salle, cuisine, plats… affichées en haut de votre page.","Dining area, kitchen, dishes… shown at the top of your page."]],
+ beauty:[["Photos de votre salon (jusqu'à 8)","Photos of your salon (up to 8)"],["Votre salon, votre équipe, vos réalisations… affichées en haut de votre page.","Your salon, your team, your work… shown at the top of your page."]],
+ health:[["Photos de votre établissement (jusqu'à 8)","Photos of your practice (up to 8)"],["Accueil, salles, équipements… affichées en haut de votre page.","Reception, rooms, equipment… shown at the top of your page."]],
+ school:[["Photos de votre école (jusqu'à 8)","Photos of your school (up to 8)"],["Bâtiment, classes, cour… affichées en haut de votre page.","Building, classrooms, grounds… shown at the top of your page."]],
+ travel:[["Photos de vos voyages (jusqu'à 8)","Photos of your trips (up to 8)"],["Votre agence, vos destinations, vos véhicules… affichées en haut de votre page.","Your office, destinations, vehicles… shown at the top of your page."]],
+ rent:[["Photos de vos logements (jusqu'à 8)","Photos of your units (up to 8)"],["Façade, pièces, cour… affichées en haut de votre page.","Outside, rooms, compound… shown at the top of your page."]]};
+const pgPhoto=()=>{ const k=biz()==="food"?"food":pgK(), r=PG_PHOTO[k]; return r?[lx(r[0][0],r[0][1]),lx(r[1][0],r[1][1])]:null; };
 const CITIES={BJ:["Cotonou","Porto-Novo","Abomey-Calavi","Parakou","Bohicon","Ouidah","Djougou","Natitingou","Lokossa","Kandi"],NG:["Lagos","Abuja","Port Harcourt","Ibadan","Kano","Benin City","Enugu","Kaduna","Abeokuta","Warri","Owerri","Ilorin"],GH:["Accra","Kumasi","Tamale","Takoradi","Cape Coast","Tema"],KE:["Nairobi","Mombasa","Kisumu","Nakuru","Eldoret"],TG:["Lomé","Kara","Sokodé","Kpalimé","Atakpamé"],CI:["Abidjan","Bouaké","Yamoussoukro","San-Pédro","Daloa","Korhogo"],SN:["Dakar","Thiès","Saint-Louis","Touba","Kaolack","Ziguinchor"],BF:["Ouagadougou","Bobo-Dioulasso"],ML:["Bamako","Sikasso"],NE:["Niamey","Zinder"],CM:["Douala","Yaoundé","Garoua"],ZA:["Johannesburg","Cape Town","Durban","Pretoria"],RW:["Kigali"],TZ:["Dar es Salaam","Dodoma","Arusha"],UG:["Kampala","Entebbe"]};
 const PHMAX=5, PHSHOP=40, PHGAL=8;
 const workOn=()=>["repair","services","beauty"].includes(biz())&&tradeOn();
 const galMax=()=>workOn()?12:PHGAL;
 const PFC={plumber:[["Installations","Réparations","Salles de bain","Châteaux d'eau"],["Installations","Repairs","Bathrooms","Water tanks"]],electrician:[["Installations","Éclairage","Réparations","Solaire"],["Installations","Lighting","Repairs","Solar"]],carpenter:[["Meubles","Portes et fenêtres","Cuisines","Sur mesure"],["Furniture","Doors and windows","Kitchens","Custom work"]],painter:[["Intérieur","Extérieur","Décoration"],["Interior","Exterior","Decorative"]],mason:[["Murs","Clôtures","Fondations","Finitions"],["Walls","Fences","Foundations","Finishing"]],tiler:[["Salles de bain","Sols","Terrasses"],["Bathrooms","Floors","Terraces"]],welder:[["Portails","Grilles","Structures","Meubles"],["Gates","Grills","Structures","Furniture"]],mechanic:[["Moteur","Freins","Carrosserie","Entretien"],["Engine","Brakes","Bodywork","Servicing"]],ac:[["Installation","Entretien","Réparation"],["Installation","Maintenance","Repair"]],tailor:[["Robes","Costumes","Uniformes","Tenues traditionnelles"],["Dresses","Suits","Uniforms","Traditional wear"]],hairdresser:[["Tresses","Mèches","Cheveux naturels","Mariée"],["Braids","Weaves","Natural hair","Bridal"]],barber:[["Coupes","Barbes","Enfants"],["Haircuts","Beards","Kids"]],makeup:[["Mariée","Soirée","Quotidien"],["Bridal","Evening","Everyday"]],nails:[["Manucure","Pédicure","Gel"],["Manicure","Pedicure","Gel"]],photo:[["Mariages","Portraits","Événements"],["Weddings","Portraits","Events"]]};
 const pfCats=()=>{ const ks=(()=>{ try{ return trSel(S.shop.cat||{}); }catch(e){ return []; } })(); const o=[]; ks.forEach(k=>{ const r=PFC[k]; if(r) r[L()==="fr"?0:1].forEach(x=>{ if(!o.includes(x)) o.push(x); }); }); return o.length?o:(L()==="fr"?["Avant et après","Réalisations récentes"]:["Before and after","Recent work"]); };
-const PROMO_WA=""; /* Ecrici WhatsApp number for promotion requests, digits only with country code, e.g. 22997000000 */
+const PROMO_WA="22996017231"; /* Ecrici WhatsApp number for promotion requests, digits only with country code, e.g. 22997000000 */
 const promoOn=()=>!!(window.__catPub&&!window.__member&&isOwner()&&biz()!=="pharmacy"&&S.shop.cat&&S.shop.cat.on&&S.shop.cat.slug&&S.shop.cat.listed);
 const PROMO_P={feat:{7:2000,14:3500,30:6000},boost:{7:1000,14:1800,30:3000}};
 function promoPrice(k,d){ const ng=(S.shop.country||"")==="NG", v=(PROMO_P[k]||PROMO_P.feat)[d]||0; return ng?"₦"+(v*2).toLocaleString("en"):v.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ")+" FCFA"; }
@@ -1959,21 +2018,21 @@ function catSection(){
   const col=ACCENTS.includes(c0.color)?c0.color:accentOf(S.shop);
   const imgF=(k,lab,w)=>`<div class="field"><label>${lab}</label><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${c0[k]?`<img alt="" src="${esc(c0[k])}" style="width:${w}px;height:56px;object-fit:cover;border-radius:${k==="logo"?"50%":"10px"}">`:""}<label class="btn small" style="cursor:pointer;margin:0">${lx("Choisir","Choose")}<input type="file" id="c-${k}" accept="image/*" style="display:none"></label>${c0[k]?`<button type="button" class="btn small ghost" data-act="cat-img-rm" data-k="${k}">${lx("Retirer","Remove")}</button>`:""}</div></div>`;
   return `<section class="sec" id="cat-box"><h2>${lx("Ma page en ligne","My online page")}</h2><div class="card form">
-    <p class="note" style="margin:0">${lx("Partagez un lien sur WhatsApp ou ailleurs. Vos clients voient vos prix et vous envoient leur commande sur WhatsApp. Le stock et les coûts ne sont jamais affichés.","Share one link on WhatsApp or anywhere. Your customers see your prices and send you their order on WhatsApp. Your stock numbers and costs are never shown.")}</p>
+    <p class="note" style="margin:0">${lx("Partagez un lien sur WhatsApp ou ailleurs. ","Share one link on WhatsApp or anywhere. ")}${(()=>{const r=PG_INTRO[pgK()]||PG_INTRO.sell;return lx(r[0],r[1]);})()}</p>
     ${window.__mkt===false?`<p class="note" style="margin:0;font-weight:600">${lx("Votre page est enregistrée. Elle sera visible du public après une vérification rapide (en général sous 24 h).","Your page is saved. It will be public after a quick check (usually within a day).")}${waPageLink(c)}</p>`:""}
     <label class="chk"><input type="checkbox" id="c-on" ${c.on?"checked":""}> ${lx("Activer ma page en ligne","Turn on my online page")}</label>
     <div class="field"><label for="c-slug">${lx("Nom du lien (lettres, chiffres, tirets)","Link name (letters, numbers, dashes)")}</label><input id="c-slug" value="${esc(c.slug||catSlugify(S.shop.name))}" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
-    <div class="field"><label for="c-phone">${lx("Numéro WhatsApp pour les commandes","WhatsApp number for orders")}</label><input id="c-phone" value="${esc(c.phone||S.shop.phone||"")}" inputmode="tel" autocomplete="off"></div>
+    <div class="field"><label for="c-phone">${(()=>{const r=PG_WA[pgK()]||PG_WA.sell;return lx("Numéro WhatsApp pour les "+r[0],"WhatsApp number for "+r[1]);})()}</label><input id="c-phone" value="${esc(c.phone||S.shop.phone||"")}" inputmode="tel" autocomplete="off"></div>
     <div class="field"><label>${lx("Couleur de ma page","My page color")}</label><div class="sw">${ACCENTS.map(k=>`<button type="button" data-act="cat-col" data-c="${k}" aria-pressed="${col===k}" style="background:${k}" aria-label="${k}"></button>`).join("")}</div></div>
     ${imgF("logo",lx("Logo (rond)","Logo (round)"),56)}${imgF("cover",lx("Photo de couverture (facultatif)","Cover photo (optional)"),100)}
-    <div class="field"><label>${(workOn()?lx("Photos de vos travaux (jusqu'à 12)","Photos of your work (up to 12)"):lx("Photos de votre lieu (jusqu'à 8)","Photos of your place (up to 8)"))}</label><div class="phg">${(c0.gal||[]).map((u,i)=>`<div class="pht"><img alt="" src="${esc(u)}"><button type="button" class="phx" data-act="gal-del" data-i="${i}" aria-label="${lx("Retirer","Remove")}">×</button></div>`).join("")}${(c0.gal||[]).length<galMax()?`<label class="pht add"><span>+</span><small>${lx("Photo","Photo")}</small><input type="file" id="c-gal" accept="image/*" multiple style="display:none"></label>`:""}</div><small class="muted">${workOn()?lx("Vos travaux terminés : avant, après, résultats.","Your finished work: before, after, results."):lx("Bâtiment, accueil, piscine, salle… affichées en haut de votre page.","Building, reception, pool, lounge… shown at the top of your page.")}</small></div>
+    <div class="field"><label>${(workOn()?lx("Photos de vos travaux (jusqu'à 12)","Photos of your work (up to 12)"):(pgPhoto()?pgPhoto()[0]:lx("Photos de votre lieu (jusqu'à 8)","Photos of your place (up to 8)")))}</label><div class="phg">${(c0.gal||[]).map((u,i)=>`<div class="pht"><img alt="" src="${esc(u)}"><button type="button" class="phx" data-act="gal-del" data-i="${i}" aria-label="${lx("Retirer","Remove")}">×</button></div>`).join("")}${(c0.gal||[]).length<galMax()?`<label class="pht add"><span>+</span><small>${lx("Photo","Photo")}</small><input type="file" id="c-gal" accept="image/*" multiple style="display:none"></label>`:""}</div><small class="muted">${workOn()?lx("Vos travaux terminés : avant, après, résultats.","Your finished work: before, after, results."):(pgPhoto()?pgPhoto()[1]:lx("Bâtiment, accueil, piscine, salle… affichées en haut de votre page.","Building, reception, pool, lounge… shown at the top of your page."))}</small></div>
     ${pfBlock(c)}
     <div class="field"><label for="c-hrsp">${lx("Horaires (facultatif)","Opening hours (optional)")}</label><select id="c-hrsp"><option value="">${lx("Choisir…","Choose…")}</option>${HRS_().map(h=>`<option value="${esc(h)}" ${c.hrs===h?"selected":""}>${esc(h)}</option>`).join("")}<option value="~" ${c.hrs&&!HRS_().includes(c.hrs)?"selected":""}>${lx("Autre…","Other…")}</option></select><input id="c-hrs" value="${esc(c.hrs||"")}" maxlength="70" placeholder="${lx("ex. Lun-Sam 8h-19h","e.g. Mon-Sat 8am-7pm")}" autocomplete="off" style="margin-top:8px;${c.hrs&&!HRS_().includes(c.hrs)?"":"display:none"}"></div>
     <label class="chk"><input type="checkbox" id="c-list" ${c.listed?"checked":""}> ${lx("Me lister dans Ecrici Market (les clients me trouvent)","List me in Ecrici Market (customers can find me)")}</label>
     ${window.__waAdmin&&window.__waAdmin("x")?`<p class="muted" style="margin:6px 0 0"><a href="${esc(window.__waAdmin(lx("Bonjour, je voudrais le badge Vérifié pour ma page Ecrici : ","Hello, I would like the Verified badge for my Ecrici page: ")+(c.slug||"")+" ("+S.shop.name+")"))}" target="_blank" rel="noopener">✔ ${lx("Demander le badge Vérifié (les clients vous font plus confiance)","Ask for the Verified badge (customers trust you more)")}</a></p>`:""}
     <div class="field"><label for="c-cityp">${lx("Ma ville (pour le Market)","My city (for the Market)")}</label>${(()=>{ const L=CITIES[S.shop.country]||[], cc=cityCanon(c.city||""), inL=!!cc&&L.includes(cc); return `<select id="c-cityp"><option value="">${lx("Choisir…","Choose…")}</option>${L.map(x=>`<option ${inL&&cc===x?"selected":""}>${esc(x)}</option>`).join("")}<option value="~" ${cc&&!inL?"selected":""}>${lx("Autre ville…","Other city…")}</option></select><input id="c-city" value="${esc(c.city||"")}" maxlength="40" placeholder="${lx("ex. Cotonou","e.g. Lagos")}" autocomplete="off" style="margin-top:8px;${cc&&!inL||!L.length?"":"display:none"}">`; })()}</div>
     ${tradeOn()?`<div class="field"><label>${sellGrp()?lx("Ce que je vends (pour être trouvé)","What I sell (so people can find you)"):kindGrp()?lx("Type d'établissement (pour être trouvé)","Kind of place (so people can find you)"):lx("Mon métier (pour être trouvé)","My trade (so people can find you)")} · ${lx("jusqu'à 3","up to 3")}</label><div id="c-trs" style="display:flex;flex-wrap:wrap;gap:6px 14px">${tradesFor().map(r=>`<label class="chk" style="margin:0"><input type="checkbox" value="${r[0]}" ${trSel(c).includes(r[0])?"checked":""} onchange="if(document.querySelectorAll('#c-trs input:checked').length>3){this.checked=false}"> ${esc(lx(r[1],r[2]))}</label>`).join("")}</div></div>`:""}
-    <div class="field"><label for="c-tag">${lx("Petit message (facultatif)","Short message (optional)")}</label><input id="c-tag" value="${esc(c.tag||"")}" maxlength="120" placeholder="${lx("ex. Livraison à Cotonou et Calavi","e.g. Delivery in Lagos and Abuja")}" autocomplete="off"><div class="dtg" style="margin-top:8px">${TAGS_().map(x=>`<button type="button" data-act="tagfill" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</div></div>
+    <div class="field"><label for="c-tag">${lx("Petit message (facultatif)","Short message (optional)")}</label><input id="c-tag" value="${esc(c.tag||"")}" maxlength="120" placeholder="${pgPh()}" autocomplete="off"><div class="dtg" style="margin-top:8px">${TAGS_().map(x=>`<button type="button" data-act="tagfill" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</div></div>
     ${dlField(c,"c")}<div class="err" id="c-err" role="alert">${esc(m)}</div>
     <button class="btn primary" data-act="save-cat">${lx("Enregistrer et publier","Save and publish")}</button>
     ${c.on&&url?`<div class="field"><label>${lx("Votre lien","Your link")}</label><input readonly value="${esc(url)}" onfocus="this.select()"></div>
@@ -2011,7 +2070,7 @@ function lnCard(){
   }
   if(S.shop.lnOff) return "";
   const nx=s.st[s.nextI];
-  return `<section class="sec"><div class="card lnc" style="display:block"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>🚀 ${lx("Lancez votre boutique en ligne","Launch your online shop")}</b><button class="btn small ghost" data-act="ln-x" aria-label="${lx("Masquer","Hide")}">×</button></div><div class="lnbar"><i style="width:${p}%"></i></div><div class="note" style="margin:0 0 8px">${s.done}/6 · ${lx("Prochaine étape : ","Next step: ")}<b>${esc(nx.t)}</b></div><button class="btn primary" data-act="ln-open">${s.done?lx("Continuer","Continue"):lx("Commencer","Start")}</button></div></section>`;
+  return `<section class="sec"><div class="card lnc" style="display:block"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>🚀 ${pgSell()?lx("Lancez votre boutique en ligne","Launch your online shop"):lx("Lancez votre page en ligne","Launch your online page")}</b><button class="btn small ghost" data-act="ln-x" aria-label="${lx("Masquer","Hide")}">×</button></div><div class="lnbar"><i style="width:${p}%"></i></div><div class="note" style="margin:0 0 8px">${s.done}/6 · ${lx("Prochaine étape : ","Next step: ")}<b>${esc(nx.t)}</b></div><button class="btn primary" data-act="ln-open">${s.done?lx("Continuer","Continue"):lx("Commencer","Start")}</button></div></section>`;
 }
 function lnHead(i,title,sub){ return `<button class="btn small ghost bk" data-act="ln-list">← ${lx("Étapes","Steps")}</button><div class="lnbar"><i style="width:${Math.round((i+1)/6*100)}%"></i></div><h2 style="margin:6px 0 4px">${title}</h2>${sub?`<p class="note" style="margin:0 0 10px">${sub}</p>`:""}`; }
 function lnModal(m){
@@ -2019,7 +2078,7 @@ function lnModal(m){
   const nav=(label,act)=>`<div class="actions"><button class="btn primary wide" data-act="${act||"ln-next"}">${label||lx("Enregistrer et continuer","Save and continue")}</button></div>`;
   const skip=`<div class="actions"><button class="btn primary wide" data-act="ln-next">${lx("Continuer","Continue")}</button></div>`;
   if(i<0||i==null){
-    return `<div class="dlg"><h2>${lx("Lancez votre boutique en ligne","Launch your online shop")}</h2><p class="note" style="margin:0 0 8px">${s.live?lx("Votre boutique est en ligne. Vous pouvez modifier chaque étape.","Your shop is live. You can edit any step."):lx("Une étape à la fois. Vos réponses sont enregistrées automatiquement.","One step at a time. Your answers are saved automatically.")}</p>
+    return `<div class="dlg"><h2>${pgSell()?lx("Lancez votre boutique en ligne","Launch your online shop"):lx("Lancez votre page en ligne","Launch your online page")}</h2><p class="note" style="margin:0 0 8px">${s.live?lx("Votre boutique est en ligne. Vous pouvez modifier chaque étape.","Your shop is live. You can edit any step."):lx("Une étape à la fois. Vos réponses sont enregistrées automatiquement.","One step at a time. Your answers are saved automatically.")}</p>
     <div class="card flush">${s.st.map((x,k)=>`<button class="row" data-act="ln-go" data-i="${k}"><div class="main"><div class="name">${x.ok?"✓ ":""}${esc(x.t)}</div></div><div class="amt"><span class="badge" style="${x.ok?"":"background:"+(x.req?"#fde8e6":"#eef")}">${x.ok?lx("Fait","Done"):x.req?lx("Obligatoire","Required"):lx("Conseillé","Recommended")}</span></div></button>`).join("")}</div>
     ${s.live?`<div class="actions"><button class="btn primary wide" data-act="ln-go" data-i="6">${lx("Voir mon lien","See my link")}</button></div>`:s.blockers.length?`<p class="note" style="margin:10px 0 0">${lx("Pour publier, il manque : ","To publish, you still need: ")}<b>${s.blockers.map(x=>esc(x.t)).join(", ")}</b></p><div class="actions"><button class="btn primary wide" data-act="ln-go" data-i="${s.nextI}">${lx("Continuer","Continue")}</button></div>`:`<div class="actions"><button class="btn primary wide" data-act="ln-go" data-i="5">${lx("Voir l'aperçu et publier","Preview and publish")}</button></div>`}</div>`;
   }
@@ -2052,7 +2111,7 @@ function lnModal(m){
     const hs=HRS_(), custom=c.hrs&&!hs.includes(c.hrs);
     return `<div class="dlg form">${lnHead(4,DLB.includes(biz())?lx("Horaires, livraison et message","Hours, delivery and message"):lx("Horaires et petit message","Hours and short message"),lx("Facultatif. Dites quand vous êtes disponible.","Optional. Say when you are available."))}
     <div class="field"><label for="ln-hp">${lx("Horaires","Opening hours")}</label><select id="ln-hp" onchange="document.getElementById('ln-hrs').style.display=this.value==='~'?'':'none'"><option value="">${lx("Choisir…","Choose…")}</option>${hs.map(h=>`<option ${c.hrs===h?"selected":""} value="${esc(h)}">${esc(h)}</option>`).join("")}<option value="~" ${custom?"selected":""}>${lx("Autre…","Other…")}</option></select><input id="ln-hrs" value="${esc(custom?c.hrs:"")}" maxlength="70" placeholder="${lx("ex. Lun-Sam 8h-19h","e.g. Mon-Sat 8am-7pm")}" autocomplete="off" style="margin-top:8px;${custom?"":"display:none"}"></div>
-    <div class="field"><label for="ln-tag">${lx("Petit message","Short message")}</label><input id="ln-tag" value="${esc(c.tag||"")}" maxlength="120" autocomplete="off" placeholder="${lx("ex. Livraison à Cotonou et Calavi","e.g. Delivery in Lagos and Abuja")}"><div class="dtg" style="margin-top:8px">${TAGS_().map(x=>`<button type="button" data-act="ln-tagfill" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</div></div>${dlField(c,"ln")}${skip}</div>`;
+    <div class="field"><label for="ln-tag">${lx("Petit message","Short message")}</label><input id="ln-tag" value="${esc(c.tag||"")}" maxlength="120" autocomplete="off" placeholder="${pgPh()}"><div class="dtg" style="margin-top:8px">${TAGS_().map(x=>`<button type="button" data-act="ln-tagfill" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</div></div>${dlField(c,"ln")}${skip}</div>`;
   }
   if(i===5){
     const its=S.products.filter(p=>!p.hide&&p.name).slice(0,3), col=ACCENTS.includes(c.color)?c.color:accentOf(S.shop), slug=catSlugify(c.slug||S.shop.name);
@@ -2202,7 +2261,7 @@ function viewSettings(){
   `;
   const back_html=`<section class="sec"><h2>${t("backup")}</h2><div class="card form"><p class="note" style="margin:0">${t("backup_note")}</p>
     <p class="note" style="margin:0"><b>${t("last_backup")}:</b> ${S.shop.lastBackup?fmtDate(S.shop.lastBackup):t("never")}</p>
-    <div class="actions"><button class="btn" data-act="tour-open">${t("tour_open")}</button>${biz()==="shop"?`<button class="btn" data-act="load-examples">${t("load_examples")}</button>`:""}<button class="btn primary" data-act="backup-now">${t("backup_now")}</button><button class="btn" data-act="export-csv">${t("export_csv")}</button></div>
+    <div class="actions"><button class="btn" data-act="tour-open">${t("tour_open")}</button><button class="btn" data-act="load-examples">${t("load_examples")}</button><button class="btn primary" data-act="backup-now">${t("backup_now")}</button><button class="btn" data-act="export-csv">${t("export_csv")}</button></div>
     <div class="field"><label for="f-import">${t("import")}</label><input type="file" id="f-import" accept=".json,application/json"></div></div></section>
   `;
   const dng_html=`<section class="sec"><h2>${t("danger")}</h2><div class="card form">
@@ -2538,7 +2597,7 @@ function _renderModal(){
     return;
   }else if(m.type==="promo"){
     const dys=[7,14,30], boost=m.kind==="boost", txt=promoText(m), ready=!boost||(m.sel||[]).length>0;
-    inner=`<div class="dlg"><h2>⭐ ${lx("Mettre en avant","Promote my shop")}</h2>
+    inner=`<div class="dlg"><h2>⭐ ${lx("Mettre en avant","Promote my "+(pgSell()?"shop":"page"))}</h2>
       <p class="note" style="margin:0">${lx("Apparaissez en haut dans Ecrici Market, avec la mention « Sponsorisé ». Envoyez la demande sur WhatsApp : l'activation se fait après paiement (Mobile Money ou virement).","Appear at the top of Ecrici Market, marked “Sponsored”. Send the request on WhatsApp: it is activated after payment (Mobile Money or transfer).")}</p>
       <div class="actions"><button class="btn ${boost?"":"primary"}" data-act="promo-kind" data-id="feat">${lx("Ma boutique","My whole shop")}</button><button class="btn ${boost?"primary":""}" data-act="promo-kind" data-id="boost">${lx("Des articles","Some items")}</button></div>
       ${boost?`<div class="note" style="margin:6px 0">${lx("Choisissez jusqu'à 3 articles :","Pick up to 3 items:")}</div><div class="actions" style="flex-wrap:wrap">${m.items.length?m.items.map((n,i)=>`<button class="btn small ${(m.sel||[]).includes(i)?"primary":""}" data-act="promo-item" data-id="${i}">${esc(n)}</button>`).join(""):`<span class="note">${lx("Ajoutez d'abord des articles sur votre page.","Add items to your page first.")}</span>`}</div>`:`<p class="note" style="margin:6px 0 0">${lx("Il faut le badge Vérifié et un logo. Maximum 5 boutiques mises en avant par ville.","Needs the Verified badge and a logo. At most 5 featured shops per city.")}</p>`}
