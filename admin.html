@@ -26,7 +26,7 @@ h1{font-size:24px;margin:6px 0 0}h2{font-size:13px;letter-spacing:1.2px;text-tra
 input,select{font:inherit;width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
 label{font-size:14px;color:var(--muted);display:grid;gap:4px}
 button,a.b{font:inherit;font-weight:650;font-size:14.5px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 13px;cursor:pointer;text-decoration:none;text-align:center;display:inline-block;min-height:40px}
-button.p{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}button.d{color:var(--bad)}button:disabled{opacity:.5}
+button.p,a.b.p{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}button.d{color:var(--bad)}button:disabled{opacity:.5}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1 1 auto}
 .err{color:var(--bad);font-size:14px;min-height:0}.err:empty{display:none}
 .ok{background:var(--ok-bg);color:var(--ok);border-radius:12px;padding:10px 12px;font-size:14.5px;font-weight:600}.ok a{color:inherit}
@@ -91,6 +91,17 @@ const daysLeft=s=>s.paid_until?Math.round((new Date(s.paid_until+"T12:00:00Z")-n
 const BIZN={shop:"Shop / general trade",electronics:"Electronics",pharmacy:"Pharmacy",food:"Restaurant / food",beauty:"Salon / beauty",health:"Clinic / lab",school:"School / training",repair:"Artisans & repairs",travel:"Travel & tours",services:"Other services",rent:"Rentals",hotel:"Hotel / guesthouse"};
 const bizOf=s=>BIZN[s.biz]||"Not chosen yet";
 const ini=s=>String(s||"?").trim().charAt(0).toUpperCase()||"?";
+const FRC=["BJ","TG","CI","SN","BF","ML","NE","CM"];
+const wDone=()=>{ try{ return JSON.parse(lsGet("ecrici-welcomed")||"{}"); }catch(e){ return {}; } };
+const wMark=id=>{ const o=wDone(); o[id]=1; lsSet("ecrici-welcomed",JSON.stringify(o)); };
+function welcomeLink(s){
+  if(!s||!s.phone) return "";
+  const fr=FRC.includes(String(s.country||"").toUpperCase()), nm=(s.name||"").trim()||(fr?"":"there");
+  let dt=""; if(s.paid_until){ const p=String(s.paid_until).slice(0,10).split("-"); dt=fr?p[2]+"/"+p[1]+"/"+p[0]:new Date(s.paid_until+"T00:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"}); }
+  const t=fr?"Bonjour "+nm+" 👋\n\nBienvenue sur Ecrici ! ✅ Votre compte a été approuvé avec succès"+(dt?" et reste actif jusqu'au "+dt:"")+".\n\nPour bien démarrer :\n1. Ouvrez ecrici.com et connectez-vous\n2. Ajoutez vos produits ou services\n3. Dans Réglages › Ma page en ligne, créez votre page pour que vos clients vous trouvent\n\nUne question ? Répondez simplement à ce message, je vous aide.\n— L'équipe Ecrici"
+   :"Hello "+nm+" 👋\n\nWelcome to Ecrici! ✅ Your account has been approved successfully"+(dt?" and is active until "+dt:"")+".\n\nTo get started:\n1. Open ecrici.com and log in\n2. Add your products or services\n3. In Settings › My online page, create your page so customers can find you\n\nAny question? Just reply to this message and I will help.\n— The Ecrici team";
+  return "https://wa.me/"+String(s.phone).replace(/\D/g,"")+"?text="+encodeURIComponent(t);
+}
 const waOf=p=>p?"https://wa.me/"+String(p).replace(/\D/g,""):"";
 const stars=n=>"★".repeat(n)+"☆".repeat(5-n);
 const dshort=d=>{ try{ return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}); }catch(e){ return ""; } };
@@ -119,6 +130,7 @@ function draw0(){
 }
 document.addEventListener("click",e=>{
   const b=e.target.closest("button,a"); if(!b||!app.contains(b)) return; const d=b.dataset;
+  if(d.w){ wMark(d.w); setTimeout(draw,400); return; }
   if(d.tab){ tab=d.tab; lsSet("ecrici-admin-tab",tab); err=""; msg=""; draw(); window.scrollTo(0,0); }
   else if(d.go){ tab=d.go; if(d.f) filter=d.f; if(d.rf) rf=d.rf; lsSet("ecrici-admin-tab",tab); err=""; msg=""; draw(); window.scrollTo(0,0); }
   else if(d.f!==undefined&&!d.go){ filter=d.f; draw(); }
@@ -163,7 +175,7 @@ function shopCard(s){
   const info=s.paid_until?`Paid until ${s.paid_until}${dl!=null?` (${dl>=0?dl+" days left":Math.abs(dl)+" days ago"})`:""}`:"Not paid yet";
   return `<div class="card" data-shop="${esc(s.id)}"><div class="item"><div class="av">${esc(ini(s.name))}</div><div class="grow"><div class="name">${esc(s.name||"(no name)")}</div><div class="muted">+${esc(s.phone)} · ${esc(s.country)} · ${esc(bizOf(s))}</div></div><span class="chip ${st}">${st}</span></div>
     <div class="muted">${esc(info)}</div>${s.market_ok===false?`<div class="muted"><b>Public page: ${s.market_asked?"WAITING for you":"not allowed yet"}</b></div>`:""}${refLine(s)}${shopsBlock(s)}
-    <div class="row">${st==="pending"?`<button class="p" data-id="${esc(s.id)}" data-a="trial">Approve · 30 days</button>`:""}<button data-id="${esc(s.id)}" data-a="m1">+1 month</button><button data-id="${esc(s.id)}" data-a="m3">+3 months</button><button data-id="${esc(s.id)}" data-a="m12">+12 months</button></div>
+    <div class="row">${st==="pending"?`<button class="p" data-id="${esc(s.id)}" data-a="trial">Approve · 30 days</button>`:""}${st!=="pending"&&s.status==="active"&&s.phone?`<a class="${wDone()[s.id]?"b":"b p"}" data-w="${esc(s.id)}" href="${esc(welcomeLink(s))}" target="_blank" rel="noopener">${wDone()[s.id]?"Welcome sent ✓ (send again)":"Send welcome on WhatsApp"}</a>`:""}<button data-id="${esc(s.id)}" data-a="m1">+1 month</button><button data-id="${esc(s.id)}" data-a="m3">+3 months</button><button data-id="${esc(s.id)}" data-a="m12">+12 months</button></div>
     <details><summary>More actions</summary><div class="row" style="margin-top:8px">${wa?`<a class="b" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>`:""}${s.market_ok===false?`<button class="p" data-id="${esc(s.id)}" data-a="mkt-on">Allow public page</button>`:`<button data-id="${esc(s.id)}" data-a="mkt-off">Stop public page</button>`}${s.ref_status==="due"?`<button class="p" data-id="${esc(s.id)}" data-a="refpaid">Mark reward paid</button>`:""}<button data-id="${esc(s.id)}" data-a="pw">Reset password</button>${s.status==="suspended"?`<button data-id="${esc(s.id)}" data-a="react">Reactivate</button>`:`<button class="d" data-id="${esc(s.id)}" data-a="susp">Suspend</button>`}${s.status==="suspended"?`<button class="d" data-id="${esc(s.id)}" data-a="del">Delete forever</button>`:""}</div></details></div>`;
 }
 function vShops(){
@@ -367,10 +379,10 @@ async function act(id,a,cid){
   else if(a==="mkt-on"){ body={market_ok:true}; }
   else if(a==="mkt-off"){ if(!confirm("Stop the public page and Market listing for "+(s.name||s.phone)+"?")) return; body={market_ok:false}; }
   else { const base=(s.status==="active"&&s.paid_until&&s.paid_until>today())?s.paid_until:today(); body={status:"active",paid_until:addTo(base,a)}; if(s.referred_by&&!s.ref_status&&a!=="trial") body.ref_status="due"; }
-  err=""; msg=""; msgLink="";
+  const wasPending=state(s)==="pending"; err=""; msg=""; msgLink="";
   const r=await api("/rest/v1/shops?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{Prefer:"return=representation"},body});
   if(!r.ok||!Array.isArray(r.json)||!r.json.length){ err=r.status===401?"Session ended. Log in again.":"Not saved. This account may not be an admin (see the guide)."; draw(); return; }
-  Object.assign(s,r.json[0]); msg="Saved: "+(s.name||s.phone); draw();
+  Object.assign(s,r.json[0]); msg="Saved: "+(s.name||s.phone); if(wasPending&&s.status==="active"&&s.phone){ msgLink=welcomeLink(s); wMark(s.id); } draw();
 }
 if(!CFG.url||/PASTE/.test(CFG.url+CFG.key)){ app.innerHTML=`<main><h1>Ecrici Admin</h1><div class="card"><p>config.js is not filled in yet.</p></div></main>`; }
 else if(sess) load(); else login();
