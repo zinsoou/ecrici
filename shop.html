@@ -205,7 +205,6 @@ function draw(){
   if(/^#[0-9a-f]{6}$/i.test(D.col||"")){ document.documentElement.style.setProperty("--hd",D.col); document.querySelector('meta[name=theme-color]').content=D.col; }
   if(okU(D.cover)) $("hd").style.backgroundImage="linear-gradient(rgba(10,15,44,.25),rgba(10,15,44,.55)),url('"+encodeURI(D.cover).replace(/'/g,"%27")+"')";
   if(okU(D.logo)){ $("lgo").src=D.logo; $("lgo").hidden=false; } else { $("lgi").textContent=(D.name||"?").trim().slice(0,2).toUpperCase(); $("lgi").hidden=false; }
-  document.querySelectorAll(".vb").forEach(x=>x.remove());
   if(D._v){ const b=document.createElement("div"); b.className="vb"; b.textContent="✔ "+tx.ver; $("nm").parentNode.insertBefore(b,$("tg")); }
   if(D.tag){ $("tg").textContent=D.tag; $("tg").hidden=false; }
   { const dg=String(D.phone||"").replace(/\D/g,"");
@@ -262,16 +261,16 @@ function form(){
   const dl=$("f_dl"); if(dl) dl.onchange=()=>{ document.querySelectorAll("#fm [data-ifd]").forEach(e=>e.hidden=dl.value!=="1"); };
   $("go").firstElementChild.textContent=BOOK.includes(D.biz)?tx.book:tx.send;
 }
-function fm(n,l){ l=l||lg; const c=D.cur||["",0,0]; const num=new Intl.NumberFormat(l==="fr"?"fr-FR":"en-NG",{maximumFractionDigits:c[2]}).format(n).replace(/[\u00a0\u202f]/g," "); return c[1]?num+" "+c[0]:c[0]+" "+num; }
+function fm(n,l){ l=l||lg; const c=Array.isArray(D.cur)?D.cur:["",0,0]; const num=new Intl.NumberFormat(l==="fr"?"fr-FR":"en-NG",{maximumFractionDigits:c[2]}).format(n).replace(/[\u00a0\u202f]/g," "); return c[1]?num+" "+c[0]:c[0]+" "+num; }
 function list(){
   const q=($("q")?$("q").value:"").trim().toLowerCase(); let g="",v="",rows="";
   const pv=i=>D.items[i].p>0?D.items[i].p:(srt==="a"?1e15:-1); const ord=D.items.map((x,i)=>i).sort((a,b)=>(D.items[b].x?1:0)-(D.items[a].x?1:0)||(srt==="a"?pv(a)-pv(b):srt==="d"?pv(b)-pv(a):0)||a-b);
   ord.forEach(i=>{ const x=D.items[i]; if(q&&!x.n.toLowerCase().includes(q)) return; if(cat==="~other"?x.c:cat&&x.c!==cat) return; if(brd&&x.b!==brd) return; const n=Q[i]||0;
     const im=imgs(x), ctl=x.a?(n?`<div class="q"><button data-i="${i}" data-d="-1" aria-label="-1">−</button><i>${n}</i><button data-i="${i}" data-d="1" aria-label="+1">+</button></div>`:`<button class="add" data-i="${i}" data-d="1">${esc(addTx())}</button>`):`<span class="outl">${esc(tx.out)}</span>`;
-    const pr=x.p>0?`<div class="pr2">${esc(x.f)}</div>`:(x.q?`<div class="pr2">${esc(x.q)}</div>`:"");
-    if(SVM){ const u=waLink(svMsg(x)); rows+=`<div class="sv${x.a?"":" off"}"><div class="si">${icoFor(x.n)}</div><div class="st"><b>${esc(nice(x.n))}</b>${x.d?`<small>${esc(String(x.d).slice(0,90))}</small>`:""}${x.p>0?`<span class="sp">${esc(x.f)}</span>`:(x.q?`<span class="sp qt">${esc(x.q)}</span>`:"")}</div>${x.a?(u?`<a class="sw" href="${esc(u)}" rel="noopener" aria-label="${esc(tx.wa)}">${SV.wa}${esc(D.biz==="beauty"||D.biz==="health"?tx.bk:D.biz==="school"?tx.inq:tx.rq)}</a>`:""):`<span class="outl">${esc(tx.unv)}</span>`}</div>`; return; }
+    const pr=x.p>0?`<div class="pr2">${esc(x.f||fm(x.p))}</div>`:(x.q?`<div class="pr2">${esc(x.q)}</div>`:"");
+    if(SVM){ const u=waLink(svMsg(x)); rows+=`<div class="sv${x.a?"":" off"}"><div class="si">${icoFor(x.n)}</div><div class="st"><b>${esc(nice(x.n))}</b>${x.d?`<small>${esc(String(x.d).slice(0,90))}</small>`:""}${x.p>0?`<span class="sp">${esc(x.f||fm(x.p))}</span>`:(x.q?`<span class="sp qt">${esc(x.q)}</span>`:"")}</div>${x.a?(u?`<a class="sw" href="${esc(u)}" rel="noopener" aria-label="${esc(tx.wa)}">${SV.wa}${esc(D.biz==="beauty"||D.biz==="health"?tx.bk:D.biz==="school"?tx.inq:tx.rq)}</a>`:""):`<span class="outl">${esc(tx.unv)}</span>`}</div>`; return; }
     if(VIS.includes(D.biz)&&im.length){
-      v+=`<div class="cd"><div class="cp" data-g="${i}"><div class="cs">${im.map(u=>`<img loading="lazy" decoding="async" alt="" src="${esc(u)}">`).join("")}</div>${im.length>1?`<span class="cn">📷 ${im.length}</span><div class="cdt">${im.map((_,j)=>`<i${j?"":` class="on"`}></i>`).join("")}</div>`:""}</div><div class="cb"><div class="n"><b>${esc(nice(x.n))}${x.x?`<span class="pr">${esc(tx.promo)}</span>`:""}</b><span>${x.p>0?esc(x.f):""}</span>${x.d?`<em class="ds">${esc(x.d)}</em>`:""}</div>${ctl}</div></div>`; }
+      v+=`<div class="cd"><div class="cp" data-g="${i}"><div class="cs">${im.map(u=>`<img loading="lazy" decoding="async" alt="" src="${esc(u)}">`).join("")}</div>${im.length>1?`<span class="cn">📷 ${im.length}</span><div class="cdt">${im.map((_,j)=>`<i${j?"":` class="on"`}></i>`).join("")}</div>`:""}</div><div class="cb"><div class="n"><b>${esc(nice(x.n))}${x.x?`<span class="pr">${esc(tx.promo)}</span>`:""}</b><span>${x.p>0?esc(x.f||fm(x.p)):""}</span>${x.d?`<em class="ds">${esc(x.d)}</em>`:""}</div>${ctl}</div></div>`; }
     else g+=`<div class="pc${x.a?"":" so"}"><div class="im"${im.length?` data-g="${i}"`:""}>${im.length?thImg(im[0],x.n):`<div class="ph">${esc((x.n||"?").trim().slice(0,1).toUpperCase())}</div>`}${x.a?"":`<span class="bd so">${esc(tx.out)}</span>`}${x.x&&x.a?`<span class="bd pr">${esc(tx.promo)}</span>`:""}${im.length>1?`<i class="mb">📷 ${im.length}</i>`:""}</div><div class="b"><div class="n">${esc(nice(x.n))}</div>${x.d?`<em class="ds">${esc(x.d)}</em>`:""}${pr}<div class="ct">${ctl}</div></div></div>`; });
   if(SVM){ $("l").innerHTML=rows?`<div class="svl">${rows}</div>`:`<div class="msg">${esc(tx.none)}</div>`; return; }
   $("l").innerHTML=(v||"")+(g?`<div class="pg${D.items.some(x=>imgs(x).length)?"":" nm"}">${g}</div>`:"")||`<div class="msg">${esc(tx.none)}</div>`;
