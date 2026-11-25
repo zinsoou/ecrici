@@ -694,7 +694,7 @@ function money(n){
   const s = new Intl.NumberFormat(L()==="fr"?"fr-FR":"en-NG",{maximumFractionDigits:(c.sym==="FCFA"||c.dec===0)?0:2}).format(n).replace(/[  ]/g," ");
   return c.after ? `${s} ${c.sym}` : `${c.sym} ${s}`;
 }
-function parseAmt(v){ const n=parseFloat(String(v||"").replace(/[\s,]/g,"").replace(",",".")); return isFinite(n)?n:0; }
+function parseAmt(v){ let r=String(v==null?"":v).replace(/[\s\u00a0]/g,""); r=/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(r)?r.replace(/,/g,""):r.replace(",","."); const n=parseFloat(r); return isFinite(n)?n:0; }
 function fmtDate(iso){
   const d=new Date(iso);
   return d.toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{day:"2-digit",month:"short",year:"numeric"})+" "+
@@ -2888,6 +2888,7 @@ function saveSale(kind){
   const lines=d.lines.map(l=>({...((l.sn||"").trim()?{sn:l.sn.trim()}:{}),...(l.ci?{ci:l.ci}:{}),...(l.co?{co:l.co}:{}),...((l.w||"").trim()?{w:l.w.trim()}:{}),d:l.d.trim(),q:parseAmt(l.q)||0,p:parseAmt(l.p),pid:l.pid||null,c:(()=>{const pr=l.pid&&S.products.find(z=>z.id===l.pid);return pr&&pr.cost>0?pr.cost:0;})()})).filter(l=>l.q>0&&l.p>0);
   const total=lines.reduce((s,l)=>s+l.q*l.p,0);
   if(!lines.length||total<=0){ d.err=t("err_total"); $("#s-err").textContent=d.err; return; }
+  if(total>1e9||lines.some(l=>l.q>1e6||l.p>1e9)){ d.err=lx("Ce montant semble trop élevé. Vérifiez la quantité et le prix (un zéro en trop ?).","This amount looks too high. Check the quantity and price (an extra zero?)."); $("#s-err").textContent=d.err; return; }
   { const dd=DETDATE[biz()]; if(dd&&!S.shop.allowPast){ for(const l of lines){ const f=[l.sn,l.w]; for(let n=0;n<2;n++) if(dd[n]&&isIso(f[n])&&f[n]<todayKey()){ d.err=lx("Cette date ne peut pas être dans le passé.","This date cannot be in the past."); $("#s-err").textContent=d.err; return; } } } }
   if(biz()==="hotel"){ const used=[]; for(const l of lines){ if(!l.ci&&!l.co) continue;
     if(!l.ci||!l.co||l.co<=l.ci){ d.err=lx("Choisissez une date d'arrivée et une date de départ après l'arrivée.","Choose a check-in date and a check-out date after it."); $("#s-err").textContent=d.err; return; }
@@ -2927,7 +2928,7 @@ function savePayment(id){
   S.txs.push(x); save(); ui.modal={type:"receipt",id:x.id}; render(); toast(t("pay_saved"));
 }
 function csvOf(){
-  const q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
+  const q=v=>{ let z=String(v==null?"":v); if(/^[=+\-@\t\r]/.test(z)&&!/^-?\d+(\.\d+)?$/.test(z)) z="'"+z; return `"${z.replace(/"/g,'""')}"`; };
   const rows=[["no","date","type","customer","items","total","paid","payment_amount","method","note","cancelled"]];
   [...S.txs].sort((a,b)=>a.no-b.no).forEach(x=>rows.push([x.no,x.date,x.type,custName(x.cust),
     x.type==="sale"?x.lines.map(l=>`${l.q} x ${l.d} @ ${l.p}${lnEx(l)?" ["+lnEx(l)+"]":""}`).join("; "):"",x.total??"",x.paid??"",x.amount??"",x.method||"",x.note||"",x.void?"yes":""]));
