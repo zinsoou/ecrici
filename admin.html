@@ -90,6 +90,7 @@ const daysLeft=s=>s.paid_until?Math.round((new Date(s.paid_until+"T12:00:00Z")-n
 
 const BIZN={shop:"Shop / general trade",electronics:"Electronics",pharmacy:"Pharmacy",food:"Restaurant / food",beauty:"Salon / beauty",health:"Clinic / lab",school:"School / training",repair:"Artisans & repairs",travel:"Travel & tours",services:"Other services",rent:"Rentals",hotel:"Hotel / guesthouse"};
 const bizOf=s=>BIZN[s.biz]||"Not chosen yet";
+const BIZF={shop:"Boutique / commerce",electronics:"Électronique",pharmacy:"Pharmacie",food:"Restaurant / alimentation",beauty:"Salon / beauté",health:"Clinique / laboratoire",school:"École / formation",repair:"Artisans et réparations",travel:"Voyages et tourisme",services:"Autres services",rent:"Locations",hotel:"Hôtel / auberge"};
 const ini=s=>String(s||"?").trim().charAt(0).toUpperCase()||"?";
 const undoAll=()=>{ try{ return JSON.parse(lsGet("ecrici-adm-undo")||"{}"); }catch(e){ return {}; } };
 const undoGet=id=>undoAll()[id]||null;
@@ -102,8 +103,8 @@ function welcomeLink(s){
   if(!s||!s.phone) return "";
   const fr=FRC.includes(String(s.country||"").toUpperCase()), nm=(s.name||"").trim()||(fr?"":"there");
   let dt=""; if(s.paid_until){ const p=String(s.paid_until).slice(0,10).split("-"); dt=fr?p[2]+"/"+p[1]+"/"+p[0]:new Date(s.paid_until+"T00:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"}); }
-  const t=fr?"Bonjour "+nm+" 👋\n\nBienvenue sur Ecrici ! ✅ Votre compte a été approuvé avec succès"+(dt?" et reste actif jusqu'au "+dt:"")+".\n\nPour bien démarrer :\n1. Ouvrez ecrici.com et connectez-vous\n2. Ajoutez vos produits ou services\n3. Dans Réglages › Ma page en ligne, créez votre page pour que vos clients vous trouvent\n\nUne question ? Répondez simplement à ce message, je vous aide.\n— L'équipe Ecrici"
-   :"Hello "+nm+" 👋\n\nWelcome to Ecrici! ✅ Your account has been approved successfully"+(dt?" and is active until "+dt:"")+".\n\nTo get started:\n1. Open ecrici.com and log in\n2. Add your products or services\n3. In Settings › My online page, create your page so customers can find you\n\nAny question? Just reply to this message and I will help.\n— The Ecrici team";
+  const t=fr?"Bonjour "+nm+" 👋\n\nBienvenue sur Ecrici ! ✅ Votre compte a été approuvé avec succès"+(dt?" et reste actif jusqu'au "+dt:"")+".\n\nPour bien démarrer :\n1. Ouvrez ecrici.com et connectez-vous\n2. Ajoutez vos produits ou services\n3. Dans Réglages › Ma page en ligne, créez votre page pour que vos clients vous trouvent"+(BIZF[s.biz]?"\n\nVotre activité enregistrée : *"+BIZF[s.biz]+"*. Ce n'est pas la bonne ? Répondez ici avec votre activité, ou changez-la dans Réglages › Type d'activité.":"")+"\n\nUne question ? Répondez simplement à ce message, je vous aide.\n— L'équipe Ecrici"
+   :"Hello "+nm+" 👋\n\nWelcome to Ecrici! ✅ Your account has been approved successfully"+(dt?" and is active until "+dt:"")+".\n\nTo get started:\n1. Open ecrici.com and log in\n2. Add your products or services\n3. In Settings › My online page, create your page so customers can find you"+(BIZN[s.biz]?"\n\nYour business type is set to *"+BIZN[s.biz]+"*. Not right? Reply here with what you do, or change it in Settings › Type of business.":"")+"\n\nAny question? Just reply to this message and I will help.\n— The Ecrici team";
   return "https://wa.me/"+String(s.phone).replace(/\D/g,"")+"?text="+encodeURIComponent(t);
 }
 const waOf=p=>p?"https://wa.me/"+String(p).replace(/\D/g,""):"";
