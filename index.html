@@ -1105,6 +1105,7 @@ function viewHome(){
     const days=lb?ageDays(lb):(t0?ageDays(t0):0);   /* never backed up: count from the first entry, so a new shop is not nagged on day one */
     if(since>=30||(since>=5&&days>=3)||(since>=1&&days>=7)) bn.push(`<div class="banner"><span>${t("backup_banner",since)}</span><button class="btn small primary" data-act="backup-now">${t("backup_now")}</button></div>`);
   }
+  try{ const an=window.__ann; if(an&&(an[L()]||an.fr)&&localStorage.getItem("ecrici-ann-seen")!==an.id) bn.unshift(`<div class="banner" style="background:var(--card);border:1px solid var(--line);color:var(--ink)"><span>📣 ${esc(an[L()]||an.fr)}${an.link?` <a href="${esc(an.link)}" target="_blank" rel="noopener">${lx("En savoir plus","Learn more")}</a>`:""}</span><button class="btn small" data-act="ann-off" data-id="${esc(an.id)}">OK</button></div>`); }catch(e){}
   if(isOwner()&&canInstall()) bn.push(`<div class="banner"><span>${t("inst_txt")}</span><span style="display:flex;gap:6px">${deferredInstall?`<button class="btn small primary" data-act="install-app">${t("inst_btn")}</button>`:""}<button class="btn small" data-act="install-off">${t("inst_later")}</button></span></div>`);
   if(!S.customers.length&&!S.txs.length&&!S.products.length) bn.push(`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`);
   const _setup=lnCard(); const _bn=bn.filter(x=>!(/ln-open/.test(_setup)&&/install-off/.test(x)));
@@ -3174,6 +3175,7 @@ document.addEventListener("click",e=>{
     case "tour-try": tourClose(); loadExamples(); break;
     case "tour-own": tourClose(); ui.view="stock"; render(); break;
     case "tour-open": ui.tour={i:0}; drawTour(); break;
+    case "ann-off": try{ localStorage.setItem("ecrici-ann-seen",id); }catch(e){} render(); break;
     case "backup-now": backupNow(); break;
     case "theme": setTheme(el.dataset.m); break;
     case "export-csv": saveFile(`ecrici-${todayKey()}.csv`,csvOf()); break;

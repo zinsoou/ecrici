@@ -59,7 +59,7 @@ const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
 const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
 let sess=null; try{ sess=JSON.parse(lsGet(SK)); }catch(e){}
-let shops=[], claims=[], branches=[], reps=[], pages=[], rvs=[], rvrep={}, promos={}, pmOpen="", pmItems=[], pmSel=[], pmNoSql=false, q="", pq="", filter="all", rf="reported", tab=lsGet("ecrici-admin-tab")||"today", err="", msg="", msgLink="", lastEmail="";
+let ann=[], annNoSql=false, annF={fr:"",en:"",link:"",until:""}, shops=[], claims=[], branches=[], reps=[], pages=[], rvs=[], rvrep={}, promos={}, pmOpen="", pmItems=[], pmSel=[], pmNoSql=false, q="", pq="", filter="all", rf="reported", tab=lsGet("ecrici-admin-tab")||"today", err="", msg="", msgLink="", lastEmail="";
 
 async function http(path,o){
   o=o||{};
@@ -103,8 +103,14 @@ function welcomeLink(s){
   if(!s||!s.phone) return "";
   const fr=FRC.includes(String(s.country||"").toUpperCase()), nm=(s.name||"").trim()||(fr?"":"there");
   let dt=""; if(s.paid_until){ const p=String(s.paid_until).slice(0,10).split("-"); dt=fr?p[2]+"/"+p[1]+"/"+p[0]:new Date(s.paid_until+"T00:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"}); }
-  const t=fr?"Bonjour "+nm+" 👋\n\nBienvenue sur Ecrici ! ✅ Votre compte a été approuvé avec succès"+(dt?" et reste actif jusqu'au "+dt:"")+".\n\nPour bien démarrer :\n1. Ouvrez ecrici.com et connectez-vous\n2. Ajoutez vos produits ou services\n3. Dans Réglages › Ma page en ligne, créez votre page pour que vos clients vous trouvent"+(BIZF[s.biz]?"\n\nVotre activité enregistrée : *"+BIZF[s.biz]+"*. Ce n'est pas la bonne ? Répondez ici avec votre activité, ou changez-la dans Réglages › Type d'activité.":"")+"\n\nUne question ? Répondez simplement à ce message, je vous aide.\n— L'équipe Ecrici"
-   :"Hello "+nm+" 👋\n\nWelcome to Ecrici! ✅ Your account has been approved successfully"+(dt?" and is active until "+dt:"")+".\n\nTo get started:\n1. Open ecrici.com and log in\n2. Add your products or services\n3. In Settings › My online page, create your page so customers can find you"+(BIZN[s.biz]?"\n\nYour business type is set to *"+BIZN[s.biz]+"*. Not right? Reply here with what you do, or change it in Settings › Type of business.":"")+"\n\nAny question? Just reply to this message and I will help.\n— The Ecrici team";
+  const bf=BIZF[s.biz], be=BIZN[s.biz];
+  const t=fr?
+    "Bonjour "+nm+" 👋\n\nBienvenue sur Ecrici ! ✅ Votre compte est approuvé"+(dt?" et actif jusqu'au "+dt:"")+".\n\n*Pour bien démarrer*\n1. Ouvrez ecrici.com et connectez-vous\n2. Ajoutez vos produits ou services\n3. Créez votre page en ligne : Réglages › Ma page en ligne"
+    +(bf?"\n\n*Votre activité*\nEnregistrée : "+bf+". Ce n'est pas la bonne ? Répondez ici avec votre activité, ou changez-la dans Réglages › Type d'activité.":"")
+    +"\n\n*Badge Vérifié ✔*\nComplétez votre page (logo, description, produits, contact), puis demandez le badge dans Réglages › Ma page en ligne › « Demander le badge Vérifié ». Nous vérifions votre activité avant de l'accorder. Les pages vérifiées sont mises en avant sur le Market.\n\nUne question ? Répondez simplement à ce message.\n— L'équipe Ecrici"
+   :"Hello "+nm+" 👋\n\nWelcome to Ecrici! ✅ Your account is approved"+(dt?" and active until "+dt:"")+".\n\n*Getting started*\n1. Open ecrici.com and log in\n2. Add your products or services\n3. Create your online page: Settings › My online page"
+    +(be?"\n\n*Your business type*\nSet to: "+be+". Not right? Reply here with what you do, or change it in Settings › Type of business.":"")
+    +"\n\n*Verified badge ✔*\nComplete your page (logo, description, products, contact), then request the badge in Settings › My online page › \"Ask for the Verified badge\". We check your business before granting it. Verified pages are shown first on the Market.\n\nAny question? Just reply to this message.\n— The Ecrici team";
   return "https://wa.me/"+String(s.phone).replace(/\D/g,"")+"?text="+encodeURIComponent(t);
 }
 const waOf=p=>p?"https://wa.me/"+String(p).replace(/\D/g,""):"";
@@ -112,7 +118,7 @@ const stars=n=>"★".repeat(n)+"☆".repeat(5-n);
 const dshort=d=>{ try{ return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}); }catch(e){ return ""; } };
 function frame(inner){
   const t=todoCounts();
-  const T=[["today","Today",t.total],["shops","Shops",0],["pages","Pages",t.pg],["reviews","Reviews",t.rv],["stats","Stats",0]];
+  const T=[["today","Today",t.total],["shops","Shops",0],["pages","Pages",t.pg],["reviews","Reviews",t.rv],["notice","Notice",0],["stats","Stats",0]];
   app.innerHTML=`<header class="bar"><div class="wrap"><div class="top"><div class="brand"><i>E</i><span>Ecrici <small>Admin</small></span></div><button id="out">Log out</button></div>
     <nav class="tabs" role="tablist">${T.map(([k,l,n])=>`<button role="tab" aria-selected="${tab===k}" data-tab="${k}">${l}${n?`<span class="n">${n}</span>`:""}</button>`).join("")}</nav></div></header>
     <main>${err?`<div class="err" id="er" style="background:var(--bad-bg);padding:10px 12px;border-radius:12px">${esc(err)}</div>`:""}${msg?`<div class="ok">${esc(msg)}${msgLink?` · <a href="${esc(msgLink)}" target="_blank" rel="noopener">Send on WhatsApp</a>`:""}</div>`:""}${inner}</main>`;
@@ -126,7 +132,7 @@ const repsBy=()=>{ const g={}; reps.forEach(r=>{ (g[r.slug]=g[r.slug]||{slug:r.s
 const rvFlag=()=>rvs.filter(r=>(rvrep[r.id]||0)>0||r.hidden);
 function draw(){ draw0(); const sg=err+"|"+msg; if((err||msg)&&sg!==window.__sg) window.scrollTo(0,0); window.__sg=sg; }
 function draw0(){
-  const v={today:vToday,shops:vShops,pages:vPages,reviews:vReviews,stats:vStats}[tab]||vToday;
+  const v={today:vToday,shops:vShops,pages:vPages,reviews:vReviews,notice:vNotice,stats:vStats}[tab]||vToday;
   frame(v());
   const keep=document.activeElement&&document.activeElement.id;
   $("#out").onclick=()=>{ sess=null; lsDel(SK); err=""; login(); };
@@ -136,6 +142,7 @@ function draw0(){
 document.addEventListener("click",e=>{
   const b=e.target.closest("button,a"); if(!b||!app.contains(b)) return; const d=b.dataset;
   if(d.w){ wMark(d.w); setTimeout(draw,400); return; }
+  if(d.an){ annAct(d.an); return; }
   if(d.tab){ tab=d.tab; lsSet("ecrici-admin-tab",tab); err=""; msg=""; draw(); window.scrollTo(0,0); }
   else if(d.go){ tab=d.go; if(d.f) filter=d.f; if(d.rf) rf=d.rf; lsSet("ecrici-admin-tab",tab); err=""; msg=""; draw(); window.scrollTo(0,0); }
   else if(d.f!==undefined&&!d.go){ filter=d.f; draw(); }
@@ -247,6 +254,34 @@ async function pmAct(slug,a,days){
   pmSel=[]; msg=a==="feat"?"Featured until "+feat+": "+slug:a==="unfeat"?"Featured removed: "+slug:a==="boost"?"Boost active: "+slug:"Boosts cleared: "+slug; draw();
 }
 function pmTog(i){ i=Number(i); const k=pmSel.indexOf(i); if(k>=0) pmSel.splice(k,1); else if(pmSel.length<3) pmSel.push(i); draw(); }
+/* ---- NOTICE (one message shown to every shop) ---- */
+const annLive=()=>ann.find(x=>x.active&&(!x.until||x.until>=today()));
+function vNotice(){
+  if(annNoSql) return `<h2>Notice</h2><div class="card"><div class="muted">Run the file <b>upgrade-v160-announcements.sql</b> in Supabase (SQL Editor) once, then reload this page.</div></div>`;
+  const cur=annLive();
+  const now=cur?`<div class="card"><div class="name">Showing now</div><div class="muted">FR: ${esc(cur.fr)}</div><div class="muted">EN: ${esc(cur.en)}</div>${cur.link?`<div class="muted">Link: ${esc(cur.link)}</div>`:""}<div class="muted">${cur.until?"Until "+esc(cur.until):"No end date"}</div><div class="row"><button class="d" data-an="stop">Stop this notice</button></div></div>`:`<div class="card"><div class="muted">No notice is showing right now.</div></div>`;
+  return `<h2>Notice to all shops</h2><div class="muted">Appears as a banner on every shop's home screen the next time they open Ecrici. Each shop can close it with OK. Publishing a new one replaces the old one.</div>${now}
+  <div class="card"><label class="muted" for="an-fr">Message in French (max 400)</label><textarea id="an-fr" maxlength="400" rows="3" style="font:inherit;width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)">${esc(annF.fr)}</textarea>
+  <label class="muted" for="an-en">Message in English (max 400)</label><textarea id="an-en" maxlength="400" rows="3" style="font:inherit;width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)">${esc(annF.en)}</textarea>
+  <label class="muted" for="an-link">Link (optional, starts with https)</label><input id="an-link" value="${esc(annF.link)}" inputmode="url" autocomplete="off">
+  <label class="muted" for="an-until">Hide after this date (optional)</label><input id="an-until" type="date" value="${esc(annF.until)}">
+  <div class="row"><button class="p" data-an="pub">Publish to all shops</button></div></div>`;
+}
+document.addEventListener("input",e=>{ const m={"an-fr":"fr","an-en":"en","an-link":"link","an-until":"until"}[e.target&&e.target.id]; if(m) annF[m]=e.target.value; });
+async function annAct(a){
+  err=""; msg="";
+  if(a==="stop"){ const r=await api("/rest/v1/rpc/admin_announce_stop",{method:"POST",body:{}}); if(!r.ok){ err="Could not stop it ("+r.status+")."; draw(); return; } }
+  else{
+    const fr=annF.fr.trim(), en=annF.en.trim(), link=annF.link.trim(), until=annF.until;
+    if(!fr||!en){ err="Write the message in both French and English."; draw(); return; }
+    if(link&&!/^https:\/\//.test(link)){ err="The link must start with https://"; draw(); return; }
+    const r=await api("/rest/v1/rpc/admin_announce",{method:"POST",body:{p_fr:fr,p_en:en,p_link:link||null,p_until:until||null}});
+    if(!r.ok){ err="Could not publish ("+r.status+"). Check the SQL step was run."; draw(); return; }
+    annF={fr:"",en:"",link:"",until:""};
+  }
+  const ra=await api("/rest/v1/announcements?select=*&order=created_at.desc&limit=5"); annNoSql=!ra.ok; ann=(ra.ok&&Array.isArray(ra.json))?ra.json:[];
+  msg=a==="stop"?"Notice stopped.":"Published. Shops will see it when they next open Ecrici."; draw();
+}
 /* ---- REVIEWS ---- */
 function vReviews(){
   const fl=rvFlag(), shown=rf==="reported"?fl:rf==="hidden"?rvs.filter(r=>r.hidden):rvs;
@@ -303,6 +338,7 @@ async function load(){
   const rpm=await api("/rest/v1/catalog_promos?select=*&limit=1000"); promos={}; pmNoSql=!rpm.ok; if(rpm.ok&&Array.isArray(rpm.json)) rpm.json.forEach(x=>{ promos[x.slug]=x; });
   const rv=await api("/rest/v1/catalog_reviews?select=id,slug,rating,name,body,done_at,hidden&done_at=not.is.null&order=done_at.desc&limit=300"); rvs=(rv.ok&&Array.isArray(rv.json))?rv.json:[];
   const rq=await api("/rest/v1/catalog_review_reports?select=review_id&limit=2000"); rvrep={}; if(rq.ok&&Array.isArray(rq.json)) rq.json.forEach(x=>{ rvrep[x.review_id]=(rvrep[x.review_id]||0)+1; });
+  const ra=await api("/rest/v1/announcements?select=*&order=created_at.desc&limit=5"); annNoSql=!ra.ok; ann=(ra.ok&&Array.isArray(ra.json))?ra.json:[];
   draw();
 }
 async function vfAct(slug,on){

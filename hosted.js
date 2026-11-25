@@ -419,7 +419,12 @@ async function enter() {
   if (!valid(a) || branchBlocked) { active = false; showGate(member ? "blocked" : a.status === "pending" ? "pending" : "blocked"); return; }
   try { await reconcile(ledShop(shop)); } catch (e) { if (e.auth) { showGate("auth"); return; } }
   lsDel("ecrici-join"); form.code = ""; if (mode === "join") mode = "login";
-  active = true; lastCheck = Date.now(); hideGate(); updateStatus(); render();
+  active = true; lastCheck = Date.now(); hideGate(); updateStatus(); render(); loadAnn();
+}
+async function loadAnn() {
+  try { const r = await api("/rest/v1/announcements?select=id,fr,en,link&order=created_at.desc&limit=1"); const x = r && r.ok && Array.isArray(r.json) ? r.json[0] : null;
+    window.__ann = x && x.id ? { id: String(x.id), fr: String(x.fr || "").slice(0, 400), en: String(x.en || "").slice(0, 400), link: /^https:\/\//.test(x.link || "") ? x.link : "" } : null;
+    if (typeof render === "function") render(); } catch (e) {}
 }
 function unlockOffline() { active = true; storeMode = "device"; hideGate(); updateStatus(); render(); }
 
