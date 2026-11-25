@@ -1109,7 +1109,7 @@ function viewHome(){
   if(!S.customers.length&&!S.txs.length&&!S.products.length) bn.push(`<div class="banner"><span>${t("empty_home")}</span><button class="btn small" data-act="load-examples">${t("load_examples")}</button></div>`);
   const _setup=lnCard(); const _bn=bn.filter(x=>!(/ln-open/.test(_setup)&&/install-off/.test(x)));
   if(_bn.length) h+=_bn[0];
-  h+=_setup+(_setup&&/ln-open/.test(_setup)?"":homeGuide()+riderCard())+rentCard()+hotelCard()+memCard()+apptCard()+jobCard()+expiryCard();
+  h+=_setup+(_setup&&/ln-open/.test(_setup)?"":homeGuide()+riderCard())+bcMonthCard()+rentCard()+hotelCard()+memCard()+apptCard()+jobCard()+expiryCard();
   h+=`<section class="sec"><h2>${t("today")}<span>${new Date().toLocaleDateString(L()==="fr"?"fr-FR":"en-GB",{weekday:"long",day:"numeric",month:"long"})}</span></h2>
     <div class="sum">
       <div class="card"><div class="lbl">${t("sold")}</div><div class="val num">${money(sold)}</div></div>
@@ -1456,6 +1456,58 @@ function loadExamples(){
   nicheExamples(); save(); ui.view="home"; ui.custId=null; render(); toast(t("examples_loaded"));
 }
 /* --- broadcast --- */
+/* v155: message sets per kind of business. [brackets] are filled in by the owner. */
+const BC_SETS={
+ sell:[["month","Nouveau mois","New month","Bonjour {name}, bon nouveau mois ! Merci de votre fidélité. — {shop}","Hello {name}, happy new month! Thank you for your loyalty. — {shop}"],
+  ["promo","Promotion","Promotion","Bonjour {name}, chez {shop} : [X] % de réduction sur [produits] jusqu'au [date]. Passez nous voir !","Hello {name}, at {shop}: [X]% off [products] until [date]. Come and see us!"],
+  ["season","Fêtes","Season","Bonjour {name}, {shop} vous souhaite de très belles fêtes ! Merci pour votre confiance.","Hello {name}, {shop} wishes you a wonderful season! Thank you for your trust."],
+  ["stock","Arrivage","New stock","Bonjour {name}, nouveaux arrivages chez {shop} : [produits]. Passez nous voir !","Hello {name}, new stock at {shop}: [products]. Come and see us!"],
+  ["back","Revenez","Come back","Bonjour {name}, ça fait un moment ! {shop} vous attend avec de bonnes offres : [offre].","Hello {name}, it has been a while! {shop} has good offers waiting for you: [offer]."]],
+ food:[["month","Nouveau mois","New month","Bonjour {name}, bon nouveau mois ! Merci de votre fidélité. — {shop}","Hello {name}, happy new month! Thank you for your loyalty. — {shop}"],
+  ["menu","Nouveau menu","New menu","Bonjour {name}, du nouveau au menu de {shop} : [plats]. Venez goûter !","Hello {name}, something new on the menu at {shop}: [dishes]. Come and taste!"],
+  ["special","Offre du jour","Today's offer","Bonjour {name}, aujourd'hui chez {shop} : [plat] à [prix] FCFA. Commandez ou passez nous voir !","Hello {name}, today at {shop}: [dish] for [price] FCFA. Order or drop by!"],
+  ["season","Fêtes","Season","Bonjour {name}, {shop} vous souhaite de très belles fêtes ! Merci pour votre confiance.","Hello {name}, {shop} wishes you a wonderful season! Thank you for your trust."],
+  ["back","Revenez","Come back","Bonjour {name}, ça fait un moment ! Votre table vous attend chez {shop}.","Hello {name}, it has been a while! Your table is waiting at {shop}."]],
+ pharmacy:[["month","Nouveau mois","New month","Bonjour {name}, bon nouveau mois ! Merci de votre confiance. — {shop}","Hello {name}, happy new month! Thank you for your trust. — {shop}"],
+  ["hours","Horaires","Opening hours","Bonjour {name}, {shop} vous informe : nos horaires d'ouverture sont [horaires].","Hello {name}, {shop} would like to let you know our opening hours are [hours]."],
+  ["avail","Produit disponible","Product available","Bonjour {name}, [produit] est de nouveau disponible chez {shop}. Passez nous voir.","Hello {name}, [product] is available again at {shop}. Come and see us."],
+  ["season","Fêtes","Season","Bonjour {name}, {shop} vous souhaite de très belles fêtes et une bonne santé !","Hello {name}, {shop} wishes you a wonderful season and good health!"],
+  ["thanks","Merci","Thank you","Bonjour {name}, merci d'avoir choisi {shop}. Nous restons à votre service.","Hello {name}, thank you for choosing {shop}. We remain at your service."]],
+ beauty:[["month","Nouveau mois","New month","Bonjour {name}, bon nouveau mois ! Merci de votre fidélité. — {shop}","Hello {name}, happy new month! Thank you for your loyalty. — {shop}"],
+  ["rebook","Reprendre RDV","Rebook","Bonjour {name}, ça fait un moment ! Prenez rendez-vous chez {shop} quand vous voulez.","Hello {name}, it has been a while! Book your next appointment at {shop} whenever you like."],
+  ["offer","Offre","Offer","Bonjour {name}, chez {shop} : [offre] jusqu'au [date]. Réservez votre place !","Hello {name}, at {shop}: [offer] until [date]. Book your spot!"],
+  ["season","Fêtes","Season","Bonjour {name}, {shop} vous souhaite de très belles fêtes ! Pensez à réserver votre coiffure ou vos soins.","Hello {name}, {shop} wishes you a wonderful season! Remember to book your hair or treatment."],
+  ["thanks","Merci","Thank you","Bonjour {name}, merci de votre visite chez {shop}. Nous espérons que vous êtes satisfait(e) !","Hello {name}, thank you for visiting {shop}. We hope you are happy with the result!"]],
+ repair:[["month","Nouveau mois","New month","Bonjour {name}, bon nouveau mois ! Merci de votre confiance. — {shop}","Hello {name}, happy new month! Thank you for your trust. — {shop}"],
+  ["avail","Disponible","Available","Bonjour {name}, {shop} est disponible cette semaine pour vos travaux. Contactez-nous pour un devis.","Hello {name}, {shop} is available this week for your jobs. Contact us for a quote."],
+  ["follow","Après intervention","After the job","Bonjour {name}, tout va bien après notre intervention ? N'hésitez pas à nous écrire si besoin. — {shop}","Hello {name}, is everything fine after our work? Do not hesitate to write to us if needed. — {shop}"],
+  ["maint","Entretien","Maintenance","Bonjour {name}, pensez à l'entretien de [équipement] pour éviter les pannes. {shop} est là pour vous aider.","Hello {name}, remember to service your [equipment] to avoid breakdowns. {shop} is here to help."],
+  ["season","Fêtes","Season","Bonjour {name}, {shop} vous souhaite de très belles fêtes ! Merci pour votre confiance.","Hello {name}, {shop} wishes you a wonderful season! Thank you for your trust."]],
+ health:[["month","Nouveau mois","New month","Bonjour {name}, bon nouveau mois et bonne santé ! — {shop}","Hello {name}, happy new month and good health! — {shop}"],
+  ["hours","Horaires","Opening hours","Bonjour {name}, {shop} vous informe : nos horaires sont [horaires].","Hello {name}, {shop} would like to let you know our hours are [hours]."],
+  ["appt","Rendez-vous","Appointment","Bonjour {name}, pensez à prendre rendez-vous chez {shop} pour votre prochain suivi.","Hello {name}, remember to book your next appointment at {shop}."],
+  ["season","Fêtes","Season","Bonjour {name}, {shop} vous souhaite de très belles fêtes et une bonne santé !","Hello {name}, {shop} wishes you a wonderful season and good health!"],
+  ["thanks","Merci","Thank you","Bonjour {name}, merci de votre confiance. Prenez soin de vous. — {shop}","Hello {name}, thank you for your trust. Take care. — {shop}"]],
+ school:[["month","Nouveau mois","New month","Bonjour {name}, bon nouveau mois ! Merci de votre confiance. — {shop}","Hello {name}, happy new month! Thank you for your trust. — {shop}"],
+  ["enrol","Inscriptions","Enrolment","Bonjour {name}, les inscriptions sont ouvertes à {shop} pour [période]. Contactez-nous pour plus d'informations.","Hello {name}, enrolment is open at {shop} for [period]. Contact us for more information."],
+  ["info","Information","Notice","Bonjour {name}, information de {shop} : [message].","Hello {name}, a notice from {shop}: [message]."],
+  ["season","Fêtes","Season","Bonjour {name}, {shop} vous souhaite de très belles fêtes ! Merci pour votre confiance.","Hello {name}, {shop} wishes you a wonderful season! Thank you for your trust."]],
+ travel:[["month","Nouveau mois","New month","Bonjour {name}, bon nouveau mois ! Merci de votre fidélité. — {shop}","Hello {name}, happy new month! Thank you for your loyalty. — {shop}"],
+  ["offer","Offre voyage","Trip offer","Bonjour {name}, {shop} propose [destination] à partir de [prix] FCFA, départ le [date]. Réservez vite !","Hello {name}, {shop} offers [destination] from [price] FCFA, departing [date]. Book early!"],
+  ["season","Fêtes","Season","Bonjour {name}, {shop} vous souhaite de très belles fêtes ! Pensez à réserver votre voyage.","Hello {name}, {shop} wishes you a wonderful season! Remember to book your trip."],
+  ["back","Revenez","Come back","Bonjour {name}, ça fait un moment ! Où voulez-vous voyager ensuite ? {shop} vous accompagne.","Hello {name}, it has been a while! Where would you like to travel next? {shop} is here for you."]],
+ rent:[["month","Nouveau mois","New month","Bonjour {name}, bon nouveau mois ! Merci pour votre confiance. — {shop}","Hello {name}, happy new month! Thank you for your trust. — {shop}"],
+  ["avail","Logement libre","Unit available","Bonjour {name}, un logement est disponible chez {shop} : [logement], loyer [prix] FCFA. Visite sur rendez-vous.","Hello {name}, a unit is available at {shop}: [unit], rent [price] FCFA. Visits by appointment."],
+  ["season","Fêtes","Season","Bonjour {name}, {shop} vous souhaite de très belles fêtes ! Merci pour votre confiance.","Hello {name}, {shop} wishes you a wonderful season! Thank you for your trust."],
+  ["thanks","Merci","Thank you","Bonjour {name}, merci d'être des nôtres. N'hésitez pas à nous écrire pour toute question. — {shop}","Hello {name}, thank you for staying with us. Feel free to write to us with any question. — {shop}"]],
+ hotel:[["month","Nouveau mois","New month","Bonjour {name}, bon nouveau mois ! Merci de votre fidélité. — {shop}","Hello {name}, happy new month! Thank you for your loyalty. — {shop}"],
+  ["offer","Offre séjour","Stay offer","Bonjour {name}, offre spéciale chez {shop} : [offre] jusqu'au [date]. Réservez votre séjour !","Hello {name}, special offer at {shop}: [offer] until [date]. Book your stay!"],
+  ["season","Fêtes","Season","Bonjour {name}, {shop} vous souhaite de très belles fêtes ! Réservez votre séjour dès maintenant.","Hello {name}, {shop} wishes you a wonderful season! Book your stay now."],
+  ["thanks","Merci","Thank you","Bonjour {name}, merci d'avoir séjourné chez {shop}. Nous serons ravis de vous revoir !","Hello {name}, thank you for staying at {shop}. We would love to welcome you again!"],
+  ["back","Revenez","Come back","Bonjour {name}, ça fait un moment ! Votre chambre vous attend chez {shop}.","Hello {name}, it has been a while! Your room is waiting at {shop}."]]};
+const bcGroup=()=>{ const b=biz(); if(b==="electronics"||b==="shop") return "sell"; if(b==="services") return "repair"; return BC_SETS[b]?b:"sell"; };
+const bcSet=()=>BC_SETS[bcGroup()];
+const bcText=k=>{ const r=bcSet().find(x=>x[0]===k)||bcSet()[0]; return L()==="en"?r[4]:r[3]; };
 const BC_TPL={
   fr:{month:"Bonjour {name}, bon nouveau mois ! Merci de votre fidélité. — {shop}",
       promo:"Bonjour {name}, chez {shop} : [X] % de réduction sur [produits] jusqu'au [date]. Passez nous voir !",
@@ -1468,7 +1520,13 @@ const BC_TPL={
       stock:"Hello {name}, new stock at {shop}: [products]. Come and see us!",
       back:"Hello {name}, it has been a while! {shop} has good offers waiting for you: [offer]."}
 };
-function bcState(){ if(!ui.bc) ui.bc={aud:"all",text:BC_TPL[L()].month,sent:{}}; return ui.bc; }
+function bcMonthKey(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
+function bcMonthCard(){
+  if(!isOwner()||!S.customers.some(c=>intlPhone(c.phone))||!S.txs.some(x=>!x.example)) return "";
+  const d=new Date(); if(d.getDate()>7) return ""; if(S.shop.bcMonth===bcMonthKey()) return "";
+  return `<div class="card" style="display:flex;gap:12px;align-items:center"><div style="font-size:26px" aria-hidden="true">🎉</div><div style="flex:1;min-width:0"><b>${lx("Un nouveau mois commence !","A new month begins!")}</b><div class="note" style="margin:2px 0 8px">${lx("Envoyez vos vœux à vos clients.","Send your customers your best wishes.")}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small primary" data-act="bcm-go">${lx("Préparer le message","Prepare the message")}</button><button class="btn small ghost" data-act="bcm-x">${lx("Plus tard","Not now")}</button></div></div></div>`;
+}
+function bcState(){ if(!ui.bc) ui.bc={aud:"all",text:bcText("month"),sent:{}}; return ui.bc; }
 function lastBuy(custId){ let m=0; for(const x of S.txs){ if(x.cust===custId&&x.type==="sale"&&!x.void){ const d=new Date(x.date).getTime(); if(d>m) m=d; } } return m; }
 function bcAudience(aud){
   const now=Date.now();
@@ -1487,10 +1545,10 @@ function viewBroadcast(){
   const b=bcState(), list=bcAudience(b.aud);
   const opened=list.filter(c=>b.sent[c.id]).length;
   const auds=[["all","aud_all"],["owe","aud_owe"],["recent","aud_recent"],["inactive","aud_inactive"]];
-  const tpls=[["month","tpl_month"],["promo","tpl_promo"],["season","tpl_season"],["stock","tpl_stock"],["back","tpl_back"]];
+  const tpls=bcSet().map(r=>[r[0],L()==="en"?r[2]:r[1]]);
   return `<section class="sec"><button class="btn small ghost" data-act="bc-back" style="justify-self:start">← ${t("back")}</button>
     <h2>${t("bc_title")}</h2><div class="card form">
-      <div class="field"><span class="lab">${t("bc_msg")}</span><div class="seg">${tpls.map(([k,l])=>`<button class="pill" data-act="bc-tpl" data-k="${k}">${t(l)}</button>`).join("")}</div>
+      <div class="field"><span class="lab">${t("bc_msg")}</span><div class="seg">${tpls.map(([k,l])=>`<button class="pill" data-act="bc-tpl" data-k="${k}">${esc(l)}</button>`).join("")}</div>
         <textarea id="bc-text" data-bind="bc.text" rows="5" aria-label="${t("bc_msg")}">${esc(b.text)}</textarea>
         <div class="err" id="bc-warn" ${/\[[^\]]+\]/.test(b.text)?"":"hidden"}>${t("bc_fill")}</div>
         <p class="note" style="margin:0">${t("bc_note")}</p></div>
@@ -3031,9 +3089,11 @@ document.addEventListener("click",e=>{
     case "install-off": try{localStorage.setItem("ecrici-install-off","1");}catch(x){} render(); break;
     case "goto": ui.view=el.dataset.to; ui.custId=null; render(); window.scrollTo(0,0); break;
     case "install-app": if(deferredInstall){ const d=deferredInstall; deferredInstall=null; try{ d.prompt(); d.userChoice.then(()=>render(),()=>render()); }catch(x){ render(); } } break;
+    case "bcm-go": S.shop.bcMonth=bcMonthKey(); save(); ui.bc=null; bcState(); ui.view="bc"; render(); window.scrollTo(0,0); break;
+    case "bcm-x": S.shop.bcMonth=bcMonthKey(); save(); render(); break;
     case "bc-open": ui.view="bc"; render(); window.scrollTo(0,0); break;
     case "bc-back": ui.view="cust"; render(); break;
-    case "bc-tpl": bcState().text=BC_TPL[L()][el.dataset.k]; render(); break;
+    case "bc-tpl": bcState().text=bcText(el.dataset.k); render(); break;
     case "bc-aud": bcState().aud=el.dataset.k; render(); break;
     case "bc-copy": copyText(bcState().text.replace(/\s*\{name\}/g,"").replace(/\{shop\}/g,S.shop.name)); break;
     case "bc-sent": { const b=bcState(); b.sent[el.dataset.bcid]=1; el.textContent=t("bc_sent");
