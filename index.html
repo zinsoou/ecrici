@@ -1887,11 +1887,16 @@ function viewLock(){
     ${window.__logout?`<div style="border-top:1px solid var(--line);padding-top:12px;display:grid;gap:6px"><button class="btn small" data-act="signout" style="justify-self:start">${t("signout_phone")}</button><p class="note" style="margin:0;font-size:.78rem">${t("signout_hint")}</p></div>`:""}
   </div></div>`;
 }
-function doUnlock(){
+async function pinHash(id,pin){ try{ if(!(window.crypto&&crypto.subtle)) return ""; const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("ecrici|"+id+"|"+pin)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }catch(e){ return ""; } }
+async function doUnlock(){
   const w=$("#lk-who"), pn=$("#lk-pin"); if(!w||!pn) return;
-  const st=S.staff.find(x=>x.id===w.value);
-  if(st&&st.pin===pn.value){ ui.me=st.id; ui.view="home"; ui.lockForgot=false; render(); }
-  else { $("#lk-err").textContent=t("wrong_pin"); }
+  const st=S.staff.find(x=>x.id===w.value), er=$("#lk-err"), now=Date.now();
+  if(ui.lkBlock&&now<ui.lkBlock){ er.textContent=lx("Trop d'essais. Réessayez dans "+Math.ceil((ui.lkBlock-now)/1000)+" secondes.","Too many tries. Try again in "+Math.ceil((ui.lkBlock-now)/1000)+" seconds."); return; }
+  let ok=false;
+  if(st){ if(st.ph){ ok=(await pinHash(st.id,pn.value))===st.ph; }
+    else if(st.pin!=null&&st.pin===pn.value){ ok=true; const h=await pinHash(st.id,pn.value); if(h){ st.ph=h; delete st.pin; try{ save(); }catch(e){} } } }
+  if(ok){ ui.lkFail=0; ui.me=st.id; ui.view="home"; ui.lockForgot=false; render(); }
+  else { ui.lkFail=(ui.lkFail||0)+1; if(ui.lkFail>=5){ ui.lkFail=0; ui.lkBlock=Date.now()+30000; er.textContent=lx("Trop d'essais. Réessayez dans 30 secondes.","Too many tries. Try again in 30 seconds."); } else er.textContent=t("wrong_pin"); }
 }
 function staffSection(){
   const on=S.shop.staffOn;
@@ -2887,6 +2892,8 @@ function saveSale(kind){
   const d=ui.draft; d.err=""; if(biz()==="rent"&&d.cust&&draftEmpty(d)) prefillFor(d.cust);
   const lines=d.lines.map(l=>({...((l.sn||"").trim()?{sn:l.sn.trim()}:{}),...(l.ci?{ci:l.ci}:{}),...(l.co?{co:l.co}:{}),...((l.w||"").trim()?{w:l.w.trim()}:{}),d:l.d.trim(),q:parseAmt(l.q)||0,p:parseAmt(l.p),pid:l.pid||null,c:(()=>{const pr=l.pid&&S.products.find(z=>z.id===l.pid);return pr&&pr.cost>0?pr.cost:0;})()})).filter(l=>l.q>0&&l.p>0);
   const total=lines.reduce((s,l)=>s+l.q*l.p,0);
+  for(const l of d.lines.map(x=>({p:parseAmt(x.p),q:parseAmt(x.q),on:!!(String(x.p||"").trim()||String(x.q||"").trim()&&String(x.q).trim()!=="1")}))){ if(!l.on) continue; if(l.p<0){ d.err=lx("Le prix ne peut pas être négatif.","The price cannot be negative."); $("#s-err").textContent=d.err; return; }
+    if(l.q<=0&&l.p>0){ d.err=lx("La quantité doit être un nombre supérieur à zéro (ex. 2 ou 1,5).","The quantity must be a number above zero (e.g. 2 or 1.5)."); $("#s-err").textContent=d.err; return; } }
   if(!lines.length||total<=0){ d.err=t("err_total"); $("#s-err").textContent=d.err; return; }
   if(total>1e9||lines.some(l=>l.q>1e6||l.p>1e9)){ d.err=lx("Ce montant semble trop élevé. Vérifiez la quantité et le prix (un zéro en trop ?).","This amount looks too high. Check the quantity and price (an extra zero?)."); $("#s-err").textContent=d.err; return; }
   { const dd=DETDATE[biz()]; if(dd&&!S.shop.allowPast){ for(const l of lines){ const f=[l.sn,l.w]; for(let n=0;n<2;n++) if(dd[n]&&isIso(f[n])&&f[n]<todayKey()){ d.err=lx("Cette date ne peut pas être dans le passé.","This date cannot be in the past."); $("#s-err").textContent=d.err; return; } } } }
@@ -3068,7 +3075,7 @@ document.addEventListener("click",e=>{
     case "save-staff": {
       const n=$("#st-name").value.trim(), pin=$("#st-pin").value.trim(), er=$("#st-err2");
       if(!n){ er.textContent=t("err_sname"); break; } if(!/^\d{4}$/.test(pin)){ er.textContent=t("err_pin"); break; }
-      S.staff.push({id:uid(),name:n,role:$("#st-role").value,pin}); save(); ui.modal=null; render(); break; }
+      (async()=>{ const sid=uid(), ph=await pinHash(sid,pin); S.staff.push(ph?{id:sid,name:n,role:$("#st-role").value,ph}:{id:sid,name:n,role:$("#st-role").value,pin}); save(); ui.modal=null; render(); })(); break; }
     case "del-staff": {
       const st=S.staff.find(x=>x.id===id); if(!st) break;
       const owners=S.staff.filter(x=>x.role==="owner");
