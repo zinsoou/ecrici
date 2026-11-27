@@ -124,9 +124,13 @@ async function load(){
   if(!slug){ msg(tx.nf,tx.nfs); return; }
   try{
     const H={apikey:ECRICI.key};
+    let pv=null; try{ if(new URLSearchParams(location.search).get("pv")==="1"){ const o=JSON.parse(localStorage.getItem("ecrici-pv")||"null"); if(o&&o.s===slug&&Date.now()-o.t<900000) pv=o.r; } }catch(e){}
+    let j;
+    if(pv){ j=[pv]; const m=document.createElement("meta"); m.name="robots"; m.content="noindex"; document.head.appendChild(m); const bn=document.createElement("div"); bn.textContent="ADMIN PREVIEW · not public yet"; bn.style.cssText="background:#b45309;color:#fff;text-align:center;padding:8px 10px;font:700 13px system-ui,sans-serif"; document.body.prepend(bn); }
+    else{
     let r=await fetch(BASE+"/rest/v1/rpc/catalog_get",{method:"POST",headers:Object.assign({"Content-Type":"application/json"},H),body:JSON.stringify({p_slug:slug})});
     if(r.status===404){ const base=BASE+"/rest/v1/catalogs?slug=eq."+slug+"&active=eq.true&select="; r=await fetch(base+"data,updated_at,verified,created_at",{headers:H}); if(!r.ok) r=await fetch(base+"data,updated_at",{headers:H}); }
-    if(!r.ok) throw 0; const j=await r.json();
+    if(!r.ok) throw 0; j=await r.json(); }
     if(!j.length||(j[0].data&&j[0].data.biz==="pharmacy")){ msg(tx.nf,tx.nfs); return; }
     D=j[0].data; D._u=j[0].updated_at; D._v=j[0].verified===true; D._c=j[0].created_at||""; sl=D.lang==="fr"?"fr":"en"; lg=dl; tx=T[lg]; document.documentElement.lang=lg; $("lgb").textContent=tx.lgt; $("lgb").onclick=()=>{ dl=lg==="fr"?"en":"fr"; try{ localStorage.setItem("ecrici-lang",dl); }catch(e){} lg=dl; tx=T[lg]; document.documentElement.lang=lg; $("lgb").textContent=tx.lgt; draw(); }; draw(); revLoad(); revForm();
   }catch(e){ msg(tx.err); }
