@@ -59,7 +59,7 @@ const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
 const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
 let sess=null; try{ sess=JSON.parse(lsGet(SK)); }catch(e){}
-let ann=[], annNoSql=false, annF={fr:"",en:"",link:"",until:""}, shops=[], claims=[], branches=[], reps=[], pages=[], rvs=[], rvrep={}, promos={}, pmOpen="", pmItems=[], pmSel=[], pmNoSql=false, q="", pq="", filter="all", rf="reported", tab=lsGet("ecrici-admin-tab")||"today", err="", msg="", msgLink="", lastEmail="";
+let actv={}, actOk=false, ann=[], annNoSql=false, annF={fr:"",en:"",link:"",until:""}, shops=[], claims=[], branches=[], reps=[], pages=[], rvs=[], rvrep={}, promos={}, pmOpen="", pmItems=[], pmSel=[], pmNoSql=false, q="", pq="", filter="all", rf="reported", tab=lsGet("ecrici-admin-tab")||"today", err="", msg="", msgLink="", lastEmail="";
 
 async function http(path,o){
   o=o||{};
@@ -130,6 +130,42 @@ async function pvOpen(slug){
   const u="/shop.html?s="+encodeURIComponent(slug)+"&pv=1"; if(w) w.location.href=u; else location.href=u;
 }
 const pvBtn=s=>{ const pg=pages.find(p=>p.shop_id===s.id); return pg&&pg.slug?`<button data-pv="${esc(pg.slug)}">Preview page</button>`:""; };
+const ndGet=()=>{ try{ return JSON.parse(lsGet("ecrici-nudged")||"{}"); }catch(e){ return {}; } };
+const ndMark=(id,n)=>{ const o=ndGet(); o[id]=Math.max(+o[id]||0,+n||1); lsSet("ecrici-nudged",JSON.stringify(o)); };
+const VIDX={en:"https://youtube.com/shorts/5k079559RYE",fr:"https://youtube.com/shorts/ATNx7UAs8B8"};
+function nudgeList(){
+  const sent=ndGet(), out=[];
+  shops.forEach(s=>{
+    if(!s.phone||s.status==="suspended"||state(s)==="pending"||!s.created_at) return;
+    const age=Math.floor((Date.now()-new Date(s.created_at).getTime())/864e5); if(age<1||age>30) return;
+    const a=actv[String(s.id)]||{}, pr=+a.products||0, sl=+a.sales||0; if(sl>0) return;
+    const step=age>=7?7:age>=3?3:1; if((+sent[s.id]||0)>=step) return;
+    out.push({s,age,step,pr});
+  });
+  return out.sort((x,y)=>y.age-x.age);
+}
+function nudgeLink(s,step,pr){
+  const fr=FRC.includes(String(s.country||"").toUpperCase()), nm=(s.name||"").trim()||(fr?"":"there"), vid=VIDX[fr?"fr":"en"];
+  let dt=""; if(s.paid_until){ const p=String(s.paid_until).slice(0,10).split("-"); dt=fr?p[2]+"/"+p[1]+"/"+p[0]:new Date(s.paid_until+"T00:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"}); }
+  let t;
+  if(step===1) t=fr?
+    "Bonjour "+nm+" 👋\n\nC'est l'équipe Ecrici. Merci d'avoir créé votre compte ! 🙏\n\n"+(pr>0?"Vos produits sont bien enregistrés. Prochaine étape : enregistrez votre première vente, cela prend 1 minute.":"Le plus simple pour commencer : ouvrez ecrici.com, appuyez sur Ajouter et enregistrez votre premier produit ou service (1 minute).")+"\n\nUn blocage ? Répondez ici, je vous aide pas à pas. 😊\n— L'équipe Ecrici"
+   :"Hello "+nm+" 👋\n\nThis is the Ecrici team. Thank you for creating your account! 🙏\n\n"+(pr>0?"Your products are saved. Next step: record your first sale, it takes 1 minute.":"The easiest way to start: open ecrici.com, tap Add and enter your first product or service (1 minute).")+"\n\nStuck on something? Reply here and I'll help you step by step. 😊\n— The Ecrici team";
+  else if(step===3) t=fr?
+    "Bonjour "+nm+" 👋\n\nPetit conseil d'Ecrici : regardez cette vidéo d'1 minute pour voir comment tout fonctionne :\n"+vid+"\n\nEnsuite, ajoutez vos produits et enregistrez une vente. Besoin d'un coup de main ? Répondez simplement à ce message.\n— L'équipe Ecrici"
+   :"Hello "+nm+" 👋\n\nA quick tip from Ecrici: watch this 1-minute video to see how everything works:\n"+vid+"\n\nThen add your products and record a sale. Need a hand? Just reply to this message.\n— The Ecrici team";
+  else t=fr?
+    "Bonjour "+nm+" 👋\n\nVotre essai gratuit Ecrici"+(dt?" se termine le "+dt:" se termine bientôt")+". Puis-je vous aider à tout configurer ?\n\nDites-moi ce qui n'est pas clair, on le règle ensemble sur WhatsApp. Vous pouvez aussi créer votre page publique gratuite pour que de nouveaux clients vous trouvent sur Ecrici Market.\n— L'équipe Ecrici"
+   :"Hello "+nm+" 👋\n\nYour free Ecrici trial "+(dt?"ends on "+dt:"ends soon")+". Can I help you get set up?\n\nTell me what is unclear and we'll sort it out together on WhatsApp. You can also create your free public page so new customers can find you on Ecrici Market.\n— The Ecrici team";
+  return "https://wa.me/"+String(s.phone).replace(/\D/g,"")+"?text="+encodeURIComponent(t);
+}
+function vNudge(){
+  if(!actOk) return `<div class="card flat"><div class="muted">To see who signed up but never started, run <b>upgrade-v163-activity.sql</b> once in Supabase. It only counts items, it never shows private data.</div></div>`;
+  const L=nudgeList(); if(!L.length) return "";
+  const row=({s,age,step,pr})=>`<div class="card"><div class="item"><div class="av">${esc(ini(s.name))}</div><div class="grow"><div class="name">${esc(s.name||s.phone)}</div><div class="muted">Joined ${age} day${age>1?"s":""} ago · ${pr>0?"products added, no sale yet":"nothing added yet"}</div></div></div><div class="row"><a class="b p" data-nd="${esc(s.id)}" data-step="${step}" href="${esc(nudgeLink(s,step,pr))}" target="_blank" rel="noopener">Send day-${step} message</a><button data-ns="${esc(s.id)}">Not now</button></div></div>`;
+  const first=L.slice(0,4).map(row).join(""), rest=L.slice(4);
+  return `<h2>Help new shops start (${L.length})</h2><div class="muted">They signed up but have not recorded a sale. One friendly message often gets them going.</div>`+first+(rest.length?`<details><summary>Show ${rest.length} more</summary>${rest.map(row).join("")}</details>`:"");
+}
 const waOf=p=>p?"https://wa.me/"+String(p).replace(/\D/g,""):"";
 const stars=n=>"★".repeat(n)+"☆".repeat(5-n);
 const dshort=d=>{ try{ return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}); }catch(e){ return ""; } };
@@ -160,6 +196,8 @@ document.addEventListener("click",e=>{
   const b=e.target.closest("button,a"); if(!b||!app.contains(b)) return; const d=b.dataset;
   if(d.w){ wMark(d.w); setTimeout(draw,400); return; }
   if(d.pv){ pvOpen(d.pv); return; }
+  if(d.nd){ ndMark(d.nd,d.step); setTimeout(draw,400); return; }
+  if(d.ns){ ndMark(d.ns,99); draw(); return; }
   if(d.an){ annAct(d.an); return; }
   if(d.tab){ tab=d.tab; lsSet("ecrici-admin-tab",tab); err=""; msg=""; draw(); window.scrollTo(0,0); }
   else if(d.go){ tab=d.go; if(d.f) filter=d.f; if(d.rf) rf=d.rf; lsSet("ecrici-admin-tab",tab); err=""; msg=""; draw(); window.scrollTo(0,0); }
@@ -186,7 +224,7 @@ function vToday(){
   if(t.rv) out.push(`<div class="card"><div class="sec"><div><div class="name">⚠ ${t.rv} review${t.rv>1?"s":""} reported or hidden</div><div class="muted">Keep the honest ones, delete the rest.</div></div><button class="p" data-go="reviews">Open</button></div></div>`);
   const cnt={pending:0,active:0,expired:0,suspended:0}; shops.forEach(s=>cnt[state(s)]++);
   const kp=`<div class="kpi">${["active","pending","expired","suspended"].map(k=>`<button data-go="shops" data-f="${k}"><b>${cnt[k]}</b><span>${k}</span></button>`).join("")}</div>`;
-  return kp+(out.length?out.join(""):`<div class="card"><div class="empty"><b>✓</b>All clear. Nothing needs you right now.</div></div>`);
+  return kp+(out.length?out.join(""):`<div class="card"><div class="empty"><b>✓</b>All clear. Nothing needs you right now.</div></div>`)+vNudge();
 }
 /* ---- SHOPS ---- */
 function refLine(s){
@@ -349,6 +387,7 @@ async function load(){
   if(r.status===401){ err="Session ended. Log in again."; login(); return; }
   if(!r.ok){ err="Could not load ("+r.status+")."; login(); return; }
   shops=r.json||[];
+  try{ const ra2=await api("/rest/v1/rpc/admin_activity",{method:"POST",body:{}}); actOk=ra2.ok&&Array.isArray(ra2.json); actv={}; if(actOk) ra2.json.forEach(x=>{ actv[String(x.shop_id)]=x; }); }catch(e){ actOk=false; }
   const rb=await api("/rest/v1/branches?select=*&order=created_at.asc"); branches=(rb.ok&&Array.isArray(rb.json))?rb.json:[];
   const rc=await api("/rest/v1/pay_claims?select=*&status=eq.pending&order=created_at.asc"); claims=(rc.ok&&Array.isArray(rc.json))?rc.json:[];
   const rr=await api("/rest/v1/catalog_reports?select=*&order=created_at.desc&limit=500"); reps=(rr.ok&&Array.isArray(rr.json))?rr.json:[];
