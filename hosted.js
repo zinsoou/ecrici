@@ -201,6 +201,7 @@ try {
   const rf = new URLSearchParams(location.search).get("ref");
   if (rf) { lsSet("ecrici-ref", String(rf).replace(/[<>"]/g, "").trim().slice(0, 60)); history.replaceState(null, "", location.pathname); }
   form.ref = lsGet("ecrici-ref") || ""; form.biz = form.biz || ""; if (form.ref && !form.code) mode = "signup";
+  if (mode === "login" && !(lsGet(K.acct) || lsGet(K.sess) || lsGet(K.owner) || lsGet("ecrici-had"))) mode = "signup"; /* new phone: open on sign-up, log-in stays one tap away */
 } catch (e) {}
 const flag = k => { try { return String.fromCodePoint(...[...k].map(c => 127397 + c.charCodeAt(0))); } catch (e) { return ""; } };
 const COUNTRY_OPTS = () => Object.entries(COUNTRIES).map(([k, v]) => `<option value="${k}" ${form.country === k ? "selected" : ""}>${flag(k)} ${esc(v.name)} (+${v.cc})</option>`).join("");
@@ -246,7 +247,7 @@ function drawGate() {
     h = head() + `<p class="lg-tag">${esc(g("wait"))}</p>`;
   } else if (gateKind === "auth") {
     const su = mode === "signup", jn = mode === "join";
-    h = head() + (jn ? "" : watchBtn()) + `<div class="card form"><h2>${esc(jn ? g("join_t") : su ? g("signup") : g("login"))}</h2>
+    h = head() + (jn ? "" : watchBtn()) + `<div class="card form">${su ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 style="margin:0">${esc(g("signup"))}</h2><button class="btn small ghost" data-lg="mode">${esc(g("login"))}</button></div>` : `<h2>${esc(jn ? g("join_t") : g("login"))}</h2>`}
       ${jn ? `<p class="lg-tag" style="margin:0">${esc(g("join_hint"))}</p>` : ""}
       ${su ? `<div class="field"><label for="lg-name">${esc(g("shop"))}</label><input id="lg-name" value="${esc(form.name)}" autocomplete="organization" autocapitalize="characters" placeholder="${esc(lang() === "fr" ? "BOUTIQUE DE VICTOR" : "VICTOR'S DRYCLEANER")}" style="text-transform:uppercase"></div>` : ""}
       ${su ? bzCards() : ""}
@@ -350,7 +351,7 @@ async function submitAuth() {
     if (!r.ok) { authErrText = authMsg(r); }
     else if (!r.json || !r.json.access_token) { authErrText = g("e_confirm"); }
     else {
-      sess = null; setSess(r.json);
+      sess = null; setSess(r.json); lsSet("ecrici-had", "1");
       if (jn) {
         const jr = await api("/rest/v1/rpc/team_join", { method: "POST", body: { p_code: form.code } });
         const m = String((jr.json && (jr.json.message || jr.json.msg)) || "");
