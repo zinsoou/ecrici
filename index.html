@@ -101,6 +101,7 @@ h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;letter-spaci
 .brand h1{font-size:1.5rem;line-height:1.1;overflow-wrap:anywhere}
 .brand small{color:var(--muted);font-size:.8rem}
 .chips{display:flex;gap:8px;align-items:center}
+.hl{outline:3px solid #2447d6;outline-offset:4px;border-radius:10px;animation:hlp 1s ease 3}@keyframes hlp{50%{outline-color:transparent}}
 .pill{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:.82rem;cursor:pointer}
 .pill[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .status{font-size:.75rem;color:var(--muted)}
@@ -1004,7 +1005,7 @@ function _render(){
   const v=ui.view;
   const who=(S.shop.staffOn||window.__member)?me():null;
   let html=`<header class="top"><div class="brand"><h1>${esc(S.shop.name)}</h1><small>${esc(cName(C()))}${who?` · ${esc(who.name)}`:""} · <span id="status"></span></small></div>
-    <div class="chips" style="flex-wrap:wrap;justify-content:flex-end">${isOwner()?`<button class="pill" data-act="tab" data-v="set" ${ui.view==="set"?'aria-pressed="true"':""}>⚙ ${t("set_btn")}</button>`:""}${window.__shopChip?window.__shopChip():""}${who?`<button class="pill" data-act="lock">${window.__member?t("member_out"):t("lock")}</button>`:""}<button class="pill" data-act="lang" aria-label="${t("language")}">${L()==="fr"?"English":"Français"}</button></div></header>`;
+    <div class="chips" style="flex-wrap:wrap;justify-content:flex-end">${isOwner()?`<button class="pill" data-act="tab" data-v="set" ${ui.view==="set"?'aria-pressed="true"':""}>⚙ ${t("set_btn")}</button>`:""}${window.__shopChip?window.__shopChip():""}${who?`<button class="pill" data-act="lock">${window.__member?t("member_out"):t("lock")}</button>`:""}<button class="pill" data-act="help">${lx("? Aide","? Help")}</button><button class="pill" data-act="lang" aria-label="${t("language")}">${L()==="fr"?"English":"Français"}</button></div></header>`;
   if(v==="home") html+=viewHome();
   else if(v==="sale") html+=viewSale();
   else if(v==="stock") html+=viewStock();
@@ -2232,6 +2233,20 @@ const GP={
  hotel:{it:["Rooms","Chambres"],s1:["open a room, add its photos","ouvrez une chambre, ajoutez ses photos"],sa:["Stay","Séjour"],sn:["stay","séjour"],cu:["Guests","Clients"],ow:["who owes you","qui vous doit"]}
 };
 GP.electronics=GP.shop;
+function helpModal(){
+  const b=biz(), ph=b==="pharmacy", nIt=t("tab_stock"), nSa=t("tab_sale"), nCu=t("tab_cust"), nRc=t("tab_hist");
+  const R=(ic,lab,att)=>`<button class="row" data-act="hgo" ${att}><div class="main"><div class="name">${ic} ${lab}</div></div><div class="amt"><span class="muted">›</span></div></button>`;
+  const rows=[];
+  if(ph) rows.push(R("🖼",lx("Mettre mon logo sur les reçus","Put my logo on receipts"),'data-k="biz" data-e="s-logo"'));
+  else rows.push(R("🖼",lx("Ajouter mon logo","Add my logo"),'data-k="cat" data-e="c-logo"'), R("🏞",lx("Ajouter ma bannière (photo de couverture)","Add my banner (cover photo)"),'data-k="cat" data-e="c-cover"'));
+  rows.push(R("📍",lx("Mettre mon adresse","Set my address"),'data-k="biz" data-e="s-addr"'));
+  if(!ph) rows.push(R("🏙",lx("Choisir ma ville (pour être trouvé)","Choose my city (to be found)"),'data-k="cat" data-e="c-cityp"'), R("✍️",lx("Écrire mon petit message et mes horaires","Write my short message and hours"),'data-k="cat" data-e="c-tag"'));
+  if(!ph) rows.push(R("📷",lx("Ajouter les photos de mes "+nIt.toLowerCase(),"Add photos to my "+nIt.toLowerCase()),'data-v="stock"'));
+  rows.push(R("💵",lx("Enregistrer : "+nSa,"Record: "+nSa),'data-v="sale"'), R("🧾",lx("Envoyer un reçu ("+nRc+")","Send a receipt ("+nRc+")"),'data-v="hist"'), R("💰",lx("Voir qui me doit ("+nCu+")","See who owes me ("+nCu+")"),'data-v="cust"'));
+  rows.push(R("📲",lx("Ajouter mon Mobile Money sur mes factures","Add my Mobile Money to my invoices"),'data-k="pay" data-e="pay-box"'));
+  const wa=window.__waAdmin&&window.__waAdmin(lx("Bonjour, j'ai besoin d'aide avec Ecrici.","Hello, I need help with Ecrici."));
+  return `<div class="dlg"><h2>${lx("Où trouver… ?","Where do I find…?")}</h2><p class="note" style="margin:0 0 6px">${lx("Touchez une ligne : je vous emmène au bon endroit.","Tap a line: I take you to the right place.")}</p><div class="card flush">${rows.join("")}</div>${wa?`<p class="muted" style="margin:10px 0 0"><a href="${esc(wa)}" target="_blank" rel="noopener">${lx("Autre question ? Écrivez-nous sur WhatsApp.","Another question? Message us on WhatsApp.")}</a></p>`:""}<div class="actions"><button class="btn wide" data-act="close-modal">${lx("Fermer","Close")}</button></div></div>`;
+}
 function growModal(){
   const B=(a,l,x)=>`<button class="btn small" data-act="${a}"${x||""}>${l}</button>`;
   const b=biz(), p=GP[b]||GP.shop, ph=!["pharmacy","health","school"].includes(b), cap=x=>x.charAt(0).toUpperCase()+x.slice(1);
@@ -2858,6 +2873,7 @@ function _renderModal(){
       <div class="actions"><button class="btn primary" data-act="pick-done"><span id="pk-n">${cnt}</span> ${t("pick_n")} · ${t("pick_done")}</button></div></div>`;
   }else if(m.type==="ppick"){ inner=ppModal(m);
   }else if(m.type==="launch"){ inner=lnModal(m);
+  }else if(m.type==="help"){ inner=helpModal();
   }else if(m.type==="grow"){ inner=growModal();
   }else if(m.type==="catqr"){
     inner=`<div class="dlg form" style="text-align:center"><h2>${lx("Code QR de ma page","QR code for my page")}</h2><p class="note" style="margin:0">${lx("Imprimez-le et collez-le dans votre boutique. Vos clients scannent et voient vos prix.","Print it and stick it in your shop. Customers scan it and see your prices.")}</p><img id="qr-img" alt="QR" width="240" height="240" style="margin:8px auto;border-radius:8px;background:#fff"><div class="actions" style="justify-content:center"><button class="btn primary" data-act="cat-qr-print">${lx("Imprimer","Print")}</button><button class="btn" data-act="close-modal">${t("cancel")}</button></div></div>`;
@@ -3173,6 +3189,11 @@ document.addEventListener("click",e=>{
     case "ln-grow": ui.modal={type:"grow"}; renderModal(); break;
     case "ln-growx": case "ln-growdone": S.shop.growOff=true; save(); ui.modal=null; render(); break;
     case "ln-sale": ui.modal=null; ui.view="sale"; render(); window.scrollTo(0,0); break;
+    case "help": ui.modal={type:"help"}; renderModal(); break;
+    case "hgo": { ui.modal=null; $("#layer").innerHTML=""; const d=el.dataset; if(d.k){ ui.view="set"; (ui.setOpen=ui.setOpen||{})[d.k]=true; } else { ui.view=d.v; ui.custId=null; }
+      render(); window.scrollTo(0,0);
+      if(d.k) setTimeout(()=>{ const e=document.getElementById(d.e); if(!e) return; const f=e.closest(".field")||e.closest("label")||e; f.scrollIntoView({block:"center"}); f.classList.add("hl"); setTimeout(()=>f.classList.remove("hl"),3000); },120);
+      else if(d.v==="stock") askTrade(); break; }
     case "go-cat": ui.view="set"; (ui.setOpen=ui.setOpen||{}).cat=true; render(); setTimeout(()=>{ const b=$("#cat-box"); if(b) b.scrollIntoView({block:"start"}); },60); break;
     case "logo-rm": delete S.shop.logoData; save(); render(); break;
     case "cat-col": catGrab(); catPatch({color:el.dataset.c}); break;

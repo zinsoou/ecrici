@@ -107,10 +107,10 @@ function welcomeLink(s){
   const t=fr?
     "Bonjour "+nm+" 👋\n\nBienvenue sur Ecrici ! ✅ Votre compte est approuvé"+(dt?" et actif jusqu'au "+dt:"")+".\n\nOuvrez ecrici.com et connectez-vous : une visite d'1 minute vous montre tout, puis ajoutez votre premier produit ou service."
     +(bf?"\n\n*Votre activité*\nEnregistrée : "+bf+". Ce n'est pas la bonne ? Répondez ici avec votre activité, ou changez-la dans Réglages › Type d'activité.":"")
-    +"\n\nUne question ? Répondez simplement à ce message.\n— L'équipe Ecrici"
+    +"\n\n*Un doute ?* Touchez *? Aide* en haut de l'écran : l'application vous emmène au bon endroit.\n\nUne question ? Répondez simplement à ce message.\n— L'équipe Ecrici"
    :"Hello "+nm+" 👋\n\nWelcome to Ecrici! ✅ Your account is approved"+(dt?" and active until "+dt:"")+".\n\nOpen ecrici.com and log in: a 1-minute tour shows you everything, then add your first product or service."
     +(be?"\n\n*Your business type*\nSet to: "+be+". Not right? Reply here with what you do, or change it in Settings › Type of business.":"")
-    +"\n\nAny question? Just reply to this message.\n— The Ecrici team";
+    +"\n\n*Not sure where something is?* Tap *? Help* at the top of the screen: the app takes you to the right place.\n\nAny question? Just reply to this message.\n— The Ecrici team";
   return "https://wa.me/"+String(s.phone).replace(/\D/g,"")+"?text="+encodeURIComponent(t);
 }
 function pageLink(s){
@@ -118,8 +118,8 @@ function pageLink(s){
   const pg=pages.find(p=>p.shop_id===s.id); if(!pg||!pg.slug) return "";
   const fr=FRC.includes(String(s.country||"").toUpperCase()), nm=(s.name||"").trim()||(fr?"":"there"), u=location.origin+"/s/"+encodeURIComponent(pg.slug);
   const t=fr?
-    "Bonjour "+nm+" 👋\n\nBonne nouvelle : votre boutique est maintenant dans le Market Ecrici ✅\n"+u+"\n\nPartagez ce lien sur votre statut WhatsApp, Facebook et Instagram. 📲\n\n*Badge Vérifié ✔ (facultatif)*\nQuand votre page est prête, demandez le badge dans Réglages › Ma page en ligne › « Demander le badge Vérifié ». Nous vérifions votre activité avant de l'accorder : cela peut prendre jusqu'à 24 h. Les pages vérifiées sont mises en avant sur le Market.\n\nUne question ? Répondez simplement à ce message.\n— L'équipe Ecrici"
-   :"Hello "+nm+" 👋\n\nGood news: your shop is now listed in the Ecrici Market ✅\n"+u+"\n\nShare this link on your WhatsApp status, Facebook and Instagram. 📲\n\n*Verified badge ✔ (optional)*\nWhen your page is ready, request the badge in Settings › My online page › \"Ask for the Verified badge\". We check your business before granting it, and this can take up to 24 hours. Verified pages are shown first on the Market.\n\nAny question? Just reply to this message.\n— The Ecrici team";
+    "Bonjour "+nm+" 👋\n\nBonne nouvelle : votre boutique est maintenant dans le Market Ecrici ✅\n"+u+"\n\nPartagez ce lien sur votre statut WhatsApp, Facebook et Instagram. 📲\n\n*Badge Vérifié ✔ (facultatif)*\nQuand votre page est prête, demandez le badge dans Réglages › Ma page en ligne › « Demander le badge Vérifié ». Nous vérifions votre activité avant de l'accorder : cela peut prendre jusqu'à 24 h. Les pages vérifiées sont mises en avant sur le Market.\n\n*Un doute ?* Touchez *? Aide* en haut de l'écran : l'application vous emmène au bon endroit.\n\nUne question ? Répondez simplement à ce message.\n— L'équipe Ecrici"
+   :"Hello "+nm+" 👋\n\nGood news: your shop is now listed in the Ecrici Market ✅\n"+u+"\n\nShare this link on your WhatsApp status, Facebook and Instagram. 📲\n\n*Verified badge ✔ (optional)*\nWhen your page is ready, request the badge in Settings › My online page › \"Ask for the Verified badge\". We check your business before granting it, and this can take up to 24 hours. Verified pages are shown first on the Market.\n\n*Not sure where something is?* Tap *? Help* at the top of the screen: the app takes you to the right place.\n\nAny question? Just reply to this message.\n— The Ecrici team";
   return "https://wa.me/"+String(s.phone).replace(/\D/g,"")+"?text="+encodeURIComponent(t);
 }
 async function pvOpen(slug){
