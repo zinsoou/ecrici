@@ -59,7 +59,7 @@ const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
 const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
 let sess=null; try{ sess=JSON.parse(lsGet(SK)); }catch(e){}
-let actv={}, actOk=false, ann=[], annNoSql=false, annF={fr:"",en:"",link:"",until:""}, shops=[], claims=[], branches=[], reps=[], pages=[], rvs=[], rvrep={}, promos={}, pmOpen="", pmItems=[], pmSel=[], pmNoSql=false, q="", pq="", filter="all", rf="reported", tab=lsGet("ecrici-admin-tab")||"today", err="", msg="", msgLink="", lastEmail="";
+let pgq={}, pgqOk=false, actv={}, actOk=false, ann=[], annNoSql=false, annF={fr:"",en:"",link:"",until:""}, shops=[], claims=[], branches=[], reps=[], pages=[], rvs=[], rvrep={}, promos={}, pmOpen="", pmItems=[], pmSel=[], pmNoSql=false, q="", pq="", filter="all", rf="reported", tab=lsGet("ecrici-admin-tab")||"today", err="", msg="", msgLink="", lastEmail="";
 
 async function http(path,o){
   o=o||{};
@@ -105,12 +105,12 @@ function welcomeLink(s){
   let dt=""; if(s.paid_until){ const p=String(s.paid_until).slice(0,10).split("-"); dt=fr?p[2]+"/"+p[1]+"/"+p[0]:new Date(s.paid_until+"T00:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"}); }
   const bf=BIZF[s.biz], be=BIZN[s.biz];
   const t=fr?
-    "Bonjour "+nm+" 👋\n\nBienvenue sur Ecrici ! ✅ Votre compte est approuvé"+(dt?" et actif jusqu'au "+dt:"")+".\n\n*Pour bien démarrer*\n1. Ouvrez ecrici.com et connectez-vous\n2. Ajoutez vos produits ou services\n3. Créez votre page en ligne : Réglages › Ma page en ligne"
+    "Bonjour "+nm+" 👋\n\nBienvenue sur Ecrici ! ✅ Votre compte est approuvé"+(dt?" et actif jusqu'au "+dt:"")+".\n\nOuvrez ecrici.com et connectez-vous : une visite d'1 minute vous montre tout, puis ajoutez votre premier produit ou service."
     +(bf?"\n\n*Votre activité*\nEnregistrée : "+bf+". Ce n'est pas la bonne ? Répondez ici avec votre activité, ou changez-la dans Réglages › Type d'activité.":"")
-    +"\n\n*Badge Vérifié ✔*\nComplétez votre page (logo, description, produits, contact), puis demandez le badge dans Réglages › Ma page en ligne › « Demander le badge Vérifié ». Nous vérifions votre activité avant de l'accorder. Les pages vérifiées sont mises en avant sur le Market.\n\nUne question ? Répondez simplement à ce message.\n— L'équipe Ecrici"
-   :"Hello "+nm+" 👋\n\nWelcome to Ecrici! ✅ Your account is approved"+(dt?" and active until "+dt:"")+".\n\n*Getting started*\n1. Open ecrici.com and log in\n2. Add your products or services\n3. Create your online page: Settings › My online page"
+    +"\n\nUne question ? Répondez simplement à ce message.\n— L'équipe Ecrici"
+   :"Hello "+nm+" 👋\n\nWelcome to Ecrici! ✅ Your account is approved"+(dt?" and active until "+dt:"")+".\n\nOpen ecrici.com and log in: a 1-minute tour shows you everything, then add your first product or service."
     +(be?"\n\n*Your business type*\nSet to: "+be+". Not right? Reply here with what you do, or change it in Settings › Type of business.":"")
-    +"\n\n*Verified badge ✔*\nComplete your page (logo, description, products, contact), then request the badge in Settings › My online page › \"Ask for the Verified badge\". We check your business before granting it. Verified pages are shown first on the Market.\n\nAny question? Just reply to this message.\n— The Ecrici team";
+    +"\n\nAny question? Just reply to this message.\n— The Ecrici team";
   return "https://wa.me/"+String(s.phone).replace(/\D/g,"")+"?text="+encodeURIComponent(t);
 }
 function pageLink(s){
@@ -118,8 +118,8 @@ function pageLink(s){
   const pg=pages.find(p=>p.shop_id===s.id); if(!pg||!pg.slug) return "";
   const fr=FRC.includes(String(s.country||"").toUpperCase()), nm=(s.name||"").trim()||(fr?"":"there"), u=location.origin+"/s/"+encodeURIComponent(pg.slug);
   const t=fr?
-    "Bonjour "+nm+" 👋\n\nBonne nouvelle : votre boutique est maintenant dans le Market Ecrici ✅\n"+u+"\n\n*Pour attirer plus de clients*\n1. Ajoutez vos produits ou services avec de belles photos et les prix (10 ou plus, c'est l'idéal)\n2. Complétez votre page : logo, description, numéro WhatsApp\n3. Partagez votre lien sur votre statut WhatsApp, Facebook et Instagram\n\n*Badge Vérifié ✔ (facultatif)*\nQuand votre page est prête, demandez le badge dans Réglages › Ma page en ligne › « Demander le badge Vérifié ». Nous vérifions votre activité avant de l'accorder : cela peut prendre jusqu'à 24 h. Les pages vérifiées sont mises en avant sur le Market.\n\nUne question ? Répondez simplement à ce message.\n— L'équipe Ecrici"
-   :"Hello "+nm+" 👋\n\nGood news: your shop is now listed in the Ecrici Market ✅\n"+u+"\n\n*To get more customers*\n1. Add your products or services with clear photos and prices (10 or more works best)\n2. Complete your page: logo, description, WhatsApp number\n3. Share your link on your WhatsApp status, Facebook and Instagram\n\n*Verified badge ✔ (optional)*\nWhen your page is ready, request the badge in Settings › My online page › \"Ask for the Verified badge\". We check your business before granting it, and this can take up to 24 hours. Verified pages are shown first on the Market.\n\nAny question? Just reply to this message.\n— The Ecrici team";
+    "Bonjour "+nm+" 👋\n\nBonne nouvelle : votre boutique est maintenant dans le Market Ecrici ✅\n"+u+"\n\nPartagez ce lien sur votre statut WhatsApp, Facebook et Instagram. 📲\n\n*Badge Vérifié ✔ (facultatif)*\nQuand votre page est prête, demandez le badge dans Réglages › Ma page en ligne › « Demander le badge Vérifié ». Nous vérifions votre activité avant de l'accorder : cela peut prendre jusqu'à 24 h. Les pages vérifiées sont mises en avant sur le Market.\n\nUne question ? Répondez simplement à ce message.\n— L'équipe Ecrici"
+   :"Hello "+nm+" 👋\n\nGood news: your shop is now listed in the Ecrici Market ✅\n"+u+"\n\nShare this link on your WhatsApp status, Facebook and Instagram. 📲\n\n*Verified badge ✔ (optional)*\nWhen your page is ready, request the badge in Settings › My online page › \"Ask for the Verified badge\". We check your business before granting it, and this can take up to 24 hours. Verified pages are shown first on the Market.\n\nAny question? Just reply to this message.\n— The Ecrici team";
   return "https://wa.me/"+String(s.phone).replace(/\D/g,"")+"?text="+encodeURIComponent(t);
 }
 async function pvOpen(slug){
@@ -130,6 +130,43 @@ async function pvOpen(slug){
   const u="/shop.html?s="+encodeURIComponent(slug)+"&pv=1"; if(w) w.location.href=u; else location.href=u;
 }
 const pvBtn=s=>{ const pg=pages.find(p=>p.shop_id===s.id); return pg&&pg.slug?`<button data-pv="${esc(pg.slug)}">Preview page</button>`:""; };
+const tpGet=()=>{ try{ return JSON.parse(lsGet("ecrici-tips")||"{}"); }catch(e){ return {}; } };
+const tpMark=(slug,t)=>{ const o=tpGet(); o[slug]=t; lsSet("ecrici-tips",JSON.stringify(o)); };
+function tipList(){
+  if(!pgqOk) return [];
+  const sent=tpGet(), out=[], now=Date.now();
+  pages.forEach(p=>{
+    if(!p.slug||!p.active||p.blocked||!p.phone) return;
+    if(now-(+sent[p.slug]||0)<12096e5) return;
+    const q=pgq[p.slug]; if(!q) return;
+    const its=Array.isArray(q.items)?q.items.filter(x=>x&&x.n):[], n=its.length, ph=its.filter(x=>x.i).length, gal=Array.isArray(q.gal)?q.gal.length:0;
+    const imp=[], min=[];
+    if(n===0) imp.push(["items0"]); else if(n<3) imp.push(["items",n]);
+    if(ph===0&&gal===0) imp.push(["photos"]); else if(n>=3&&["shop","electronics","food"].includes(q.biz)&&ph/n<.5) imp.push(["photos2"]);
+    if(!p.logo) imp.push(["logo"]);
+    if(!p.city) imp.push(["city"]);
+    if(!q.cover) min.push(["cover"]); if(!(q.tag||"").trim()) min.push(["tag"]); if(!(q.hrs||"").trim()) min.push(["hrs"]);
+    if(!imp.length&&min.length<2) return;
+    out.push({p,gaps:imp.concat(min),imp:imp.length});
+  });
+  return out.sort((a,b)=>b.imp-a.imp||b.gaps.length-a.gaps.length);
+}
+const TPN={items0:["no products or services yet","aucun produit ou service"],items:["only a few items","très peu d'articles"],photos:["no photos","pas de photos"],photos2:["many items without photos","beaucoup d'articles sans photo"],logo:["no logo","pas de logo"],city:["no city set","ville non choisie"],cover:["no cover photo","pas de photo de couverture"],tag:["no short message","pas de petit message"],hrs:["no opening hours","pas d'horaires"]};
+function tipLink(p,gaps){
+  const fr=FRC.includes(String(p.country||"").toUpperCase()), nm=(p.name||"").trim()||(fr?"":"there"), u=location.origin+"/s/"+encodeURIComponent(p.slug);
+  const L=g=>{ const k=g[0]; return fr?({items0:"Ajoutez vos premiers produits ou services : nom, prix et une photo",items:"Ajoutez plus d'articles : vous en avez "+g[1]+", visez 10 ou plus",photos:"Ajoutez des photos : les pages avec photos reçoivent beaucoup plus de messages",photos2:"Ajoutez une photo à chaque article",logo:"Ajoutez votre logo",city:"Choisissez votre ville pour apparaître dans « Près de moi »",cover:"Ajoutez une photo de couverture",tag:"Écrivez un petit message d'accroche",hrs:"Indiquez vos horaires"})[k]:({items0:"Add your first products or services: name, price and a photo",items:"Add more items: you have "+g[1]+", aim for 10 or more",photos:"Add photos: pages with photos get many more messages",photos2:"Add a photo to each item",logo:"Add your logo",city:"Choose your city so you show up in \"Near me\"",cover:"Add a cover photo",tag:"Write a short welcome message",hrs:"Add your opening hours"})[k]; };
+  const lines=gaps.slice(0,6).map(g=>"✅ "+L(g)).join("\n");
+  const t=fr?
+    "Bonjour "+nm+" 👋\n\nC'est l'équipe Ecrici. Nous avons regardé votre page :\n"+u+"\n\nPour recevoir plus de clients, voici ce qui peut l'améliorer :\n"+lines+"\n\nComment faire : ouvrez Ecrici › Réglages › Ma page en ligne. Cela prend 5 minutes.\n\nBesoin d'aide ? Répondez ici, je vous guide pas à pas. 😊\n— L'équipe Ecrici"
+   :"Hello "+nm+" 👋\n\nThis is the Ecrici team. We had a look at your page:\n"+u+"\n\nTo get more customers, here is what would improve it:\n"+lines+"\n\nHow: open Ecrici › Settings › My online page. It takes 5 minutes.\n\nNeed help? Reply here and I'll guide you step by step. 😊\n— The Ecrici team";
+  return "https://wa.me/"+String(p.phone).replace(/\D/g,"")+"?text="+encodeURIComponent(t);
+}
+function vTips(){
+  if(!pgqOk) return "";
+  const L=tipList(); if(!L.length) return "";
+  const row=({p,gaps})=>`<div class="card"><div class="item"><div class="av">${esc(ini(p.name||p.slug))}</div><div class="grow"><div class="name">${esc(p.name||p.slug)}</div><div class="muted">Missing: ${esc(gaps.slice(0,4).map(g=>TPN[g[0]][0]).join(", "))}${gaps.length>4?" +"+(gaps.length-4):""}</div></div></div><div class="row"><a class="b p" data-tp="${esc(p.slug)}" href="${esc(tipLink(p,gaps))}" target="_blank" rel="noopener">Send tips on WhatsApp</a><button data-tn="${esc(p.slug)}">Not now</button></div></div>`;
+  return `<h2>Improve live pages (${L.length})</h2><div class="muted">These pages are missing things that bring customers. The message lists exactly what each one needs.</div>`+L.slice(0,4).map(row).join("")+(L.length>4?`<details><summary>Show ${L.length-4} more</summary>${L.slice(4).map(row).join("")}</details>`:"");
+}
 const ndGet=()=>{ try{ return JSON.parse(lsGet("ecrici-nudged")||"{}"); }catch(e){ return {}; } };
 const ndMark=(id,n)=>{ const o=ndGet(); o[id]=Math.max(+o[id]||0,+n||1); lsSet("ecrici-nudged",JSON.stringify(o)); };
 const VIDX={en:"https://youtube.com/shorts/5k079559RYE",fr:"https://youtube.com/shorts/ATNx7UAs8B8"};
@@ -152,8 +189,8 @@ function nudgeLink(s,step,pr){
     "Bonjour "+nm+" 👋\n\nC'est l'équipe Ecrici. Merci d'avoir créé votre compte ! 🙏\n\n"+(pr>0?"Vos produits sont bien enregistrés. Prochaine étape : enregistrez votre première vente, cela prend 1 minute.":"Le plus simple pour commencer : ouvrez ecrici.com, appuyez sur Ajouter et enregistrez votre premier produit ou service (1 minute).")+"\n\nUn blocage ? Répondez ici, je vous aide pas à pas. 😊\n— L'équipe Ecrici"
    :"Hello "+nm+" 👋\n\nThis is the Ecrici team. Thank you for creating your account! 🙏\n\n"+(pr>0?"Your products are saved. Next step: record your first sale, it takes 1 minute.":"The easiest way to start: open ecrici.com, tap Add and enter your first product or service (1 minute).")+"\n\nStuck on something? Reply here and I'll help you step by step. 😊\n— The Ecrici team";
   else if(step===3) t=fr?
-    "Bonjour "+nm+" 👋\n\nPetit conseil d'Ecrici : regardez cette vidéo d'1 minute pour voir comment tout fonctionne :\n"+vid+"\n\nEnsuite, ajoutez vos produits et enregistrez une vente. Besoin d'un coup de main ? Répondez simplement à ce message.\n— L'équipe Ecrici"
-   :"Hello "+nm+" 👋\n\nA quick tip from Ecrici: watch this 1-minute video to see how everything works:\n"+vid+"\n\nThen add your products and record a sale. Need a hand? Just reply to this message.\n— The Ecrici team";
+    "Bonjour "+nm+" 👋\n\nPetit conseil d'Ecrici : regardez cette vidéo d'1 minute pour voir comment tout fonctionne :\n"+vid+"\n\nEnsuite, enregistrez une vente (1 minute) : le reçu et la liste de qui vous doit se font tout seuls. Besoin d'un coup de main ? Répondez simplement à ce message.\n— L'équipe Ecrici"
+   :"Hello "+nm+" 👋\n\nA quick tip from Ecrici: watch this 1-minute video to see how everything works:\n"+vid+"\n\nThen record a sale (1 minute): the receipt and the list of who owes you are made for you. Need a hand? Just reply to this message.\n— The Ecrici team";
   else t=fr?
     "Bonjour "+nm+" 👋\n\nVotre essai gratuit Ecrici"+(dt?" se termine le "+dt:" se termine bientôt")+". Puis-je vous aider à tout configurer ?\n\nDites-moi ce qui n'est pas clair, on le règle ensemble sur WhatsApp. Vous pouvez aussi créer votre page publique gratuite pour que de nouveaux clients vous trouvent sur Ecrici Market.\n— L'équipe Ecrici"
    :"Hello "+nm+" 👋\n\nYour free Ecrici trial "+(dt?"ends on "+dt:"ends soon")+". Can I help you get set up?\n\nTell me what is unclear and we'll sort it out together on WhatsApp. You can also create your free public page so new customers can find you on Ecrici Market.\n— The Ecrici team";
@@ -197,6 +234,8 @@ document.addEventListener("click",e=>{
   if(d.w){ wMark(d.w); setTimeout(draw,400); return; }
   if(d.pv){ pvOpen(d.pv); return; }
   if(d.nd){ ndMark(d.nd,d.step); setTimeout(draw,400); return; }
+  if(d.tp){ tpMark(d.tp,Date.now()); setTimeout(draw,400); return; }
+  if(d.tn){ tpMark(d.tn,Date.now()); draw(); return; }
   if(d.ns){ ndMark(d.ns,99); draw(); return; }
   if(d.an){ annAct(d.an); return; }
   if(d.tab){ tab=d.tab; lsSet("ecrici-admin-tab",tab); err=""; msg=""; draw(); window.scrollTo(0,0); }
@@ -224,7 +263,7 @@ function vToday(){
   if(t.rv) out.push(`<div class="card"><div class="sec"><div><div class="name">⚠ ${t.rv} review${t.rv>1?"s":""} reported or hidden</div><div class="muted">Keep the honest ones, delete the rest.</div></div><button class="p" data-go="reviews">Open</button></div></div>`);
   const cnt={pending:0,active:0,expired:0,suspended:0}; shops.forEach(s=>cnt[state(s)]++);
   const kp=`<div class="kpi">${["active","pending","expired","suspended"].map(k=>`<button data-go="shops" data-f="${k}"><b>${cnt[k]}</b><span>${k}</span></button>`).join("")}</div>`;
-  return kp+(out.length?out.join(""):`<div class="card"><div class="empty"><b>✓</b>All clear. Nothing needs you right now.</div></div>`)+vNudge();
+  return kp+(out.length?out.join(""):`<div class="card"><div class="empty"><b>✓</b>All clear. Nothing needs you right now.</div></div>`)+vNudge()+vTips();
 }
 /* ---- SHOPS ---- */
 function refLine(s){
@@ -388,6 +427,7 @@ async function load(){
   if(!r.ok){ err="Could not load ("+r.status+")."; login(); return; }
   shops=r.json||[];
   try{ const ra2=await api("/rest/v1/rpc/admin_activity",{method:"POST",body:{}}); actOk=ra2.ok&&Array.isArray(ra2.json); actv={}; if(actOk) ra2.json.forEach(x=>{ actv[String(x.shop_id)]=x; }); }catch(e){ actOk=false; }
+  try{ const rq2=await api("/rest/v1/catalogs?select=slug,items:data->items,gal:data->gal,cover:data->>cover,tag:data->>tag,hrs:data->>hrs,biz:data->>biz&active=eq.true&blocked=eq.false&limit=1000"); pgqOk=rq2.ok&&Array.isArray(rq2.json); pgq={}; if(pgqOk) rq2.json.forEach(x=>{ pgq[x.slug]=x; }); }catch(e){ pgqOk=false; }
   const rb=await api("/rest/v1/branches?select=*&order=created_at.asc"); branches=(rb.ok&&Array.isArray(rb.json))?rb.json:[];
   const rc=await api("/rest/v1/pay_claims?select=*&status=eq.pending&order=created_at.asc"); claims=(rc.ok&&Array.isArray(rc.json))?rc.json:[];
   const rr=await api("/rest/v1/catalog_reports?select=*&order=created_at.desc&limit=500"); reps=(rr.ok&&Array.isArray(rr.json))?rr.json:[];

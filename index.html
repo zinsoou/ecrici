@@ -2157,7 +2157,7 @@ function lnCard(){
   const s=lnState(), p=Math.round(s.done/6*100);
   if(s.live){
     if(S.shop.growOff) return "";
-    return `<section class="sec"><div class="card lnc"><div style="flex:1"><b>🚀 ${lx("Faites grandir votre entreprise","Grow your business")}</b><div class="note" style="margin:2px 0 8px">${lx("6 petits conseils pour attirer plus de clients.","6 quick tips to attract more customers.")}</div><button class="btn small primary" data-act="ln-grow">${lx("Voir les conseils","See the tips")}</button></div><button class="btn small ghost" data-act="ln-growx" aria-label="${lx("Masquer","Hide")}">×</button></div></section>`;
+    return `<section class="sec"><div class="card lnc"><div style="flex:1"><b>🚀 ${lx("Faites grandir votre entreprise","Grow your business")}</b><div class="note" style="margin:2px 0 8px">${lx("8 petits conseils pour bien utiliser Ecrici.","8 quick tips to get the most from Ecrici.")}</div><button class="btn small primary" data-act="ln-grow">${lx("Voir les conseils","See the tips")}</button></div><button class="btn small ghost" data-act="ln-growx" aria-label="${lx("Masquer","Hide")}">×</button></div></section>`;
   }
   if(S.shop.lnOff) return "";
   const nx=s.st[s.nextI];
@@ -2218,13 +2218,35 @@ function lnModal(m){
   <div class="field"><input readonly value="${esc(u)}" onfocus="this.select()" style="text-align:center"></div>
   <div class="actions" style="display:grid;gap:8px"><a class="btn primary wide" href="${esc(u)}" target="_blank" rel="noopener">${lx("Voir ma boutique","View my shop")}</a><button class="btn wide" data-act="cat-wa">${lx("Partager sur WhatsApp","Share on WhatsApp")}</button><button class="btn wide" data-act="cat-copy">${lx("Copier le lien de mon site","Copy my website link")}</button><button class="btn wide" data-act="ln-go" data-i="2">${lx("Ajouter d'autres articles","Add more items")}</button><button class="btn wide" data-act="ln-grow">${lx("🚀 Faire grandir mon entreprise","🚀 Grow my business")}</button></div></div>`;
 }
+const GP={
+ shop:{it:["Items","Articles"],s1:["open an item, add its photo","ouvrez un article, ajoutez sa photo"],sa:["Sale","Vente"],sn:["sale","vente"],cu:["Customers","Clients"],ow:["who owes you","qui vous doit"]},
+ pharmacy:{it:["Items","Articles"],s1:["add each medicine with price, stock and expiry date","ajoutez chaque médicament avec prix, stock et date de péremption"],sa:["Sale","Vente"],sn:["sale","vente"],cu:["Customers","Clients"],ow:["who owes you","qui vous doit"]},
+ food:{it:["Menu","Menu"],s1:["open a dish, add its photo","ouvrez un plat, ajoutez sa photo"],sa:["Sale","Vente"],sn:["sale","vente"],cu:["Customers","Clients"],ow:["who owes you","qui vous doit"]},
+ beauty:{it:["Services","Services"],s1:["open a service, add a photo of your work","ouvrez un service, ajoutez une photo de votre travail"],sa:["Visit","Visite"],sn:["visit","visite"],cu:["Clients","Clients"],ow:["who owes you","qui vous doit"]},
+ health:{it:["Services","Soins"],s1:["add each care or test with its price","ajoutez chaque soin ou acte avec son prix"],sa:["Visit","Visite"],sn:["visit","visite"],cu:["Patients","Patients"],ow:["who owes you","qui vous doit"]},
+ school:{it:["Fee types","Types de frais"],s1:["add each fee with its price","ajoutez chaque frais avec son prix"],sa:["Payment","Paiement"],sn:["payment","paiement"],cu:["Students","Élèves"],ow:["unpaid fees","les frais impayés"]},
+ repair:{it:["Prices","Tarifs"],s1:["open a service or part, add a photo of your work","ouvrez un service ou une pièce, ajoutez une photo de votre travail"],sa:["Job","Travail"],sn:["job","travail"],cu:["Clients","Clients"],ow:["who owes you","qui vous doit"]},
+ services:{it:["Services","Services"],s1:["open a service, add a photo","ouvrez un service, ajoutez une photo"],sa:["Service","Prestation"],sn:["service","prestation"],cu:["Clients","Clients"],ow:["who owes you","qui vous doit"]},
+ travel:{it:["Trips","Voyages"],s1:["open a trip, add its photo","ouvrez un voyage, ajoutez sa photo"],sa:["Booking","Réservation"],sn:["booking","réservation"],cu:["Clients","Clients"],ow:["who owes you","qui vous doit"]},
+ rent:{it:["Units","Biens"],s1:["open a unit, add its photos","ouvrez un bien, ajoutez ses photos"],sa:["Rent","Loyer"],sn:["rent payment","loyer"],cu:["Tenants","Locataires"],ow:["unpaid rent","les loyers impayés"]},
+ hotel:{it:["Rooms","Chambres"],s1:["open a room, add its photos","ouvrez une chambre, ajoutez ses photos"],sa:["Stay","Séjour"],sn:["stay","séjour"],cu:["Guests","Clients"],ow:["who owes you","qui vous doit"]}
+};
+GP.electronics=GP.shop;
 function growModal(){
-  const T=[[lx("Partagez votre lien","Share your link"),lx("Envoyez-le sur WhatsApp, dans votre statut et à vos clients. Collez-le dans votre bio Facebook ou Instagram.","Send it on WhatsApp, post it in your status and give it to your customers. Paste it in your Facebook or Instagram bio."),`<button class="btn small" data-act="cat-wa">${lx("Partager","Share")}</button><button class="btn small" data-act="cat-qr">${lx("Code QR","QR code")}</button>`],
-    [lx("Ajoutez plus d'articles","Add more items"),lx("Plus vous en montrez, plus vous recevez de messages. Visez 10 ou plus.","The more you show, the more messages you get. Aim for 10 or more."),`<button class="btn small" data-act="ln-go" data-i="2">${lx("Ajouter","Add")}</button>`],
-    [lx("Améliorez votre profil","Improve your profile"),lx("Un logo, une couverture et des photos de votre travail rassurent les clients.","A logo, a cover and photos of your work reassure customers."),`<button class="btn small" data-act="ln-go" data-i="3">${lx("Ajouter des photos","Add photos")}</button>`],
+  const B=(a,l,x)=>`<button class="btn small" data-act="${a}"${x||""}>${l}</button>`;
+  const b=biz(), p=GP[b]||GP.shop, ph=!["pharmacy","health","school"].includes(b), cap=x=>x.charAt(0).toUpperCase()+x.slice(1);
+  const nIt=t("tab_stock"), nSa=t("tab_sale"), nCu=t("tab_cust"), nRc=t("tab_hist");
+  const two=b==="pharmacy"
+    ?[lx("Mettez votre logo sur les reçus","Put your logo on receipts"),lx("Réglages › Plus d'options (reçus et retards) : ajoutez votre n° d'entreprise et votre logo.","Settings › More options (receipts and late payments): add your business number and logo."),B("tab",lx("Ouvrir les réglages","Open settings"),' data-v="set"')]
+    :[lx("Ajoutez votre logo et votre bannière","Add your logo and banner"),lx("Réglages › Ma page en ligne › Logo et Photo de couverture. Cela rassure les clients.","Settings › My online page › Logo and Cover photo. It reassures customers."),B("ln-go",lx("Ajouter","Add"),' data-i="3"')];
+  const T=[[lx("Partagez votre lien","Share your link"),lx("Envoyez-le sur WhatsApp, dans votre statut et à vos clients. Collez-le dans votre bio Facebook ou Instagram.","Send it on WhatsApp, post it in your status and give it to your customers. Paste it in your Facebook or Instagram bio."),B("cat-wa",lx("Partager","Share"))+B("cat-qr",lx("Code QR","QR code"))],
+    [lx("Ajoutez vos "+nIt.toLowerCase()+(ph?" et leurs photos":""),"Add your "+nIt.toLowerCase()+(ph?" and photos":"")),lx("Touchez l'onglet "+nIt+", "+p.s1[1]+".","Tap the "+nIt+" tab, "+p.s1[0]+"."),B("tab",lx("Aller à "+nIt,"Go to "+nIt),' data-v="stock"')],
+    two,
+    [lx("Enregistrez chaque "+p.sn[1],"Record every "+p.sn[0]),lx("Touchez "+nSa+", choisissez ce qui a été fourni, puis Payé en totalité, À crédit ou Paiement partiel. Vous voyez ainsi votre vrai bénéfice.","Tap "+nSa+", pick what was provided, then Paid, On credit or Part paid. You then see your real profit."),B("ln-sale",lx("Enregistrer","Record"))],
+    [lx("Envoyez un reçu","Send a receipt"),lx("Chaque enregistrement crée un reçu PDF. Ouvrez "+nRc+" et envoyez-le au client sur WhatsApp.","Each record makes a PDF receipt. Open "+nRc+" and send it to the customer on WhatsApp."),B("tab",lx("Voir "+nRc,"See "+nRc),' data-v="hist"')],
+    [lx(cap(p.ow[1]),cap(p.ow[0])),lx("Touchez "+nCu+" pour voir les dettes. Un rappel WhatsApp poli en un geste.","Tap "+nCu+" to see debts. A polite WhatsApp reminder in one tap."),B("tab",lx("Voir "+nCu,"See "+nCu),' data-v="cust"')],
     [lx("Répondez vite","Reply fast"),lx("Les clients écrivent sur WhatsApp. Répondez dans l'heure : c'est la clé pour vendre.","Customers write on WhatsApp. Reply within the hour: it is the key to selling."),""],
-    [lx("Gardez vos disponibilités à jour","Keep availability up to date"),lx("Dans chaque article, décochez « Afficher sur ma page » quand ce n'est plus disponible.","In each item, untick “Show on my online page” when it is no longer available."),""],
-    [lx("Utilisez votre cahier","Use your ledger"),lx("Enregistrez chaque vente et chaque dette dans Ecrici pour voir votre vrai bénéfice.","Record every sale and debt in Ecrici to see your real profit."),`<button class="btn small" data-act="ln-sale">${lx("Enregistrer une vente","Record a sale")}</button>`]];
+    [lx("Gardez vos disponibilités à jour","Keep availability up to date"),lx("Dans chaque article, décochez « Afficher sur ma page » quand ce n'est plus disponible.","In each item, untick “Show on my online page” when it is no longer available."),""]];
   return `<div class="dlg"><h2>🚀 ${lx("Faites grandir votre entreprise","Grow your business")}</h2>${T.map((x,k)=>`<div class="card" style="margin:8px 0"><b>${k+1}. ${x[0]}</b><p class="note" style="margin:4px 0 ${x[2]?"8px":"0"}">${x[1]}</p>${x[2]}</div>`).join("")}<div class="actions"><button class="btn primary wide" data-act="ln-growdone">${lx("Terminé","Done")}</button></div></div>`;
 }
 async function lnPub(){
@@ -2948,7 +2970,7 @@ document.addEventListener("click",e=>{
   const a=el.dataset.act, id=el.dataset.id;
   if(a==="veil"){ if(e.target===el){ ui.modal=null; renderModal(); } return; }
   switch(a){
-    case "tab": ui.view=el.dataset.v; ui.custId=null; if(ui.view!=="sale") {} render(); window.scrollTo(0,0); if(ui.view==="stock") askTrade(); break;
+    case "tab": if(ui.modal&&ui.modal.type==="grow") ui.modal=null; ui.view=el.dataset.v; ui.custId=null; if(ui.view!=="sale") {} render(); window.scrollTo(0,0); if(ui.view==="stock") askTrade(); break;
     case "svc-pick": if(spOn()) spOpen(); break;
     case "sp-tr": if(ui.modal&&ui.modal.type==="svcpick"){ ui.modal.tr=el.dataset.k; spRefresh(); } break;
     case "sp-tog": { const m=ui.modal, k=el.dataset.k; if(!m) break; if(m.sel[k]) delete m.sel[k]; else m.sel[k]={pm:"q",price:""}; spRefresh(); break; }
